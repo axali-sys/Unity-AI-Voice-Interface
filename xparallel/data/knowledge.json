@@ -1,0 +1,12 @@
+{
+  "xparallel": {
+    "name": "XParallel",
+    "description": "The Parallel AIverse: an AI infrastructure and ecosystem connecting parallel intelligence and infrastructure through X-intersections.",
+    "layers": ["intelligence", "infrastructure", "x-link", "applications", "governance"]
+  },
+  "axaliai": {
+    "name": "Axaliai",
+    "role": "development and intelligence layer / first XParallel client",
+    "website": "https://axaliai.com"
+  }
+}
