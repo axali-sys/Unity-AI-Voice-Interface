@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: xparallel-testnet
+    runtime: python
+    buildCommand: ""
+    startCommand: "python xparallel/server.py"
+    healthCheckPath: /health
+    envVars:
+      - key: XP_TOKEN
+        sync: false
+      - key: XP_HOST
+        value: 0.0.0.0
