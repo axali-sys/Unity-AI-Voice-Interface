@@ -14,10 +14,7 @@ def request(path, method="GET", payload=None):
         BASE + path,
         data=body,
         method=method,
-        headers={
-            "Authorization": f"Bearer {TOKEN}",
-            "Content-Type": "application/json",
-        },
+        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
     )
     with urlopen(req, timeout=15) as response:
         return json.loads(response.read())
@@ -27,10 +24,10 @@ def main():
     query = " ".join(sys.argv[1:]).strip() or "What is XParallel?"
     registry = request("/registry")
     result = request("/ask", "POST", {"query": query})
-    print("AXALIAI -> XPARALLEL TESTNET")
+    print("AXALIAI -> XPARALLEL TESTNET v0.2")
     print("Endpoint:", BASE)
-    print("Registered knowledge:", ", ".join(registry["knowledge"]))
-    print("Registered services:", ", ".join(s["name"] for s in registry["services"]))
+    print("Knowledge:", ", ".join(registry["knowledge"]))
+    print("Services:", ", ".join(s["name"] for s in registry["services"]))
     print(json.dumps(result, indent=2))
 
 
