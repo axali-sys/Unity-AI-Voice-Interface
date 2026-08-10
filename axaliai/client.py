@@ -1,10 +1,11 @@
 """Axaliai's first XParallel development-layer client."""
 import json
+import os
 import sys
 from urllib.request import Request, urlopen
 
-BASE = "http://127.0.0.1:8787"
-TOKEN = "xparallel-test-token"
+BASE = os.getenv("XP_URL", "http://127.0.0.1:8787").rstrip("/")
+TOKEN = os.getenv("XP_TOKEN", "xparallel-test-token")
 
 
 def request(path, method="GET", payload=None):
@@ -18,7 +19,7 @@ def request(path, method="GET", payload=None):
             "Content-Type": "application/json",
         },
     )
-    with urlopen(req) as response:
+    with urlopen(req, timeout=15) as response:
         return json.loads(response.read())
 
 
@@ -27,6 +28,7 @@ def main():
     registry = request("/registry")
     result = request("/ask", "POST", {"query": query})
     print("AXALIAI -> XPARALLEL TESTNET")
+    print("Endpoint:", BASE)
     print("Registered knowledge:", ", ".join(registry["knowledge"]))
     print("Registered services:", ", ".join(s["name"] for s in registry["services"]))
     print(json.dumps(result, indent=2))
