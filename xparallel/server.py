@@ -1,4 +1,4 @@
-"""XParallel Testnet v0.4 API."""
+"""XParallel Testnet v0.5 API."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
@@ -6,6 +6,7 @@ import os
 from store import get, load
 from router import route
 from connectors import connector_result
+from agent import plan
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -15,6 +16,7 @@ SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": "testnet"},
     {"id": "service-registry", "name": "Service Registry", "status": "testnet"},
     {"id": "agent-router", "name": "Agent Router", "status": "testnet"},
+    {"id": "execution-agent", "name": "Execution Agent", "status": "testnet", "mode": "plan-only"},
     {"id": "external-sources", "name": "External Source Connectors", "status": "testnet"},
 ]
 
@@ -34,7 +36,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            return send_json(self, 200, {"status": "ok", "network": "xparallel-testnet", "version": "0.4"})
+            return send_json(self, 200, {"status": "ok", "network": "xparallel-testnet", "version": "0.5"})
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
@@ -50,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch"):
+        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan"):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -67,15 +69,14 @@ class Handler(BaseHTTPRequestHandler):
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"})
+        if self.path == "/agent/plan":
+            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
+
         decision = route(query)
         if self.path == "/route":
             return send_json(self, 200, {"network": "xparallel-testnet", **decision})
         if self.path == "/build":
-            return send_json(self, 200, {
-                "network": "xparallel-testnet", "mode": "build", "status": "accepted",
-                "query": query, "matched_resources": decision["resources"],
-                "next": "connect an execution agent to run approved workflows"
-            })
+            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
         return send_json(self, 200, {
             "network": "xparallel-testnet", "mode": decision["mode"], "query": query,
             "results": decision["resources"],
@@ -87,5 +88,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"XParallel Testnet v0.4 listening on {HOST}:{PORT}")
+    print(f"XParallel Testnet v0.5 listening on {HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()
