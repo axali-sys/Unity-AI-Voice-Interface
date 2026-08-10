@@ -1,0 +1,22 @@
+{
+  "name": "XParallel Testnet",
+  "version": "0.4.0",
+  "client": "Axaliai",
+  "gateway": "https://axaliai.com",
+  "components": [
+    "server",
+    "store",
+    "router",
+    "connectors",
+    "authentication",
+    "deployment"
+  ],
+  "capabilities": [
+    "health",
+    "registry",
+    "knowledge retrieval",
+    "intent routing",
+    "build handoff",
+    "controlled HTTPS retrieval"
+  ]
+}
