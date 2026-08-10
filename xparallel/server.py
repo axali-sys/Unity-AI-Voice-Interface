@@ -1,9 +1,11 @@
 """Minimal XParallel Testnet v0.1 server."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
 
-HOST, PORT = "127.0.0.1", 8787
-TOKEN = "xparallel-test-token"
+HOST = os.getenv("XP_HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
+TOKEN = os.getenv("XP_TOKEN", "xparallel-test-token")
 
 KNOWLEDGE = {
     "xparallel": {
@@ -39,10 +41,11 @@ class Handler(BaseHTTPRequestHandler):
         return self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
     def do_GET(self):
-        if not self.authorized():
-            return send_json(self, 401, {"error": "unauthorized"})
+        # Health checks must work without credentials so hosting platforms can probe the service.
         if self.path == "/health":
             return send_json(self, 200, {"status": "ok", "network": "xparallel-testnet", "version": "0.1"})
+        if not self.authorized():
+            return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
             return send_json(self, 200, {"knowledge": list(KNOWLEDGE), "services": SERVICES})
         if self.path.startswith("/knowledge/"):
@@ -56,8 +59,11 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path != "/ask":
             return send_json(self, 404, {"error": "not_found"})
-        length = int(self.headers.get("Content-Length", "0"))
-        data = json.loads(self.rfile.read(length) or b"{}")
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            data = json.loads(self.rfile.read(length) or b"{}")
+        except (ValueError, json.JSONDecodeError):
+            return send_json(self, 400, {"error": "invalid_json"})
         query = str(data.get("query", "")).lower()
         if "axaliai" in query:
             answer = KNOWLEDGE["axaliai"]
@@ -72,5 +78,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"XParallel Testnet v0.1: http://{HOST}:{PORT}")
+    print(f"XParallel Testnet v0.1 listening on {HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()
