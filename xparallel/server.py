@@ -1,4 +1,4 @@
-"""XParallel Testnet v0.5 API."""
+"""XParallel production API for Axaliai."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
@@ -10,14 +10,19 @@ from agent import plan
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
-TOKEN = os.getenv("XP_TOKEN", "xparallel-test-token")
+TOKEN = os.getenv("XP_TOKEN")
+NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
+VERSION = os.getenv("XP_VERSION", "1.0.0")
+
+if not TOKEN:
+    raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
 
 SERVICES = [
-    {"id": "knowledge", "name": "Knowledge Registry", "status": "testnet"},
-    {"id": "service-registry", "name": "Service Registry", "status": "testnet"},
-    {"id": "agent-router", "name": "Agent Router", "status": "testnet"},
-    {"id": "execution-agent", "name": "Execution Agent", "status": "testnet", "mode": "plan-only"},
-    {"id": "external-sources", "name": "External Source Connectors", "status": "testnet"},
+    {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
+    {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
+    {"id": "agent-router", "name": "Agent Router", "status": NETWORK},
+    {"id": "execution-agent", "name": "Execution Agent", "status": NETWORK, "mode": "plan-only"},
+    {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
 
 
@@ -36,13 +41,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            return send_json(self, 200, {"status": "ok", "network": "xparallel-testnet", "version": "0.5"})
+            return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION})
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
-            return send_json(self, 200, {"knowledge": list(load()), "services": SERVICES})
+            return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
-            return send_json(self, 200, {"services": SERVICES})
+            return send_json(self, 200, {"network": NETWORK, "services": SERVICES})
         if self.path.startswith("/knowledge/"):
             key = self.path.split("/knowledge/", 1)[1]
             item = get(key)
@@ -70,17 +75,17 @@ class Handler(BaseHTTPRequestHandler):
         if not query:
             return send_json(self, 400, {"error": "query_required"})
         if self.path == "/agent/plan":
-            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
+            return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
         decision = route(query)
         if self.path == "/route":
-            return send_json(self, 200, {"network": "xparallel-testnet", **decision})
+            return send_json(self, 200, {"network": NETWORK, **decision})
         if self.path == "/build":
-            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
+            return send_json(self, 200, {"network": NETWORK, **plan(query)})
         return send_json(self, 200, {
-            "network": "xparallel-testnet", "mode": decision["mode"], "query": query,
+            "network": NETWORK, "mode": decision["mode"], "query": query,
             "results": decision["resources"],
-            "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching testnet knowledge found yet."
+            "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet."
         })
 
     def log_message(self, *_):
@@ -88,5 +93,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"XParallel Testnet v0.5 listening on {HOST}:{PORT}")
+    print(f"XParallel {NETWORK} v{VERSION} listening on {HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()
