@@ -1,0 +1,19 @@
+# Axaliai / XParallel production deployment contract.
+# Secrets are supplied by the hosting platform; never commit private keys.
+service: axaliai-mainnet
+network: xparallel-mainnet
+runtime: python
+start_command: python xparallel/server.py
+health_check: /health
+required_environment:
+  XP_HOST: 0.0.0.0
+  XP_NETWORK: xparallel-mainnet
+  XP_TOKEN: secret
+  PORT: platform-assigned
+optional_environment:
+  XP_VERSION: 1.0.0
+  XP_DEPLOYMENT_ID: github-deployment-id
+notes:
+  - Mainnet blockchain transactions are NOT executed by this file.
+  - A chain/RPC and explicit deployment contract must be configured before on-chain anchoring.
+  - Never place a wallet private key in GitHub source files.
