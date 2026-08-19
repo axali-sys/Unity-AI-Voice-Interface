@@ -7,9 +7,14 @@ provided through environment variables.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
-import threading
+import sys
 import time
 from urllib.parse import parse_qs, urlparse
+
+# Make the repository root importable both from source and when packaged by PyInstaller.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from xparallel.router import route
 from xparallel.agent import plan
