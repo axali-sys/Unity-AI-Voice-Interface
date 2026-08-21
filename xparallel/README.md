@@ -1,55 +1,49 @@
-# XParallel Testnet v0.1
+# XParallel V0.1 — Intent-to-Experiment
 
-XParallel is the Parallel AIverse infrastructure prototype. This directory contains the first test environment used by Axaliai as its development-layer client.
+XParallel V0.1 turns a human goal into a controlled parallel-world experiment.
 
-## Architecture
+## Flow
 
-```text
-User -> Axaliai client -> XParallel API -> Registry / Knowledge / Services
-                                      |
-                               Auth + Permissions
-```
+`Human intent -> Intent model -> Sandbox simulation -> Evidence -> Human approval -> Real-world implementation`
 
-The prototype uses a dependency-free Python HTTP service so the architecture can be tested before introducing production infrastructure.
+V0.1 is deliberately simulation-only. It does **not** execute arbitrary code or automatically modify production systems.
 
-## Automatic deployment
+## API
 
-The repository includes a `Procfile` and `render.yaml`. A compatible Python web host can start XParallel with:
+Run from the repository root:
 
 ```bash
-python xparallel/server.py
+XP_TOKEN=change-me python xparallel/server.py
 ```
 
-The server binds to `0.0.0.0` and reads the hosting platform's `PORT` environment variable. Set `XP_TOKEN` as a deployment secret; do not commit a production token.
-
-The public health endpoint is:
+Health is public:
 
 ```text
 GET /health
 ```
 
-It does not require authentication so deployment platforms can monitor the service.
+The V0.1 experiment endpoint requires the bearer token:
 
-## Local run
+```text
+POST /experiment
+Authorization: Bearer change-me
+Content-Type: application/json
 
-```bash
-python xparallel/server.py
+{"query":"Deploy Axaliai V1"}
 ```
 
-Default local address: `http://127.0.0.1:8787`.
+The response records the intent, simulated result, limitations, experiment ID, and whether the result is ready for human review.
 
-## Test through Axaliai
+## Architecture
 
-Set the XParallel endpoint and token if the server is remote:
+- `intent.py` — structured human intent
+- `router.py` — intent routing
+- `experiment.py` — experiment orchestration
+- `simulator.py` — parallel-world simulation boundary
+- `permissions.py` — human authority boundary
+- `agent.py` — planning-only execution-agent boundary
+- `store.py` — knowledge/memory store
+- `connectors.py` — constrained HTTPS connector
+- `server.py` — HTTP API
 
-```bash
-export XP_URL=https://YOUR-XPARALLEL-HOST
-export XP_TOKEN=YOUR_TEST_TOKEN
-python axaliai/client.py "What is XParallel?"
-```
-
-The client discovers the registry, retrieves knowledge, and returns an Axaliai-style answer.
-
-## Security
-
-This is a testnet. Authentication is a bearer token for the prototype. Production deployment should replace it with proper identity, key rotation, authorization scopes, TLS, rate limits, and audit logging.
+The long-term objective is to let XParallel test implementations in a parallel environment and transfer only reviewed, evidence-backed results into the real environment.
