@@ -13,6 +13,7 @@ from xparallel.v1_runner import available
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
 TOKEN = os.getenv("XP_TOKEN")
+APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-testnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
 
@@ -42,6 +43,9 @@ class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
+    def execution_approved(self):
+        return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
+
     def do_GET(self):
         if self.path == "/health":
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
@@ -60,7 +64,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment"):
+        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute"):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -80,11 +84,16 @@ class Handler(BaseHTTPRequestHandler):
         if not query:
             return send_json(self, 400, {"error": "query_required"})
 
-        if self.path == "/experiment":
+        if self.path in ("/execute", "/experiment"):
             execution = data.get("execution")
-            if execution is not None and not isinstance(execution, dict):
-                return send_json(self, 400, {"error": "execution_must_be_object"})
-            return send_json(self, 200, {"network": NETWORK, **run_experiment(query, execution)})
+            if not isinstance(execution, dict) or not execution.get("files"):
+                return send_json(self, 400, {"error": "execution.files_required"})
+            if self.path == "/execute" and not self.execution_approved():
+                return send_json(self, 403, {"error": "human_approval_required"})
+            result = run_experiment(query, execution)
+            result["network"] = NETWORK
+            return send_json(self, 200, result)
+
         if self.path == "/agent/plan":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
