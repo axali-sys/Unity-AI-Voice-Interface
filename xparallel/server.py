@@ -1,4 +1,4 @@
-"""XParallel V0.1 API: intent -> parallel experiment -> evidence."""
+"""XParallel V1 API: intent -> controlled sandbox -> evidence."""
 import json
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -8,18 +8,24 @@ from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
 from xparallel.router import route
 from xparallel.store import get, load
+from xparallel.v1_runner import available
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
-TOKEN = os.getenv("XP_TOKEN", "xparallel-test-token")
+TOKEN = os.getenv("XP_TOKEN")
+NETWORK = os.getenv("XP_NETWORK", "xparallel-testnet")
+VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
+
+if not TOKEN:
+    raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
 
 SERVICES = [
-    {"id": "knowledge", "name": "Knowledge Registry", "status": "testnet"},
-    {"id": "service-registry", "name": "Service Registry", "status": "testnet"},
-    {"id": "intent-router", "name": "Intent Router", "status": "v0.1"},
-    {"id": "parallel-simulator", "name": "Parallel World Simulator", "status": "v0.1", "mode": "simulation-only"},
-    {"id": "execution-agent", "name": "Execution Agent", "status": "testnet", "mode": "plan-only"},
-    {"id": "external-sources", "name": "External Source Connectors", "status": "testnet"},
+    {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
+    {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
+    {"id": "intent-router", "name": "Intent Router", "status": "v1"},
+    {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
+    {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
+    {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
 
 
@@ -38,13 +44,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            return send_json(self, 200, {"status": "ok", "network": "xparallel-testnet", "version": "0.1.0"})
+            return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
-            return send_json(self, 200, {"knowledge": list(load()), "services": SERVICES})
+            return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
-            return send_json(self, 200, {"services": SERVICES})
+            return send_json(self, 200, {"network": NETWORK, "services": SERVICES})
         if self.path.startswith("/knowledge/"):
             key = self.path.split("/knowledge/", 1)[1]
             item = get(key)
@@ -58,6 +64,8 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
+            if length > 2_000_000:
+                return send_json(self, 413, {"error": "request_too_large"})
             data = json.loads(self.rfile.read(length) or b"{}")
         except (ValueError, json.JSONDecodeError):
             return send_json(self, 400, {"error": "invalid_json"})
@@ -73,19 +81,22 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 400, {"error": "query_required"})
 
         if self.path == "/experiment":
-            return send_json(self, 200, {"network": "xparallel-testnet", **run_experiment(query)})
+            execution = data.get("execution")
+            if execution is not None and not isinstance(execution, dict):
+                return send_json(self, 400, {"error": "execution_must_be_object"})
+            return send_json(self, 200, {"network": NETWORK, **run_experiment(query, execution)})
         if self.path == "/agent/plan":
-            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
+            return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
         decision = route(query)
         if self.path == "/route":
-            return send_json(self, 200, {"network": "xparallel-testnet", **decision})
+            return send_json(self, 200, {"network": NETWORK, **decision})
         if self.path == "/build":
-            return send_json(self, 200, {"network": "xparallel-testnet", **plan(query)})
+            return send_json(self, 200, {"network": NETWORK, **plan(query)})
         return send_json(self, 200, {
-            "network": "xparallel-testnet", "mode": decision["mode"], "query": query,
+            "network": NETWORK, "mode": decision["mode"], "query": query,
             "results": decision["resources"],
-            "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching testnet knowledge found yet."
+            "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet."
         })
 
     def log_message(self, *_):
@@ -93,5 +104,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"XParallel V0.1 listening on {HOST}:{PORT}")
+    print(f"XParallel {NETWORK} {VERSION} listening on {HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()
