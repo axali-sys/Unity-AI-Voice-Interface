@@ -11,11 +11,6 @@
     "environment": "mainnet|staging|development",
     "status": "pending|success|failed|rolled_back",
     "url": "deployment URL",
-    "onchain": {
-      "anchored": false,
-      "chain_id": null,
-      "tx_hash": null,
-      "contract": null
-    }
+    "onchain": {"anchored": false,"chain_id": null,"tx_hash": null,"contract": null}
   }
 }

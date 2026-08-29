@@ -25,19 +25,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Validate deployment manifest
         run: |
           test -f deployment/mainnet.yaml
           test -f deployment/history.json
           test -f xparallel/server.py
-
       - name: Trigger Render deployment
         if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
         run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-
       - name: Deployment metadata
         run: |
           echo "service=$SERVICE"

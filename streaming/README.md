@@ -14,9 +14,6 @@ This package defines the production streaming-host layer for Axaliai/XParallel.
 
 ## Production
 
-The host is designed to run behind HTTPS on the Axaliai domain. The Windows
-executable is built by GitHub Actions; the hosted service remains the canonical
-server process.
+The host is designed to run behind HTTPS on the Axaliai domain. The Windows executable is built by GitHub Actions; the hosted service remains the canonical server process.
 
-This is a streaming transport/hosting layer. It does not claim that Unity
-Technologies operates or endorses Axaliai; the brand string is a project label.
+This is a streaming transport/hosting layer. It does not claim that Unity Technologies operates or endorses Axaliai; the brand string is a project label.
