@@ -1,0 +1,45 @@
+name: Axaliai Mainnet Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  SERVICE: axaliai-mainnet
+  NETWORK: xparallel-mainnet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: mainnet
+      url: https://axaliai.com/
+    concurrency:
+      group: axaliai-mainnet
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate deployment manifest
+        run: |
+          test -f deployment/mainnet.yaml
+          test -f deployment/history.json
+          test -f xparallel/server.py
+      - name: Trigger Render deployment
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Deployment metadata
+        run: |
+          echo "service=$SERVICE"
+          echo "network=$NETWORK"
+          echo "commit=${GITHUB_SHA}"
+          echo "url=https://axaliai.com/"
+          echo "GitHub environment deployment history is authoritative for CI/CD events."
+          echo "On-chain anchoring requires an explicitly selected blockchain and deployed registry contract."

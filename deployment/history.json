@@ -1,0 +1,16 @@
+{
+  "project": "Axaliai",
+  "service": "XParallel",
+  "network": "xparallel-mainnet",
+  "source_repository": "axali-sys/Unity-AI-Voice-Interface",
+  "deployments": [],
+  "schema": {
+    "id": "unique deployment id",
+    "commit": "git commit SHA",
+    "timestamp": "ISO-8601 UTC",
+    "environment": "mainnet|staging|development",
+    "status": "pending|success|failed|rolled_back",
+    "url": "deployment URL",
+    "onchain": {"anchored": false,"chain_id": null,"tx_hash": null,"contract": null}
+  }
+}

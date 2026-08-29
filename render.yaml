@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: xparallel-testnet
+    name: axaliai-mainnet
     runtime: python
     buildCommand: ""
     startCommand: "python xparallel/server.py"
@@ -10,3 +10,7 @@ services:
         sync: false
       - key: XP_HOST
         value: 0.0.0.0
+      - key: XP_NETWORK
+        value: xparallel-mainnet
+      - key: XP_VERSION
+        value: 1.0.0
