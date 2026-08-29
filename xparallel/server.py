@@ -1,12 +1,13 @@
 """XParallel production API for Axaliai."""
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from store import get, load
-from router import route
-from connectors import connector_result
-from agent import plan
+from xparallel.agent import plan
+from xparallel.connectors import connector_result
+from xparallel.experiment import run_experiment
+from xparallel.router import route
+from xparallel.store import get, load
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -20,8 +21,9 @@ if not TOKEN:
 SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
-    {"id": "agent-router", "name": "Agent Router", "status": NETWORK},
-    {"id": "execution-agent", "name": "Execution Agent", "status": NETWORK, "mode": "plan-only"},
+    {"id": "intent-router", "name": "Intent Router", "status": VERSION},
+    {"id": "parallel-simulator", "name": "Parallel World Simulator", "status": VERSION, "mode": "simulation-or-controlled-execution"},
+    {"id": "execution-agent", "name": "Execution Agent", "status": NETWORK, "mode": "controlled-sandbox"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
 
@@ -57,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan"):
+        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment"):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -74,6 +76,10 @@ class Handler(BaseHTTPRequestHandler):
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"})
+
+        if self.path == "/experiment":
+            execution = data.get("execution")
+            return send_json(self, 200, {"network": NETWORK, **run_experiment(query, execution)})
         if self.path == "/agent/plan":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
