@@ -1,0 +1,41 @@
+<!-- Axaliai / XParallel Squarespace embed.
+     Paste this into a Squarespace Code Block.
+     The API intentionally exposes only /public/ask, /public/build and /public/route.
+-->
+<div id="axaliai-app">
+  <form id="axaliai-form">
+    <label for="axaliai-query">Ask Axaliai</label>
+    <textarea id="axaliai-query" rows="4" required placeholder="Describe what you want Axaliai to do..."></textarea>
+    <button type="submit">Run</button>
+  </form>
+  <pre id="axaliai-result" aria-live="polite"></pre>
+</div>
+
+<script>
+(() => {
+  const API = "https://api.axaliai.com";
+  const form = document.getElementById("axaliai-form");
+  const query = document.getElementById("axaliai-query");
+  const result = document.getElementById("axaliai-result");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const text = query.value.trim();
+    if (!text) return;
+
+    result.textContent = "Working…";
+    try {
+      const response = await fetch(`${API}/public/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: text })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      result.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+      result.textContent = `Axaliai connection error: ${error.message}`;
+    }
+  });
+})();
+</script>
