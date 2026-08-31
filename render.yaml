@@ -8,6 +8,12 @@ services:
     envVars:
       - key: XP_TOKEN
         sync: false
+      - key: XP_PUBLIC_ORIGINS
+        value: "https://axaliai.com,https://www.axaliai.com"
+      - key: XP_PUBLIC_RATE_LIMIT
+        value: "30"
+      - key: XP_PUBLIC_RATE_WINDOW
+        value: "60"
       - key: XP_HOST
         value: 0.0.0.0
       - key: XP_NETWORK
