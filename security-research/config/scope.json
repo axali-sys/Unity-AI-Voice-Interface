@@ -1,0 +1,11 @@
+{
+  "project": "XParallel Security Research V1",
+  "mode": "controlled",
+  "authorized_targets": ["local-synthetic-lab"],
+  "production_exploitation": false,
+  "third_party_data": false,
+  "synthetic_data_only": true,
+  "mass_testing": false,
+  "automatic_escalation": false,
+  "stop_on_boundary_crossing": true
+}
