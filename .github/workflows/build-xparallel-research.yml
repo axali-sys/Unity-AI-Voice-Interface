@@ -1,0 +1,30 @@
+name: Build XParallel Research V1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [xparallel-security-research-v1]
+    paths:
+      - 'security-research/**'
+      - '.github/workflows/build-xparallel-research.yml'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: security-research
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install builder
+        run: python -m pip install --upgrade pip pyinstaller
+      - name: Build EXE
+        run: pyinstaller XParallelResearch.spec
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: XParallelResearch-windows
+          path: security-research/dist/XParallelResearch.exe
