@@ -1,0 +1,2 @@
+# V1 intentionally has no network/client dependency.
+# Add provider SDKs only after an authorized scope is explicitly configured.
