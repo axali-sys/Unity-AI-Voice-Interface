@@ -1,0 +1,31 @@
+{
+  "schema": "axaliai.repository-registry.v1",
+  "hub": "axali-sys/Unity-AI-Voice-Interface",
+  "owner": "axali-sys",
+  "repositories": [
+    {
+      "name": "Unity-AI-Voice-Interface",
+      "role": "mobile-ai-voice-core",
+      "url": "https://github.com/axali-sys/Unity-AI-Voice-Interface.git",
+      "defaultBranch": "main"
+    },
+    {
+      "name": "binance-spot-api-docs",
+      "role": "market-api-reference",
+      "url": "https://github.com/axali-sys/binance-spot-api-docs.git",
+      "defaultBranch": "master"
+    },
+    {
+      "name": "zeek",
+      "role": "network-security-tooling",
+      "url": "https://github.com/axali-sys/zeek.git",
+      "defaultBranch": "master"
+    },
+    {
+      "name": "openclaw-mission-control",
+      "role": "mission-control",
+      "url": "https://github.com/axali-sys/openclaw-mission-control.git",
+      "defaultBranch": "master"
+    }
+  ]
+}
