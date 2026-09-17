@@ -1,0 +1,43 @@
+# XParallel V1 implementation
+
+## Runtime path
+
+Axaliai -> XParallel gateway -> `/execute` -> approval gate -> controlled Docker sandbox -> test command -> evidence -> review.
+
+## V1 controls
+
+- Docker-only project execution; the host never evaluates the supplied test command.
+- No container network access.
+- Read-only container root filesystem with a writable disposable `/workspace` mount.
+- All Linux capabilities dropped and `no-new-privileges` enabled.
+- Memory, CPU, PID and wall-clock limits.
+- Maximum request size, file count and per-file size.
+- Workspace paths cannot escape the disposable workspace.
+- Production deployment remains disabled; successful execution is reviewable evidence only.
+- `/execute` requires a separate `XP_EXECUTION_APPROVAL_TOKEN` in addition to the API token.
+
+## Request shape
+
+`POST /execute` with:
+
+```json
+{
+  "query": "Run the project tests",
+  "execution": {
+    "files": {
+      "test_hello.py": "<base64>"
+    },
+    "test_command": "python -m unittest discover -v"
+  }
+}
+```
+
+## Status semantics
+
+- `success`: sandbox process exited zero and evidence was captured.
+- `failed`: sandbox started but the test process failed or timed out.
+- `blocked`: execution infrastructure is unavailable or approval is absent.
+
+## Explicit boundary
+
+V1 is a controlled execution/testnet layer, not an unattended production deployment system. A production deployer, persistent artifact store, external identity provider, rate limiting, secret rotation, observability stack and provider-specific AI credentials remain deployment concerns and must be configured in the target environment before production use.
