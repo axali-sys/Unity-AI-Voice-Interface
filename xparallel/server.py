@@ -90,7 +90,10 @@ class Handler(BaseHTTPRequestHandler):
             execution = data.get("execution")
             if not isinstance(execution, dict) or not execution.get("files"):
                 return send_json(self, 400, {"error": "execution.files_required"})
-            if self.path == "/execute" and not self.execution_approved():
+            # Both execution-capable endpoints must carry the separate human-approval
+            # credential. /experiment can invoke the same Docker runner as /execute,
+            # so API authentication alone must never authorize sandbox execution.
+            if not self.execution_approved():
                 return send_json(self, 403, {"error": "human_approval_required"})
             result = run_experiment(query, execution)
             result["network"] = NETWORK
