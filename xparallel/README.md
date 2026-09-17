@@ -1,55 +1,62 @@
-# XParallel Testnet v0.1
+# XParallel V1 — Intent-to-Experiment
 
-XParallel is the Parallel AIverse infrastructure prototype. This directory contains the first test environment used by Axaliai as its development-layer client.
+XParallel V1 turns a human goal into a controlled parallel-world experiment and, when explicitly approved, a bounded Docker project test.
 
-## Architecture
+## Flow
 
-```text
-User -> Axaliai client -> XParallel API -> Registry / Knowledge / Services
-                                      |
-                               Auth + Permissions
-```
+`Human intent -> Intent model -> Sandbox simulation / controlled project execution -> Evidence -> Human approval -> Real-world implementation`
 
-The prototype uses a dependency-free Python HTTP service so the architecture can be tested before introducing production infrastructure.
+Production deployment remains outside the V1 execution boundary.
 
-## Automatic deployment
+## API
 
-The repository includes a `Procfile` and `render.yaml`. A compatible Python web host can start XParallel with:
+Run from the repository root:
 
 ```bash
-python xparallel/server.py
+XP_TOKEN=change-me python xparallel/server.py
 ```
 
-The server binds to `0.0.0.0` and reads the hosting platform's `PORT` environment variable. Set `XP_TOKEN` as a deployment secret; do not commit a production token.
-
-The public health endpoint is:
+Health is public:
 
 ```text
 GET /health
 ```
 
-It does not require authentication so deployment platforms can monitor the service.
+The authenticated experiment endpoint accepts an intent and optional project workspace:
 
-## Local run
+```text
+POST /experiment
+Authorization: Bearer change-me
+Content-Type: application/json
 
-```bash
-python xparallel/server.py
+{"query":"Deploy Axaliai V1","execution":{"files":{"test_hello.py":"<base64>"},"test_command":"python -m unittest discover -v"}}
 ```
 
-Default local address: `http://127.0.0.1:8787`.
+`POST /execute` uses the same controlled execution path but additionally requires `X-XParallel-Approval` matching `XP_EXECUTION_APPROVAL_TOKEN`.
 
-## Test through Axaliai
+## V1 controls
 
-Set the XParallel endpoint and token if the server is remote:
+- Docker-only project execution; the host never evaluates the supplied test command.
+- No container network access.
+- Read-only container root filesystem with a disposable writable workspace.
+- Linux capabilities dropped and `no-new-privileges` enabled.
+- Memory, CPU, PID and wall-clock limits.
+- File count, file size, and request size limits.
+- Workspace paths cannot escape the disposable workspace.
+- Successful execution produces reviewable evidence only; production deployment is disabled.
 
-```bash
-export XP_URL=https://YOUR-XPARALLEL-HOST
-export XP_TOKEN=YOUR_TEST_TOKEN
-python axaliai/client.py "What is XParallel?"
-```
+## Architecture
 
-The client discovers the registry, retrieves knowledge, and returns an Axaliai-style answer.
+- `intent.py` — structured human intent
+- `router.py` — intent routing
+- `experiment.py` — experiment orchestration
+- `simulator.py` — parallel-world simulation boundary
+- `permissions.py` — human authority boundary
+- `agent.py` — planning-only execution-agent boundary
+- `store.py` — knowledge/memory store
+- `connectors.py` — constrained HTTPS connector
+- `docker_runner.py` — fixed Docker probe
+- `v1_runner.py` — controlled project execution
+- `server.py` — HTTP API
 
-## Security
-
-This is a testnet. Authentication is a bearer token for the prototype. Production deployment should replace it with proper identity, key rotation, authorization scopes, TLS, rate limits, and audit logging.
+The long-term objective is to let XParallel test implementations in a parallel environment and transfer only reviewed, evidence-backed results into the real environment.
