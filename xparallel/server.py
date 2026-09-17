@@ -1,4 +1,4 @@
-"""XParallel production API for Axaliai."""
+"""XParallel production API with V1 controlled execution."""
 import json
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -8,12 +8,14 @@ from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
 from xparallel.router import route
 from xparallel.store import get, load
+from xparallel.v1_runner import available
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
 TOKEN = os.getenv("XP_TOKEN")
+APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
-VERSION = os.getenv("XP_VERSION", "1.0.0")
+VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
 
 if not TOKEN:
     raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
@@ -22,8 +24,8 @@ SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": VERSION},
-    {"id": "parallel-simulator", "name": "Parallel World Simulator", "status": VERSION, "mode": "simulation-or-controlled-execution"},
-    {"id": "execution-agent", "name": "Execution Agent", "status": NETWORK, "mode": "controlled-sandbox"},
+    {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
+    {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
 
@@ -41,9 +43,12 @@ class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
+    def execution_approved(self):
+        return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
+
     def do_GET(self):
         if self.path == "/health":
-            return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION})
+            return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
@@ -59,11 +64,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment"):
+        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute"):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
+            if length > 2_000_000:
+                return send_json(self, 413, {"error": "request_too_large"})
             data = json.loads(self.rfile.read(length) or b"{}")
+            if not isinstance(data, dict):
+                return send_json(self, 400, {"error": "json_object_required"})
         except (ValueError, json.JSONDecodeError):
             return send_json(self, 400, {"error": "invalid_json"})
 
@@ -77,9 +86,16 @@ class Handler(BaseHTTPRequestHandler):
         if not query:
             return send_json(self, 400, {"error": "query_required"})
 
-        if self.path == "/experiment":
+        if self.path in ("/execute", "/experiment"):
             execution = data.get("execution")
-            return send_json(self, 200, {"network": NETWORK, **run_experiment(query, execution)})
+            if not isinstance(execution, dict) or not execution.get("files"):
+                return send_json(self, 400, {"error": "execution.files_required"})
+            if self.path == "/execute" and not self.execution_approved():
+                return send_json(self, 403, {"error": "human_approval_required"})
+            result = run_experiment(query, execution)
+            result["network"] = NETWORK
+            return send_json(self, 200, result)
+
         if self.path == "/agent/plan":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
@@ -99,5 +115,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"XParallel {NETWORK} v{VERSION} listening on {HOST}:{PORT}")
+    print(f"XParallel {NETWORK} {VERSION} listening on {HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()
