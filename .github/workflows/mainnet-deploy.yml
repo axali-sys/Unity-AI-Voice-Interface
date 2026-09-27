@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  deployments: write
 
 env:
   SERVICE: axaliai-mainnet
@@ -16,9 +15,6 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: mainnet
-      url: https://axaliai.com/
     concurrency:
       group: axaliai-mainnet
       cancel-in-progress: false
