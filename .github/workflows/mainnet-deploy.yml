@@ -2,7 +2,18 @@ name: Axaliai Mainnet Deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - axaliai-mainnet-deployment
+    paths:
+      - 'xparallel/**'
+      - 'axaliai/**'
+      - 'tests/**'
+      - 'web/**'
+      - 'deployment/**'
+      - 'render.yaml'
+      - 'vercel.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
@@ -14,11 +25,47 @@ env:
   NETWORK: xparallel-mainnet
 
 jobs:
+  verify:
+    name: Verify Axaliai
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate repository manifests
+        run: |
+          test -f deployment/mainnet.yaml
+          test -f deployment/history.json
+          test -f xparallel/server.py
+          test -f web/index.html
+          test -f vercel.json
+          python -m py_compile xparallel/*.py axaliai/*.py
+
+      - name: Run Python tests
+        run: python -m unittest discover -v
+
+      - name: Validate Vercel configuration
+        run: python - <<'PY'
+        import json
+        from pathlib import Path
+        config = json.loads(Path("vercel.json").read_text())
+        assert config["rewrites"][0]["source"] == "/"
+        assert config["rewrites"][0]["destination"] == "/web/index.html"
+        print("vercel.json: valid")
+        PY
+
   deploy:
+    name: Deploy Axaliai Mainnet
+    needs: verify
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: mainnet
-      url: https://axaliai.com/
     concurrency:
       group: axaliai-mainnet
       cancel-in-progress: false
@@ -26,23 +73,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate deployment manifest
-        run: |
-          test -f deployment/mainnet.yaml
-          test -f deployment/history.json
-          test -f xparallel/server.py
-
       - name: Trigger Render deployment
         if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
         run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
 
-      - name: Deployment metadata
+      - name: Deployment configuration status
         run: |
+          if [ -n "${RENDER_DEPLOY_HOOK:-}" ]; then
+            echo "Render deployment hook triggered."
+          else
+            echo "RENDER_DEPLOY_HOOK is not configured; deployment was not triggered."
+            echo "Configure the repository/environment secret before expecting automatic Render deployment."
+          fi
           echo "service=$SERVICE"
           echo "network=$NETWORK"
           echo "commit=${GITHUB_SHA}"
-          echo "url=https://axaliai.com/"
-          echo "GitHub environment deployment history is authoritative for CI/CD events."
-          echo "On-chain anchoring requires an explicitly selected blockchain and deployed registry contract."
