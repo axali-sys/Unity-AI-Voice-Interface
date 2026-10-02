@@ -5,10 +5,24 @@ on:
     branches:
       - main
       - axaliai-mainnet-deployment
+    paths:
+      - 'xparallel/**'
+      - 'axaliai/**'
+      - 'tests/**'
+      - 'web/**'
+      - 'deployment/**'
+      - 'render.yaml'
+      - 'vercel.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
   contents: read
+  deployments: write
+
+env:
+  SERVICE: axaliai-mainnet
+  NETWORK: xparallel-mainnet
 
 jobs:
   verify:
@@ -21,9 +35,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
-      - name: Validate required files
+      - name: Validate repository manifests
         run: |
           test -f deployment/mainnet.yaml
           test -f deployment/history.json
@@ -31,15 +45,49 @@ jobs:
           test -f web/index.html
           test -f vercel.json
           test -f .env.example
+          python -m py_compile xparallel/*.py axaliai/*.py
 
-      - name: Compile Python
-        run: python -m py_compile xparallel/*.py axaliai/*.py
-
-      - name: Run tests
+      - name: Run Python tests
         run: python -m unittest discover -s tests -p 'test*.py' -v
 
-      - name: Validate Vercel routing
-        run: python -c "import json; c=json.load(open('vercel.json')); assert c['rewrites'][0]['source']=='/'; assert c['rewrites'][0]['destination']=='/web/index.html'; print('Vercel routing: OK')"
+      - name: Validate Vercel configuration
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          config = json.loads(Path("vercel.json").read_text())
+          assert config["rewrites"][0]["source"] == "/"
+          assert config["rewrites"][0]["destination"] == "/web/index.html"
+          print("vercel.json: valid")
+          PY
 
-      - name: Validate environment template
-        run: python -c "from pathlib import Path; s=Path('.env.example').read_text(); required=['XP_TOKEN','XP_EXECUTION_APPROVAL_TOKEN','XP_HOST','XP_NETWORK','XP_VERSION']; assert all(k+'=' in s for k in required); print('Environment template: OK')"
+  deploy:
+    name: Deploy Axaliai Mainnet
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: mainnet
+    concurrency:
+      group: axaliai-mainnet
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Render deployment
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not configured; automatic Render deployment is not triggered."
+            exit 0
+          fi
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
+          echo "Render deployment hook triggered."
+
+      - name: Deployment metadata
+        run: |
+          echo "service=$SERVICE"
+          echo "network=$NETWORK"
+          echo "commit=$"+"{GITHUB_SHA}"
