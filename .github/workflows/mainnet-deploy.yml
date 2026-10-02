@@ -50,14 +50,15 @@ jobs:
         run: python -m unittest discover -v
 
       - name: Validate Vercel configuration
-        run: python - <<'PY'
-        import json
-        from pathlib import Path
-        config = json.loads(Path("vercel.json").read_text())
-        assert config["rewrites"][0]["source"] == "/"
-        assert config["rewrites"][0]["destination"] == "/web/index.html"
-        print("vercel.json: valid")
-        PY
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          config = json.loads(Path("vercel.json").read_text())
+          assert config["rewrites"][0]["source"] == "/"
+          assert config["rewrites"][0]["destination"] == "/web/index.html"
+          print("vercel.json: valid")
+          PY
 
   deploy:
     name: Deploy Axaliai Mainnet
@@ -74,19 +75,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Trigger Render deployment
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
-        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-
-      - name: Deployment configuration status
         run: |
-          if [ -n "${RENDER_DEPLOY_HOOK:-}" ]; then
-            echo "Render deployment hook triggered."
-          else
-            echo "RENDER_DEPLOY_HOOK is not configured; deployment was not triggered."
-            echo "Configure the repository/environment secret before expecting automatic Render deployment."
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not configured; automatic Render deployment is not triggered."
+            exit 0
           fi
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
+          echo "Render deployment hook triggered."
+
+      - name: Deployment metadata
+        run: |
           echo "service=$SERVICE"
           echo "network=$NETWORK"
           echo "commit=${GITHUB_SHA}"
