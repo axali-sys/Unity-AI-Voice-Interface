@@ -1,17 +1,23 @@
+import unittest
+
 from xparallel.experiment import run_experiment
 from xparallel.intent import parse_intent
 
 
-def test_parse_intent():
-    intent = parse_intent("Deploy Axaliai V1")
-    assert intent.goal == "Deploy Axaliai V1"
-    assert intent.environment == "sandbox"
-    assert intent.approval_required is True
+class XParallelV01Tests(unittest.TestCase):
+    def test_parse_intent(self):
+        intent = parse_intent("Deploy Axaliai V1")
+        self.assertEqual(intent.goal, "Deploy Axaliai V1")
+        self.assertEqual(intent.environment, "sandbox")
+        self.assertTrue(intent.approval_required)
+
+    def test_experiment_stops_at_human_boundary(self):
+        result = run_experiment("Deploy Axaliai V1")
+        self.assertEqual(result["result"]["status"], "success")
+        self.assertEqual(result["transfer"]["status"], "ready_for_review")
+        self.assertTrue(result["transfer"]["requires_human_approval"])
+        self.assertEqual(result["transfer"]["real_world_execution"], "not_performed")
 
 
-def test_experiment_stops_at_human_boundary():
-    result = run_experiment("Deploy Axaliai V1")
-    assert result["result"]["status"] == "success"
-    assert result["transfer"]["status"] == "ready_for_review"
-    assert result["transfer"]["requires_human_approval"] is True
-    assert result["transfer"]["real_world_execution"] == "not_performed"
+if __name__ == "__main__":
+    unittest.main()
