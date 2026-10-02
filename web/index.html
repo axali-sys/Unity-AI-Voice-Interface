@@ -1,9 +1,90 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Axaliai — All Social</title><style>
-*{box-sizing:border-box}body{margin:0;background:#07080c;color:#f5f7fb;font-family:Inter,system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:28px 18px}h1{margin:0;font-size:32px}.sub{color:#9aa3b2;margin:8px 0 24px}.search{width:100%;padding:15px 17px;border:1px solid #272c36;border-radius:16px;background:#11141b;color:white;font-size:16px;outline:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:18px}.card{border:1px solid #252a34;background:#10131a;border-radius:18px;padding:20px;min-height:125px;cursor:pointer;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#687386}.icon{font-size:28px}.name{font-weight:700;margin-top:12px}.status{font-size:12px;color:#8f99a8;margin-top:5px}.command{margin-top:22px;padding:18px;border:1px solid #252a34;border-radius:18px;background:#0d1016}.command button{margin-top:12px;padding:11px 15px;border:0;border-radius:12px;background:#f5f7fb;color:#08090c;font-weight:700}.result{color:#b8c0cc;margin-top:12px;min-height:22px}</style></head>
-<body><main><h1>Axaliai</h1><div class="sub">The DNA of AI · All Social gateway</div><input id="q" class="search" placeholder="Ask Axaliai or find a social platform…"><section id="grid" class="grid"></section><div class="command"><strong>Universal command</strong><div class="result" id="result">Choose a platform or ask Axaliai what you want to do.</div><button id="ask">Run command</button></div></main>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<title>Axaliai — All Social</title>
+<style>
+:root{--bg:#07080c;--panel:#10131a;--panel2:#0d1016;--line:#252a34;--muted:#8f99a8;--text:#f5f7fb}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at 50% -10%,#18202e 0,#07080c 38%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{width:min(1180px,100%);margin:auto;padding:22px 16px 42px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px}.mark{width:42px;height:42px;border-radius:13px;background:#f5f7fb;color:#07080c;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:22px;margin:0}.brand small{display:block;color:var(--muted);margin-top:2px}
+.pill{border:1px solid var(--line);background:#0d1016;border-radius:999px;padding:8px 12px;color:#b9c1cd;font-size:12px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,#111722,#0d1016);border-radius:26px;padding:24px;margin-bottom:16px}
+.hero h2{font-size:clamp(28px,7vw,46px);line-height:1.02;margin:0 0 10px;letter-spacing:-1.5px}.hero p{margin:0;color:#aeb6c3;max-width:650px;line-height:1.55}
+.search{display:flex;gap:10px;margin-top:20px}.search input{flex:1;min-width:0;padding:15px 16px;border:1px solid var(--line);border-radius:15px;background:#090b10;color:#fff;font-size:15px;outline:none}.search input:focus{border-color:#697386}
+.section{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px}.section h3{font-size:15px;margin:0}.count{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:3px;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#0d1016;color:#9fa8b6;border-radius:999px;padding:8px 12px;font-size:12px;cursor:pointer}.tab.active{background:#f5f7fb;color:#07080c;border-color:#f5f7fb}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);background:rgba(16,19,26,.92);border-radius:20px;padding:15px;min-height:142px;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#5e6879;background:#131720}.icon{width:44px;height:44px;border-radius:14px;background:#181d27;display:grid;place-items:center;font-weight:900;font-size:20px}.name{font-weight:750;margin-top:12px}.type{font-size:11px;color:var(--muted);margin-top:4px}.open{font-size:11px;color:#c8ced8;margin-top:14px}
+.command{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--panel2)}.command strong{font-size:14px}.command p{font-size:12px;color:var(--muted);line-height:1.5}.command-row{display:flex;gap:8px}.command-row input{flex:1;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#080a0f;color:#fff}.command button{padding:12px 15px;border:0;border-radius:12px;background:#f5f7fb;color:#07080c;font-weight:750}.result{color:#b9c1cc;font-size:12px;margin-top:10px;min-height:18px}
+.note{margin-top:18px;text-align:center;color:#707a89;font-size:11px;line-height:1.5}
+@media(min-width:650px){main{padding:30px 24px 56px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:950px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.hero{padding:32px}.top{margin-bottom:28px}}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="brand"><div class="mark">X</div><div><h1>Axaliai</h1><small>The DNA of AI</small></div></div>
+  <div class="pill">ALL SOCIAL</div>
+</header>
+
+<section class="hero">
+  <h2>All your social.<br>One front door.</h2>
+  <p>See independent social platforms together in one Axaliai interface. Choose a platform and continue to its own service.</p>
+  <div class="search"><input id="q" autocomplete="off" placeholder="Search social platforms…"></div>
+</section>
+
+<div class="tabs" id="tabs"></div>
+<div class="section"><h3>Social platforms</h3><span class="count" id="count"></span></div>
+<section id="grid" class="grid"></section>
+
+<section class="command">
+  <strong>Axaliai command</strong>
+  <p>Use Axaliai as the front door. Platform accounts and actions remain separate and require their own authorization.</p>
+  <div class="command-row"><input id="command" placeholder="e.g. Find a video platform"><button id="run">Go</button></div>
+  <div id="result" class="result">Ready.</div>
+</section>
+<div class="note">Axaliai unifies the interface — it does not merge or impersonate the independent platforms.</div>
+</main>
+
 <script>
-const apps=[['◎','Instagram'],['f','Facebook'],['♪','TikTok'],['▶','YouTube'],['𝕏','X'],['in','LinkedIn'],['@','Threads'],['R','Reddit'],['P','Pinterest'],['◉','WhatsApp'],['✈','Telegram'],['♫','Spotify']];
-const grid=document.getElementById('grid'),q=document.getElementById('q'),result=document.getElementById('result');
-function render(){const s=q.value.toLowerCase();grid.innerHTML=apps.filter(a=>a[1].toLowerCase().includes(s)).map(a=>`<div class="card" data-name="${a[1]}"><div class="icon">${a[0]}</div><div class="name">${a[1]}</div><div class="status">Open / connect</div></div>`).join('');document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{result.textContent='Selected '+c.dataset.name+'. Authorization will be required before account actions.'})}q.oninput=render;document.getElementById('ask').onclick=()=>{result.textContent=q.value?'Axaliai command: '+q.value:'Select a platform or enter a command.'};render();
-</script></body></html>
+const apps=[
+ {n:'Instagram',i:'◎',c:'Social',u:'https://www.instagram.com/'},
+ {n:'Facebook',i:'f',c:'Social',u:'https://www.facebook.com/'},
+ {n:'TikTok',i:'♪',c:'Video',u:'https://www.tiktok.com/'},
+ {n:'YouTube',i:'▶',c:'Video',u:'https://www.youtube.com/'},
+ {n:'X',i:'𝕏',c:'Social',u:'https://x.com/'},
+ {n:'LinkedIn',i:'in',c:'Professional',u:'https://www.linkedin.com/'},
+ {n:'Threads',i:'@',c:'Social',u:'https://www.threads.net/'},
+ {n:'Reddit',i:'R',c:'Community',u:'https://www.reddit.com/'},
+ {n:'Pinterest',i:'P',c:'Visual',u:'https://www.pinterest.com/'},
+ {n:'WhatsApp',i:'◉',c:'Messaging',u:'https://www.whatsapp.com/'},
+ {n:'Telegram',i:'✈',c:'Messaging',u:'https://telegram.org/'},
+ {n:'Spotify',i:'♫',c:'Music',u:'https://open.spotify.com/'}
+];
+const cats=['All','Social','Video','Messaging','Professional','Community','Visual','Music'];
+let active='All';
+const grid=document.getElementById('grid'),q=document.getElementById('q'),count=document.getElementById('count');
+const tabs=document.getElementById('tabs');
+function drawTabs(){tabs.innerHTML=cats.map(c=>'<button class="tab '+(c===active?'active':'')+'" data-c="'+c+'">'+c+'</button>').join('');tabs.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{active=b.dataset.c;drawTabs();render()})}
+function render(){
+ const s=q.value.trim().toLowerCase();
+ const list=apps.filter(a=>(active==='All'||a.c===active)&&(!s||a.n.toLowerCase().includes(s)||a.c.toLowerCase().includes(s)));
+ count.textContent=list.length+' platform'+(list.length===1?'':'s');
+ grid.innerHTML=list.map(a=>'<a class="card" href="'+a.u+'" target="_blank" rel="noopener noreferrer"><div class="icon">'+a.i+'</div><div class="name">'+a.n+'</div><div class="type">'+a.c+'</div><div class="open">Open platform ↗</div></a>').join('')||'<div class="result">No matching platform.</div>';
+}
+q.oninput=render;
+document.getElementById('run').onclick=()=>{
+ const v=document.getElementById('command').value.trim().toLowerCase();
+ if(!v){document.getElementById('result').textContent='Enter a command.';return}
+ const hit=apps.find(a=>v.includes(a.n.toLowerCase()));
+ document.getElementById('result').textContent=hit?'Opening '+hit.n+' as a separate platform.':'Axaliai found the social gateway. Choose a platform from the grid.';
+ if(hit) window.open(hit.u,'_blank','noopener,noreferrer');
+};
+drawTabs();render();
+</script>
+</body>
+</html>
