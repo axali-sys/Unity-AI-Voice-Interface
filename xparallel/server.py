@@ -17,8 +17,6 @@ APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
 
-if not TOKEN:
-    raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
 
 SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
