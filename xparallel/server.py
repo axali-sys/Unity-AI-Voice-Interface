@@ -25,8 +25,6 @@ PUBLIC_RATE_LIMIT = int(os.getenv("XP_PUBLIC_RATE_LIMIT", "30"))
 PUBLIC_RATE_WINDOW = int(os.getenv("XP_PUBLIC_RATE_WINDOW", "60"))
 _PUBLIC_REQUESTS = {}
 
-if not TOKEN:
-    raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
 
 SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
