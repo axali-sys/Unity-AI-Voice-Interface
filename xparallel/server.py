@@ -155,6 +155,12 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "url_required"})
             return send_json(self, 200, connector_result(url))
 
+        if self.path == "/public/solutions":
+            workspace = workspace_context(data)["workspace_id"]
+            limit = max(1, min(int(data.get("limit", 50)), 100))
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "solutions": REPOSITORY.list(workspace, limit=limit)}, cors=True)
+
         if self.path in {"/public/solution", "/solution"}:
             query = str(data.get("query", "")).strip()
             try:
