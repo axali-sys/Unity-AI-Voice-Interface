@@ -16,6 +16,7 @@ from xparallel.authz import authorize
 from xparallel.audit_repository import AUDIT_REPOSITORY
 from xparallel.store import get, load
 from xparallel.v1_runner import available
+from xparallel.axaliai_gateway import gateway_manifest
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -109,6 +110,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
+        if self.path == "/public/xparallel/access":
+            if not public_allowed(self):
+                return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
+            return send_json(self, 200, gateway_manifest(), cors=True)
         if self.path == "/public/health":
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
