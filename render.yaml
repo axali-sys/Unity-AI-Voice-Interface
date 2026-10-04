@@ -20,3 +20,7 @@ services:
         value: xparallel-mainnet
       - key: XP_VERSION
         value: 1.0.0
+      - key: XP_BILLING_EMAIL
+        value: azalibol74@gmail.com
+      - key: XP_EXECUTION_APPROVAL_TOKEN
+        sync: false
