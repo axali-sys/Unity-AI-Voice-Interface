@@ -12,6 +12,8 @@ from xparallel.graph import GRAPH
 from xparallel.persistence import REPOSITORY
 from xparallel.workspace import workspace_context
 from xparallel.billing import usage_event, invoice_preview
+from xparallel.authz import authorize
+from xparallel.audit_repository import AUDIT_REPOSITORY
 from xparallel.store import get, load
 from xparallel.v1_runner import available
 
@@ -21,6 +23,7 @@ TOKEN = os.getenv("XP_TOKEN")
 APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0")
+DEFAULT_ROLE = os.getenv("XP_DEFAULT_ROLE", "owner")
 PUBLIC_ORIGINS = {origin.strip().rstrip("/") for origin in os.getenv(
     "XP_PUBLIC_ORIGINS", "https://axaliai.com,https://www.axaliai.com"
 ).split(",") if origin.strip()}
@@ -70,6 +73,15 @@ def public_rate_ok(handler):
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
+
+    def role(self):
+        return DEFAULT_ROLE if self.authorized() else "viewer"
+
+    def require_role(self, action):
+        return authorize(self.role(), action)
+
+    def audit(self, action, workspace, actor="system", metadata=None):
+        return AUDIT_REPOSITORY.record(action, workspace, actor, metadata)
 
     def execution_approved(self):
         return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
@@ -147,6 +159,7 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context(data)["workspace_id"]
             node = GRAPH.add(solution, status="candidate", tags=data.get("tags") or [])
             REPOSITORY.put(workspace, node)
+            audit = self.audit("solution_created", workspace, workspace_context(data)["actor"], {"node_id": node["node_id"]})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "solution": solution, "node": node,
                 "billing": usage_event("solution_created", workspace)}, cors=is_public)
@@ -206,10 +219,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/graph":
             workspace = workspace_context(data)["workspace_id"]
+            if not self.require_role("read"):
+                return send_json(self, 403, {"error":"forbidden"})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "nodes": REPOSITORY.list(workspace)})
 
         if self.path == "/graph/promote":
+            if not self.require_role("verify"):
+                return send_json(self, 403, {"error":"forbidden"})
             workspace = workspace_context(data)["workspace_id"]
             node_id = str(data.get("node_id", "")).strip()
             if not node_id:
@@ -221,13 +238,17 @@ class Handler(BaseHTTPRequestHandler):
                 GRAPH.add(node["solution"], status=node["status"], tags=node["tags"])
             promoted = GRAPH.promote(node_id)
             REPOSITORY.put(workspace, promoted)
+            audit = self.audit("verification", workspace, workspace_context(data)["actor"], {"node_id": node_id})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
-                "node": promoted, "billing": usage_event("verification", workspace)})
+                "node": promoted, "billing": usage_event("verification", workspace), "audit": audit})
 
         if self.path == "/billing/preview":
+            if not self.require_role("billing"):
+                return send_json(self, 403, {"error":"forbidden"})
             workspace = workspace_context(data)["workspace_id"]
             events = data.get("events") if isinstance(data.get("events"), list) else []
-            return send_json(self, 200, {"network": NETWORK, **invoice_preview(workspace, events)})
+            audit = self.audit("billing_preview", workspace, workspace_context(data)["actor"])
+            return send_json(self, 200, {"network": NETWORK, **invoice_preview(workspace, events), "audit": audit})
 
         if self.path == "/agent/plan":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
