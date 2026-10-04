@@ -8,6 +8,10 @@ from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
 from xparallel.router import route
 from xparallel.solution import create_solution, verify_solution
+from xparallel.graph import GRAPH
+from xparallel.persistence import REPOSITORY
+from xparallel.workspace import workspace_context
+from xparallel.billing import usage_event, invoice_preview
 from xparallel.store import get, load
 from xparallel.v1_runner import available
 
@@ -111,7 +115,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         is_public = self.path.startswith("/public/")
-        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify"}
+        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify", "/public/graph/search"}
         if is_public:
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -149,6 +153,16 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": str(exc)}, cors=is_public)
             return send_json(self, 200, {"network": NETWORK, **result}, cors=is_public)
 
+        if self.path in {"/public/graph/search", "/graph/search"}:
+            query = str(data.get("query", "")).strip()
+            if not query:
+                return send_json(self, 400, {"error": "query_required"}, cors=is_public)
+            limit = int(data.get("limit", 10))
+            workspace = workspace_context(data)["workspace_id"]
+            results = GRAPH.search(query, limit=limit)
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
+
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"}, cors=is_public)
@@ -162,7 +176,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/public/build":
             return send_json(self, 200, {"network": NETWORK, **plan(query)}, cors=True)
 
-        private = {"/ask", "/build", "/route", "/agent/plan", "/experiment", "/execute"}
+        if self.path in {"/public/solution", "/solution"}:
+            workspace = workspace_context(data)["workspace_id"]
+            solution = create_solution(query)
+            node = GRAPH.add(solution, status="candidate", tags=data.get("tags") or [])
+            REPOSITORY.put(workspace, node)
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "solution": solution, "node": node,
+                "billing": usage_event("solution_created", workspace)}, cors=is_public)
+
+        private = {"/ask", "/build", "/route", "/agent/plan", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
         if self.path not in private:
             return send_json(self, 404, {"error": "not_found"})
 
@@ -175,6 +198,29 @@ class Handler(BaseHTTPRequestHandler):
             result = run_experiment(query, execution)
             result["network"] = NETWORK
             return send_json(self, 200, result)
+
+        if self.path == "/graph":
+            workspace = workspace_context(data)["workspace_id"]
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "nodes": REPOSITORY.list(workspace)})
+
+        if self.path == "/graph/promote":
+            workspace = workspace_context(data)["workspace_id"]
+            node_id = str(data.get("node_id", "")).strip()
+            if not node_id:
+                return send_json(self, 400, {"error": "node_id_required"})
+            node = REPOSITORY.get(workspace, node_id)
+            if not node:
+                return send_json(self, 404, {"error": "not_found"})
+            promoted = GRAPH.promote(node_id)
+            REPOSITORY.put(workspace, promoted)
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "node": promoted, "billing": usage_event("verification", workspace)})
+
+        if self.path == "/billing/preview":
+            workspace = workspace_context(data)["workspace_id"]
+            events = data.get("events") if isinstance(data.get("events"), list) else []
+            return send_json(self, 200, {"network": NETWORK, **invoice_preview(workspace, events)})
 
         if self.path == "/agent/plan":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
