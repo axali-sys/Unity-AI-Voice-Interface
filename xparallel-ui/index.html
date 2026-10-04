@@ -1,14 +1,53 @@
 <!doctype html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XParallel — Parallel Development</title><link rel="stylesheet" href="styles.css"></head>
-<body><div class="shell"><aside><div class="brand"><b>X</b><span>XPARALLEL<small>PARALLEL DEVELOPMENT</small></span></div><nav><button class="active" data-v="Overview">◈ Overview</button><button class="" data-v="Projects">▣ Projects</button><button class="" data-v="Solutions">◇ Solutions</button><button class="" data-v="Agents">✦ Agents</button><button class="" data-v="Sandbox">⌘ Sandbox</button><button class="" data-v="Evidence">✓ Evidence</button><button class="" data-v="Graph">◎ Graph</button><button class="" data-v="Deploy">⇧ Deploy</button></nav><footer id="footer">● Checking infrastructure<br><em>Human approval enforced</em></footer></aside><main><header><div><small>WORKSPACE / AXALIAI</small><h1 id="title">Parallel workspace</h1></div><button id="connect">Connect Axaliai</button></header><section id="content"><div class="hero"><i>XPARALLEL V1 · LIVE</i><h2>What do you want to build?</h2><p>Turn an idea into a tested, evidence-backed solution inside a controlled parallel development environment.</p><div class="prompt"><input id="idea" placeholder="Describe a project, feature, system or solution…"><button id="start">Start solution</button></div><p id="status" aria-live="polite"></p></div><div class="cards"><article><label>ACTIVE SOLUTION</label><h3>Axaliai Gateway</h3><p>Gateway access contract and server-side routing.</p><div class="steps"><span>INTAKE</span><span>PLAN</span><span>SANDBOX</span><span>TEST</span><span>EVIDENCE</span><span>APPROVAL</span><span>DEPLOY</span></div></article><article><label>AGENTS</label><strong>4</strong><p>Planner · Builder · Tester · Verifier</p></article><article><label>EVIDENCE</label><strong id="evidence">12</strong><p>Artifacts and verification events captured.</p></article></div></section></main></div>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080a0f"><title>XParallel — Workspace</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<div class="shell">
+<aside>
+  <div class="brand"><b>×</b><span>XPARALLEL<small>PARALLEL DEVELOPMENT</small></span></div>
+  <nav id="nav">
+    <button class="active" data-v="Overview">◈ <span>Overview</span></button><button data-v="Projects">▣ <span>Projects</span></button><button data-v="Solutions">◇ <span>Solutions</span></button><button data-v="Agents">✦ <span>Agents</span></button><button data-v="Sandbox">⌘ <span>Sandbox</span></button><button data-v="Evidence">✓ <span>Evidence</span></button><button data-v="Graph">◎ <span>Graph</span></button><button data-v="Deploy">⇧ <span>Deploy</span></button>
+  </nav>
+  <footer id="footer">● Connecting…<br><em>Human approval enforced</em></footer>
+</aside>
+<main>
+<header><div><small>WORKSPACE / AXALIAI</small><h1 id="title">Parallel workspace</h1></div><div class="header-actions"><span id="health" class="pill">● checking</span><button id="connect">Connect Axaliai</button></div></header>
+<section id="content"></section>
+</main>
+</div>
 <script>
-const API=(window.XPARALLEL_API||"https://api.axaliai.com").replace(/\/$/,""),c=document.getElementById("content"),t=document.getElementById("title"),status=document.getElementById("status"),footer=document.getElementById("footer");
+const API=(window.XPARALLEL_API||"https://api.axaliai.com").replace(/\/$/,""), WS="axaliai-public";
+const content=document.getElementById("content"),statusLine=()=>document.getElementById("status"),footer=document.getElementById("footer"),health=document.getElementById("health");
 async function json(path,body){const r=await fetch(API+path,{method:body?"POST":"GET",headers:body?{"Content-Type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok)throw new Error(d.error||"request_failed");return d}
-async function check(){try{const d=await json("/public/xparallel/access");footer.innerHTML="● "+d.status.toUpperCase()+" · "+d.network+"<br><em>Human approval enforced</em>"}catch(e){footer.innerHTML="● Gateway unavailable<br><em>Retry when the API is online</em>"}}
-async function start(){const input=document.getElementById("idea"),v=input.value.trim();if(!v){status.textContent="Describe what you want to build first.";return}status.textContent="Creating solution intake…";try{const d=await json("/public/solution",{query:v,workspace_id:"axaliai-public",actor:"axaliai-ui"});status.textContent="Solution created: "+d.solution.lifecycle+" · "+d.solution.fingerprint;input.value=""}catch(e){status.textContent="Could not create solution: "+e.message}}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function lifecycle(active){const steps=["INTAKE","PLAN","SANDBOX","TEST","EVIDENCE","APPROVAL","DEPLOY"],i=Math.max(0,steps.indexOf(active));return '<div class="steps">'+steps.map((s,n)=>'<span class="'+(n<=i?"done":"")+'">'+s+"</span>").join("")+"</div>"}
+function solutionCard(node){const s=node.solution||{};return '<article class="solution-card"><div class="row"><div><label>SOLUTION</label><h3>'+esc(s.query||"Untitled")+'</h3></div><span class="state">'+esc(s.lifecycle||node.status||"UNKNOWN")+"</span></div><p>Fingerprint <code>"+esc(s.fingerprint||node.node_id||"—")+"</code></p>"+lifecycle(s.lifecycle||"INTAKE")+"</article>"}
+function shell(title,eyebrow,body){content.innerHTML='<div class="page"><div class="page-head"><div><i>'+eyebrow+'</i><h2>'+title+'</h2></div><span class="muted">Workspace: '+WS+"</span></div>"+body+"</div>"}
+async function overview(){
+shell("What do you want to build?","XPARALLEL V2 · LIVE",'<p class="lead">Turn an idea into a tested, evidence-backed solution inside a controlled parallel development environment.</p><div class="prompt"><input id="idea" placeholder="Describe a project, feature, system or solution…"><button id="start">Start solution</button></div><p id="status" class="status" aria-live="polite"></p><div class="grid three"><article><label>ACTIVE LIFECYCLE</label><h3>Solution engine</h3><p>INTAKE → PLAN → SANDBOX → TEST → EVIDENCE → APPROVAL → DEPLOY</p></article><article><label>AGENTS</label><strong>4</strong><p>Planner · Builder · Tester · Verifier</p></article><article><label>SECURITY</label><strong>ON</strong><p>Credentials remain server-side. Human approval required.</p></article></div>');
 document.getElementById("start").onclick=start;
-document.getElementById("connect").onclick=async()=>{status.textContent="Connecting to Axaliai gateway…";try{const d=await json("/public/xparallel/access");status.textContent="Connected · "+d.gateway+" v"+d.version+" · "+d.capabilities.length+" capabilities"}catch(e){status.textContent="Gateway connection failed: "+e.message}};
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");t.textContent=b.dataset.v});
-check();
-</script></body></html>
+}
+async function solutions(){
+shell("Solutions","LIVE SOLUTION REGISTRY",'<div id="solution-list" class="list"><div class="loading">Loading workspace solutions…</div></div>');
+try{const d=await json("/public/solutions",{workspace_id:WS,limit:50});const list=document.getElementById("solution-list");list.innerHTML=d.solutions?.length?d.solutions.map(solutionCard).join(""):'<div class="empty">No solutions yet. Start one from Overview.</div>'}catch(e){document.getElementById("solution-list").innerHTML='<div class="error">Could not load solutions: '+esc(e.message)+"</div>"}
+}
+function staticPage(v){
+const data={
+Projects:["Projects","WORKSPACE","<div class='grid three'><article><label>AXALIAI</label><h3>AI development gateway</h3><p>Public entry point connected to the XParallel solution engine.</p><span class='tag'>CONNECTED</span></article><article><label>WORKSPACE</label><h3>Axaliai Public</h3><p>Workspace-scoped solution records and evidence.</p><span class='tag'>ACTIVE</span></article><article><label>ARCHITECTURE</label><h3>Parallel development</h3><p>Gateway → Workspace → Sandbox → Evidence → Approval → Deploy.</p><span class='tag'>V2</span></article></div>"],
+Agents:["Agents","AI WORKFORCE","<div class='grid four'>"+["Planner","Builder","Tester","Verifier"].map((x,i)=>"<article><label>AGENT 0"+(i+1)+"</label><h3>"+x+"</h3><p>"+["Plans solution paths.","Builds implementation plans.","Checks test readiness.","Validates evidence."][i]+"</p><span class='tag'>READY</span></article>").join("")+"</div>"],
+Sandbox:["Sandbox","CONTROLLED ENVIRONMENT","<div class='banner'><strong>Sandbox execution boundary</strong><p>The workspace can prepare and verify solutions without exposing execution credentials to the browser.</p><span class='tag'>APPROVAL-GATED</span></div>"],
+Evidence:["Evidence","VERIFICATION","<div class='banner'><strong>Evidence follows the solution lifecycle</strong><p>Fingerprints, verification results and audit records belong to the server-side XParallel infrastructure.</p><span class='tag'>TRACEABLE</span></div>"],
+Graph:["Graph","SOLUTION RELATIONSHIPS","<div class='search'><input id='graphq' placeholder='Search your solution graph…'><button id='graphbtn'>Search</button></div><div id='graphresults' class='list'><div class='empty'>Search the workspace graph.</div></div>"],
+Deploy:["Deploy","CONTROLLED RELEASE","<div class='banner'><strong>Deployment is intentionally gated</strong><p>Real execution remains behind human approval. Payment capture is disabled in V1.</p><span class='tag'>HUMAN APPROVAL REQUIRED</span></div>"]
+};
+const d=data[v]||data.Projects;shell(d[0],d[1],d[2]);
+if(v==="Graph")document.getElementById("graphbtn").onclick=graphSearch;
+}
+async function graphSearch(){const q=document.getElementById("graphq").value.trim(),out=document.getElementById("graphresults");if(!q){out.innerHTML='<div class="empty">Enter a search term.</div>';return}out.innerHTML='<div class="loading">Searching graph…</div>';try{const d=await json("/public/graph/search",{query:q,workspace_id:WS,actor:"axaliai-ui",limit:20});out.innerHTML=d.results?.length?d.results.map(solutionCard).join(""):'<div class="empty">No matching nodes.</div>'}catch(e){out.innerHTML='<div class="error">'+esc(e.message)+"</div>"}}
+async function start(){const input=document.getElementById("idea"),v=input.value.trim(),s=statusLine();if(!v){s.textContent="Describe what you want to build first.";return}s.textContent="Creating solution intake…";try{const d=await json("/public/solution",{query:v,workspace_id:WS,actor:"axaliai-ui"});s.textContent="Solution created · "+(d.solution.lifecycle||"INTAKE")+" · "+(d.solution.fingerprint||"");input.value=""}catch(e){s.textContent="Could not create solution: "+e.message}}
+async function check(){try{const d=await json("/public/xparallel/access");health.textContent="● "+String(d.status).toUpperCase();footer.innerHTML="● "+d.status.toUpperCase()+" · "+d.network+"<br><em>Human approval enforced</em>"}catch(e){health.textContent="● offline";footer.innerHTML="● Gateway unavailable<br><em>Retry when the API is online</em>"}}
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");const v=b.dataset.v;document.getElementById("title").textContent=v==="Overview"?"Parallel workspace":v;v==="Overview"?overview():v==="Solutions"?solutions():staticPage(v)});
+document.getElementById("connect").onclick=async()=>{try{const d=await json("/public/xparallel/access");const s=statusLine();if(s)s.textContent="Connected · "+d.gateway+" v"+d.version+" · "+d.capabilities.length+" capabilities";health.textContent="● CONNECTED"}catch(e){const s=statusLine();if(s)s.textContent="Gateway connection failed: "+e.message}};
+overview();check();
+</script>
+</body></html>
