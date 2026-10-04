@@ -1,4 +1,4 @@
-"""XParallel V1 API: intent -> controlled sandbox -> evidence."""
+"""XParallel V1 API: intent -> controlled sandbox -> evidence -> verified solution."""
 import json
 import os
 import time
@@ -7,6 +7,7 @@ from xparallel.agent import plan
 from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
 from xparallel.router import route
+from xparallel.solution import create_solution, verify_solution
 from xparallel.store import get, load
 from xparallel.v1_runner import available
 
@@ -16,25 +17,22 @@ TOKEN = os.getenv("XP_TOKEN")
 APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0")
-PUBLIC_ORIGINS = {
-    origin.strip().rstrip("/")
-    for origin in os.getenv("XP_PUBLIC_ORIGINS", "https://axaliai.com,https://www.axaliai.com").split(",")
-    if origin.strip()
-}
+PUBLIC_ORIGINS = {origin.strip().rstrip("/") for origin in os.getenv(
+    "XP_PUBLIC_ORIGINS", "https://axaliai.com,https://www.axaliai.com"
+).split(",") if origin.strip()}
 PUBLIC_RATE_LIMIT = int(os.getenv("XP_PUBLIC_RATE_LIMIT", "30"))
 PUBLIC_RATE_WINDOW = int(os.getenv("XP_PUBLIC_RATE_WINDOW", "60"))
 _PUBLIC_REQUESTS = {}
-
 
 SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": "v1"},
+    {"id": "solution-engine", "name": "XParallel Solution Engine", "status": "v1"},
     {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
     {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
-
 
 def send_json(handler, status, payload, cors=False):
     body = json.dumps(payload, indent=2).encode()
@@ -51,10 +49,8 @@ def send_json(handler, status, payload, cors=False):
     handler.end_headers()
     handler.wfile.write(body)
 
-
 def public_allowed(handler):
     return handler.headers.get("Origin", "") in PUBLIC_ORIGINS
-
 
 def public_rate_ok(handler):
     now = time.time()
@@ -67,10 +63,9 @@ def public_rate_ok(handler):
     _PUBLIC_REQUESTS[key] = timestamps
     return True
 
-
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
-        return self.headers.get("Authorization") == f"Bearer {TOKEN}"
+        return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
     def execution_approved(self):
         return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
@@ -116,12 +111,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         is_public = self.path.startswith("/public/")
+        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify"}
         if is_public:
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
             if not public_rate_ok(self):
                 return send_json(self, 429, {"error": "rate_limit_exceeded"}, cors=True)
-            if self.path not in {"/public/ask", "/public/build", "/public/route"}:
+            if self.path not in public_paths:
                 return send_json(self, 404, {"error": "not_found"}, cors=True)
         elif not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
@@ -138,19 +134,29 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "url_required"})
             return send_json(self, 200, connector_result(url))
 
+        if self.path in {"/public/solution", "/solution"}:
+            query = str(data.get("query", "")).strip()
+            try:
+                solution = create_solution(query)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)}, cors=is_public)
+            return send_json(self, 200, {"network": NETWORK, **solution}, cors=is_public)
+
+        if self.path in {"/public/verify", "/verify"}:
+            try:
+                result = verify_solution(data.get("solution"))
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)}, cors=is_public)
+            return send_json(self, 200, {"network": NETWORK, **result}, cors=is_public)
+
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"}, cors=is_public)
 
         if self.path == "/public/ask":
             decision = route(query)
-            return send_json(self, 200, {
-                "network": NETWORK,
-                "mode": decision["mode"],
-                "query": query,
-                "results": decision["resources"],
-                "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet.",
-            }, cors=True)
+            return send_json(self, 200, {"network": NETWORK, "mode": decision["mode"], "query": query,
+                "results": decision["resources"], "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet."}, cors=True)
         if self.path == "/public/route":
             return send_json(self, 200, {"network": NETWORK, **route(query)}, cors=True)
         if self.path == "/public/build":
@@ -177,17 +183,11 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, **decision})
         if self.path == "/build":
             return send_json(self, 200, {"network": NETWORK, **plan(query)})
-        return send_json(self, 200, {
-            "network": NETWORK,
-            "mode": decision["mode"],
-            "query": query,
-            "results": decision["resources"],
-            "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet.",
-        })
+        return send_json(self, 200, {"network": NETWORK, "mode": decision["mode"], "query": query,
+            "results": decision["resources"], "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet."})
 
     def log_message(self, *_):
         pass
-
 
 if __name__ == "__main__":
     print(f"XParallel {NETWORK} {VERSION} listening on {HOST}:{PORT}")
