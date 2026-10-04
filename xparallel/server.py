@@ -144,7 +144,12 @@ class Handler(BaseHTTPRequestHandler):
                 solution = create_solution(query)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)}, cors=is_public)
-            return send_json(self, 200, {"network": NETWORK, **solution}, cors=is_public)
+            workspace = workspace_context(data)["workspace_id"]
+            node = GRAPH.add(solution, status="candidate", tags=data.get("tags") or [])
+            REPOSITORY.put(workspace, node)
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
+                "solution": solution, "node": node,
+                "billing": usage_event("solution_created", workspace)}, cors=is_public)
 
         if self.path in {"/public/verify", "/verify"}:
             try:
@@ -159,7 +164,16 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "query_required"}, cors=is_public)
             limit = int(data.get("limit", 10))
             workspace = workspace_context(data)["workspace_id"]
-            results = GRAPH.search(query, limit=limit)
+            candidates = REPOSITORY.list(workspace, limit=200)
+            terms = {term.lower() for term in query.split() if len(term) > 2}
+            scored = []
+            for node in candidates:
+                haystack = json.dumps(node.get("solution", {}), sort_keys=True).lower()
+                score = sum(term in haystack for term in terms)
+                if score:
+                    scored.append((score, node))
+            scored.sort(key=lambda item: -item[0])
+            results = [node for _, node in scored[:max(1, min(limit, 50))]]
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
 
@@ -175,15 +189,6 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, **route(query)}, cors=True)
         if self.path == "/public/build":
             return send_json(self, 200, {"network": NETWORK, **plan(query)}, cors=True)
-
-        if self.path in {"/public/solution", "/solution"}:
-            workspace = workspace_context(data)["workspace_id"]
-            solution = create_solution(query)
-            node = GRAPH.add(solution, status="candidate", tags=data.get("tags") or [])
-            REPOSITORY.put(workspace, node)
-            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
-                "solution": solution, "node": node,
-                "billing": usage_event("solution_created", workspace)}, cors=is_public)
 
         private = {"/ask", "/build", "/route", "/agent/plan", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
         if self.path not in private:
