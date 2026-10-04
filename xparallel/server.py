@@ -17,6 +17,7 @@ from xparallel.audit_repository import AUDIT_REPOSITORY
 from xparallel.store import get, load
 from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
+from xparallel.omni_unitai import system_manifest
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -58,7 +59,13 @@ def send_json(handler, status, payload, cors=False):
     handler.wfile.write(body)
 
 def public_allowed(handler):
-    return handler.headers.get("Origin", "") in PUBLIC_ORIGINS
+    origin = handler.headers.get("Origin", "")
+    if origin in PUBLIC_ORIGINS:
+        return True
+    if not origin:
+        host = handler.headers.get("Host", "").split(":", 1)[0].lower()
+        return host.endswith(".vercel.app") or host in {"axaliai.com", "www.axaliai.com"}
+    return False
 
 def public_rate_ok(handler):
     now = time.time()
@@ -114,6 +121,10 @@ class Handler(BaseHTTPRequestHandler):
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
             return send_json(self, 200, gateway_manifest(), cors=True)
+        if self.path == "/public/system":
+            if not public_allowed(self):
+                return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
+            return send_json(self, 200, system_manifest(), cors=True)
         if self.path == "/public/health":
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
