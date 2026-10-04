@@ -217,6 +217,8 @@ class Handler(BaseHTTPRequestHandler):
             node = REPOSITORY.get(workspace, node_id)
             if not node:
                 return send_json(self, 404, {"error": "not_found"})
+            if GRAPH.get(node_id) is None:
+                GRAPH.add(node["solution"], status=node["status"], tags=node["tags"])
             promoted = GRAPH.promote(node_id)
             REPOSITORY.put(workspace, promoted)
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
