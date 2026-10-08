@@ -80,9 +80,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
 
-        allowed = {"/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute",
-                   "/v1/experiments", "/v1/experiments/run", "/v1/experiments/approve", "/v1/experiments/reject"}
-        if self.path not in allowed:
+        allowed = {"/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute", "/v1/experiments"}
+        v1_action = self.path.startswith("/v1/experiments/") and self.path.count("/") == 3 and self.path.split("/")[-1] in {"run", "approve", "reject"}
+        if self.path not in allowed and not v1_action:
             return send_json(self, 404, {"error": "not_found"})
 
         try:
