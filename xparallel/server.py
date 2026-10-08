@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from xparallel.agent import plan
 from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
+from xparallel.experiment_store import STORE
 from xparallel.router import route
 from xparallel.store import get, load
 from xparallel.v1_runner import available
@@ -15,7 +16,7 @@ PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
 TOKEN = os.getenv("XP_TOKEN")
 APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
-VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
+VERSION = os.getenv("XP_VERSION", "1.1.0-v1")
 
 if not TOKEN:
     raise RuntimeError("XP_TOKEN must be configured by the deployment environment")
@@ -24,11 +25,12 @@ SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": VERSION},
+    {"id": "experiment-state-machine", "name": "Persistent Experiment State Machine", "status": "v1"},
     {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
     {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
+    {"id": "evidence-store", "name": "Experiment Evidence Store", "status": "v1"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
 ]
-
 
 def send_json(handler, status, payload):
     body = json.dumps(payload, indent=2).encode()
@@ -38,7 +40,6 @@ def send_json(handler, status, payload):
     handler.end_headers()
     handler.wfile.write(body)
 
-
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return self.headers.get("Authorization") == f"Bearer {TOKEN}"
@@ -46,11 +47,25 @@ class Handler(BaseHTTPRequestHandler):
     def execution_approved(self):
         return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
 
+    def actor(self):
+        return self.headers.get("X-XParallel-Actor", "human")[:128]
+
     def do_GET(self):
         if self.path == "/health":
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
+
+        if self.path.startswith("/v1/experiments/"):
+            parts = self.path.strip("/").split("/")
+            eid = parts[2] if len(parts) > 2 else ""
+            record = STORE.get(eid)
+            if not record:
+                return send_json(self, 404, {"error": "experiment_not_found"})
+            if len(parts) == 4 and parts[3] == "events":
+                return send_json(self, 200, {"experiment": eid, "events": STORE.events(eid)})
+            return send_json(self, 200, record)
+
         if self.path == "/registry":
             return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
@@ -64,8 +79,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute"):
+
+        allowed = {"/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute",
+                   "/v1/experiments", "/v1/experiments/run", "/v1/experiments/approve", "/v1/experiments/reject"}
+        if self.path not in allowed:
             return send_json(self, 404, {"error": "not_found"})
+
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length > 2_000_000:
@@ -75,6 +94,45 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "json_object_required"})
         except (ValueError, json.JSONDecodeError):
             return send_json(self, 400, {"error": "invalid_json"})
+
+        # V1 persistent experiment API.
+        if self.path == "/v1/experiments":
+            objective = str(data.get("objective") or data.get("query") or "").strip()
+            if not objective:
+                return send_json(self, 400, {"error": "objective_required"})
+            workspace = str(data.get("workspace_id") or "default").strip()[:64]
+            payload = {"execution": data.get("execution")} if data.get("execution") else {}
+            record = STORE.create(
+                workspace_id=workspace,
+                actor=self.actor(),
+                objective=objective,
+                constraints=data.get("constraints") if isinstance(data.get("constraints"), list) else [],
+                success_criteria=data.get("success_criteria") if isinstance(data.get("success_criteria"), list) else [],
+                payload=payload,
+            )
+            return send_json(self, 201, record)
+
+        if self.path.startswith("/v1/experiments/"):
+            parts = self.path.strip("/").split("/")
+            if len(parts) != 3:
+                return send_json(self, 404, {"error": "not_found"})
+            eid, action = parts[1], parts[2]
+            try:
+                if action == "run":
+                    record = STORE.run(eid)
+                    return send_json(self, 200, record)
+                if action == "approve":
+                    # Approval is an explicit state transition. It never deploys.
+                    record = STORE.approve(eid, self.actor())
+                    return send_json(self, 200, record)
+                if action == "reject":
+                    record = STORE.reject(eid, self.actor(), str(data.get("reason") or "")[:1000])
+                    return send_json(self, 200, record)
+            except KeyError as exc:
+                return send_json(self, 404, {"error": str(exc)})
+            except ValueError as exc:
+                return send_json(self, 409, {"error": str(exc)})
+            return send_json(self, 404, {"error": "not_found"})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()
@@ -112,7 +170,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, *_):
         pass
-
 
 if __name__ == "__main__":
     print(f"XParallel {NETWORK} {VERSION} listening on {HOST}:{PORT}")
