@@ -80,6 +80,22 @@ def public_rate_ok(handler):
     _PUBLIC_REQUESTS[key] = timestamps
     return True
 
+def retrieve_memory_context(query, data):
+    """Return a small, workspace-scoped memory context for authenticated AI workflows."""
+    workspace = workspace_context(data)["workspace_id"]
+    matches = search_memories(query, workspace, limit=3)
+    return [
+        {
+            "id": item.get("id"),
+            "summary": item.get("summary", ""),
+            "content": str(item.get("content", ""))[:4000],
+            "tags": item.get("tags", []),
+            "score": item.get("score", 0),
+        }
+        for item in matches
+    ]
+
+
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
@@ -312,14 +328,18 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, **invoice_preview(workspace, events), "audit": audit})
 
         if self.path == "/agent/plan":
-            return send_json(self, 200, {"network": NETWORK, **plan(query)})
+            context = retrieve_memory_context(query, data)
+            return send_json(self, 200, {"network": NETWORK, **plan(query, context)})
         decision = route(query)
         if self.path == "/route":
             return send_json(self, 200, {"network": NETWORK, **decision})
         if self.path == "/build":
-            return send_json(self, 200, {"network": NETWORK, **plan(query)})
+            context = retrieve_memory_context(query, data)
+            return send_json(self, 200, {"network": NETWORK, **plan(query, context)})
+        context = retrieve_memory_context(query, data)
         return send_json(self, 200, {"network": NETWORK, "mode": decision["mode"], "query": query,
-            "results": decision["resources"], "message": "XParallel knowledge retrieved." if decision["resources"] else "No matching knowledge found yet."})
+            "results": decision["resources"], "memory_context": context,
+            "message": "XParallel knowledge and memory retrieved." if decision["resources"] or context else "No matching knowledge or memory found yet."})
 
     def log_message(self, *_):
         pass
