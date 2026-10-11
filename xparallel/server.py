@@ -2,6 +2,7 @@
 import json
 import os
 import time
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from xparallel.agent import plan
 from xparallel.connectors import connector_result
@@ -18,6 +19,7 @@ from xparallel.store import get, load
 from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
+from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -131,6 +133,15 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()}, cors=True)
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
+        parsed = urlparse(self.path)
+        if parsed.path == "/memory":
+            params = parse_qs(parsed.query)
+            workspace = params.get("workspace_id", ["default"])[0]
+            limit = params.get("limit", ["50"])[0]
+            query = params.get("q", [""])[0]
+            if query:
+                return send_json(self, 200, {"memories": search_memories(query, workspace, limit)})
+            return send_json(self, 200, {"memories": list_memories(workspace, limit)})
         if self.path == "/registry":
             return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
@@ -211,6 +222,34 @@ class Handler(BaseHTTPRequestHandler):
             results = [node for _, node in scored[:max(1, min(limit, 50))]]
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
+
+        if self.path == "/memory/save":
+            try:
+                result = save_memory(
+                    content=data.get("content", ""),
+                    workspace_id=str(data.get("workspace_id", "default")),
+                    summary=str(data.get("summary", "")),
+                    tags=data.get("tags") if isinstance(data.get("tags"), list) else [],
+                )
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            return send_json(self, 201 if result["created"] else 200, result)
+
+        if self.path == "/memory/search":
+            memory_query = str(data.get("query", "")).strip()
+            if not memory_query:
+                return send_json(self, 400, {"error": "query_required"})
+            workspace = str(data.get("workspace_id", "default"))
+            limit = max(1, min(int(data.get("limit", 10)), 50))
+            return send_json(self, 200, {"memories": search_memories(memory_query, workspace, limit)})
+
+        if self.path == "/memory/forget":
+            memory_id = str(data.get("id", "")).strip()
+            if not memory_id:
+                return send_json(self, 400, {"error": "id_required"})
+            workspace = str(data.get("workspace_id", "default"))
+            deleted = forget_memory(memory_id, workspace)
+            return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         query = str(data.get("query", "")).strip()
         if not query:
