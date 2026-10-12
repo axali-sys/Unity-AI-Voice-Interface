@@ -20,6 +20,7 @@ from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
+from xparallel.memory_service import summarize_memories
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -258,6 +259,22 @@ class Handler(BaseHTTPRequestHandler):
             workspace = str(data.get("workspace_id", "default"))
             limit = max(1, min(int(data.get("limit", 10)), 50))
             return send_json(self, 200, {"memories": search_memories(memory_query, workspace, limit)})
+
+        if self.path == "/memory/summarize":
+            memory_query = str(data.get("query", "")).strip()
+            if not memory_query:
+                return send_json(self, 400, {"error": "query_required"})
+            workspace = workspace_context(data)["workspace_id"]
+            limit = max(1, min(int(data.get("limit", 5)), 10))
+            try:
+                result = summarize_memories(memory_query, workspace, limit)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            return send_json(self, 200, result)
 
         if self.path == "/memory/forget":
             memory_id = str(data.get("id", "")).strip()
