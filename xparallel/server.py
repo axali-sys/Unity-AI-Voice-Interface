@@ -20,6 +20,7 @@ from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
+from xparallel.memory_backup import create_backup, list_backups, restore_backup
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -150,6 +151,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/memory/backups":
+            return send_json(self, 200, {"backups": list_backups()})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
             workspace = params.get("workspace_id", ["default"])[0]
@@ -238,6 +241,29 @@ class Handler(BaseHTTPRequestHandler):
             results = [node for _, node in scored[:max(1, min(limit, 50))]]
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
+
+        if self.path == "/memory/backup":
+            try:
+                result = create_backup()
+            except (OSError, ValueError) as exc:
+                return send_json(self, 500, {"error": "backup_failed", "detail": str(exc)})
+            self.audit("memory_backup_created", "system", "authenticated_user", {"backup_id": result["backup_id"]})
+            return send_json(self, 201, result)
+
+        if self.path == "/memory/restore":
+            backup_id = str(data.get("backup_id", "")).strip()
+            if not backup_id:
+                return send_json(self, 400, {"error": "backup_id_required"})
+            if data.get("confirm_restore") is not True:
+                return send_json(self, 400, {"error": "explicit_confirm_restore_required"})
+            try:
+                result = restore_backup(backup_id)
+            except FileNotFoundError:
+                return send_json(self, 404, {"error": "backup_not_found"})
+            except (OSError, ValueError) as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            self.audit("memory_backup_restored", "system", "authenticated_user", {"backup_id": backup_id})
+            return send_json(self, 200, result)
 
         if self.path == "/memory/save":
             try:
