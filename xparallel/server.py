@@ -51,13 +51,14 @@ def send_json(handler, status, payload, cors=False):
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json")
     handler.send_header("Content-Length", str(len(body)))
-    if cors:
-        origin = handler.headers.get("Origin", "")
-        if origin in PUBLIC_ORIGINS:
+    origin = handler.headers.get("Origin", "")
+    # Allow configured frontend origins to call private endpoints with a bearer token.
+    # CORS is not authorization: every private route still checks XP_TOKEN.
+    if origin in PUBLIC_ORIGINS:
             handler.send_header("Access-Control-Allow-Origin", origin)
             handler.send_header("Vary", "Origin")
             handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+            handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -123,13 +124,15 @@ class Handler(BaseHTTPRequestHandler):
         return data
 
     def do_OPTIONS(self):
-        if not self.path.startswith("/public/") or not public_allowed(self):
+        origin = self.headers.get("Origin", "")
+        if not public_allowed(self) or (origin and origin not in PUBLIC_ORIGINS):
             return send_json(self, 403, {"error": "origin_not_allowed"})
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", self.headers.get("Origin"))
-        self.send_header("Vary", "Origin")
+        if origin and origin in PUBLIC_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
         self.send_header("Access-Control-Max-Age", "600")
         self.end_headers()
 
@@ -153,7 +156,7 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
-            workspace = params.get("workspace_id", ["default"])[0]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             query = params.get("q", [""])[0]
             if query:
@@ -244,7 +247,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 result = save_memory(
                     content=data.get("content", ""),
-                    workspace_id=str(data.get("workspace_id", "default")),
+                    workspace_id=workspace_context(data)["workspace_id"],
                     summary=str(data.get("summary", "")),
                     tags=data.get("tags") if isinstance(data.get("tags"), list) else [],
                 )
@@ -256,7 +259,7 @@ class Handler(BaseHTTPRequestHandler):
             memory_query = str(data.get("query", "")).strip()
             if not memory_query:
                 return send_json(self, 400, {"error": "query_required"})
-            workspace = str(data.get("workspace_id", "default"))
+            workspace = workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 10)), 50))
             return send_json(self, 200, {"memories": search_memories(memory_query, workspace, limit)})
 
