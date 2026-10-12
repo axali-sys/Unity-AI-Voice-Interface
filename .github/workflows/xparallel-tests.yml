@@ -24,6 +24,18 @@ jobs:
           python-version: "3.12"
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
+      - name: Check workbench JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("public/xparallel.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
+          if not scripts:
+              raise SystemExit("No inline workbench script found")
+          Path("/tmp/xparallel-workbench.js").write_text(scripts[-1], encoding="utf-8")
+          PY
+          node --check /tmp/xparallel-workbench.js
       - name: Test memory retrieval and summarization
         run: python -m unittest discover -s tests -p "test_memory_service.py" -v
       - name: Test Parallel World planner
