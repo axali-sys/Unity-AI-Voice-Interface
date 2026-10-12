@@ -1,0 +1,30 @@
+name: XParallel Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - "xparallel/**"
+      - "tests/**"
+      - "public/xparallel.html"
+      - ".github/workflows/xparallel-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python sources
+        run: python -m compileall -q xparallel tests
+      - name: Test memory retrieval and summarization
+        run: python -m unittest discover -s tests -p "test_memory_service.py" -v
+      - name: Test Parallel World planner
+        run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
