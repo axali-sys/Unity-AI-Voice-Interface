@@ -3,12 +3,13 @@
 ## What this change adds
 - `public/xparallel.html`: mobile-first Parallel World workbench and server-connected AI Memory UI. Existing `public/index.html`, route handlers, and workflows are left intact.
 - `xparallel/memory_service.py`: retrieves relevant records from the existing SQLite memory vault and calls a configured OpenAI-compatible chat-completions endpoint for a grounded summary.
+- `xparallel/parallel_world.py`: calls the configured AI provider to produce a structured, evidence-oriented task plan grounded in retrieved workspace memories.
 - `xparallel/server.py`: adds an authenticated `POST /memory/summarize` endpoint; existing route paths are retained.
 
 ## Parallel World model
 XParallel's intended architecture is: human goal -> intent/plan -> isolated workspace -> bounded execution -> tests and evidence -> human review -> explicit approval -> real-world transfer. It is designed to extend through adapters for software repositories, operating systems, cloud infrastructure, data pipelines, and other platforms. It does not mean every arbitrary program/job is already supported. Each adapter needs explicit permissions, test fixtures, sandbox limits, evidence, rollback, and approval gates.
 
-The UI's `Create AI plan` action uses the existing `/build` API. `Run isolated experiment` uses the existing `/experiment` API and accepts only a file manifest whose file contents are Base64 strings. The current runner is Docker-based and can report blocked when Docker is unavailable. The experiment route does not deploy to production. The separate `/execute` route retains its existing approval-token gate.
+The UI's `Create AI plan` action uses the authenticated, provider-backed `/world/plan` API; it returns a plan, not proof of execution. `Run isolated experiment` uses the existing `/experiment` API and accepts only a file manifest whose file contents are Base64 strings. The current runner is Docker-based and can report blocked when Docker is unavailable. The experiment route does not deploy to production. The separate `/execute` route retains its existing approval-token gate.
 
 ## AI Memory service
 - The source text remains stored in the existing memory vault; summaries are derived and never replace source records.
@@ -25,7 +26,7 @@ The UI's `Create AI plan` action uses the existing `/build` API. `Run isolated e
 - Docker execution must remain network-disabled and resource-limited. Keep real-world changes behind review, explicit approval, and rollback plans.
 
 ## Verification checklist
-1. Python syntax/import checks for `xparallel/server.py` and `xparallel/memory_service.py`.
+1. Python syntax/import checks for `xparallel/server.py`, `xparallel/memory_service.py`, and `xparallel/parallel_world.py`.
 2. Unit tests for save/list/search/dedup/forget, provider success, provider missing key, malformed provider response, and workspace separation.
 3. API tests for unauthorized access, invalid payloads, retrieval limits, and summarization errors.
 4. Browser test with a configured API, then test no token, invalid token, missing AI provider, and unavailable Docker.
