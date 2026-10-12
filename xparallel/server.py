@@ -56,10 +56,10 @@ def send_json(handler, status, payload, cors=False):
     # Allow configured frontend origins to call private endpoints with a bearer token.
     # CORS is not authorization: every private route still checks XP_TOKEN.
     if origin in PUBLIC_ORIGINS:
-            handler.send_header("Access-Control-Allow-Origin", origin)
-            handler.send_header("Vary", "Origin")
-            handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
+        handler.send_header("Access-Control-Allow-Origin", origin)
+        handler.send_header("Vary", "Origin")
+        handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -286,6 +286,11 @@ class Handler(BaseHTTPRequestHandler):
                 error = str(exc)
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
+            self.audit("memory_summarized", workspace, workspace_context(data)["actor"], {
+                "provider": result.get("provider", "unknown"),
+                "source_count": len(result.get("memories", [])),
+                "query_length": len(memory_query),
+            })
             return send_json(self, 200, result)
 
         if self.path == "/world/plan":
@@ -307,11 +312,6 @@ class Handler(BaseHTTPRequestHandler):
             self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
                 "provider": plan.get("provider", "unknown"),
                 "memory_source_count": len(plan.get("memory_sources", [])),
-            })
-            self.audit("memory_summarized", workspace, workspace_context(data)["actor"], {
-                "provider": result.get("provider", "unknown"),
-                "source_count": len(result.get("memories", [])),
-                "query_length": len(memory_query),
             })
             return send_json(self, 200, result)
 
