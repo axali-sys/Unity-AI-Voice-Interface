@@ -21,6 +21,7 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
+from xparallel.parallel_world import create_parallel_plan
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -253,6 +254,10 @@ class Handler(BaseHTTPRequestHandler):
                 )
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
+            workspace = workspace_context(data)["workspace_id"]
+            self.audit("memory_saved", workspace, workspace_context(data)["actor"], {
+                "memory_id": result["id"], "created": result["created"],
+            })
             return send_json(self, 201 if result["created"] else 200, result)
 
         if self.path == "/memory/search":
@@ -261,7 +266,11 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "query_required"})
             workspace = workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 10)), 50))
-            return send_json(self, 200, {"memories": search_memories(memory_query, workspace, limit)})
+            memories = search_memories(memory_query, workspace, limit)
+            self.audit("memory_searched", workspace, workspace_context(data)["actor"], {
+                "result_count": len(memories), "query_length": len(memory_query),
+            })
+            return send_json(self, 200, {"memories": memories})
 
         if self.path == "/memory/summarize":
             memory_query = str(data.get("query", "")).strip()
@@ -279,12 +288,42 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, status, {"error": error})
             return send_json(self, 200, result)
 
+        if self.path == "/world/plan":
+            query = str(data.get("query", "")).strip()
+            if not query:
+                return send_json(self, 400, {"error": "query_required"})
+            if len(query) > 4000:
+                return send_json(self, 400, {"error": "query_too_large"})
+            workspace = workspace_context(data)["workspace_id"]
+            try:
+                result = create_parallel_plan(query, workspace)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            plan = result.get("plan", {})
+            self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
+                "provider": plan.get("provider", "unknown"),
+                "memory_source_count": len(plan.get("memory_sources", [])),
+            })
+            self.audit("memory_summarized", workspace, workspace_context(data)["actor"], {
+                "provider": result.get("provider", "unknown"),
+                "source_count": len(result.get("memories", [])),
+                "query_length": len(memory_query),
+            })
+            return send_json(self, 200, result)
+
         if self.path == "/memory/forget":
             memory_id = str(data.get("id", "")).strip()
             if not memory_id:
                 return send_json(self, 400, {"error": "id_required"})
-            workspace = str(data.get("workspace_id", "default"))
+            workspace = workspace_context(data)["workspace_id"]
             deleted = forget_memory(memory_id, workspace)
+            self.audit("memory_forgotten", workspace, workspace_context(data)["actor"], {
+                "memory_id": memory_id, "deleted": deleted,
+            })
             return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         query = str(data.get("query", "")).strip()
