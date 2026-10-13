@@ -74,6 +74,21 @@ class MixerTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("ANSWER_B", seen["prompt"])
         self.assertEqual(text, "final")
 
+    async def test_selected_plugin_context_is_passed_to_provider_calls(self):
+        entries = [{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]
+        seen = {}
+        async def fake(entry, prompt, context=""):
+            seen["context"] = context
+            return {"provider":"openai","model_id":"gpt-4o","text":"answer","latency_ms":1,"tokens_in":1,"tokens_out":1,"response_hash":"h","error":None}
+        with patch.object(mixer, "model_registry", return_value=entries), \
+             patch("xparallel.plugins.retrieve_plugin_context", return_value={"context":"retrieved-source-snippet","results":[{"plugin_id":"web_search","state":"ok"}]}), \
+             patch.object(mixer, "call_provider", new=fake), \
+             patch.object(mixer, "_synthesize", new=AsyncMock(return_value=("final", {"provider":"openai","model_id":"gpt-4o"}))):
+            result = await mixer.mix("question", plugin_ids=["web_search"])
+        self.assertEqual(result["state"], "ok")
+        self.assertIn("retrieved-source-snippet", seen["context"])
+        self.assertEqual(result["plugin_results"][0]["plugin_id"], "web_search")
+
     async def test_timeout_budget_is_enforced(self):
         entries = [{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]
         async def slow(entry, prompt, context=""):
