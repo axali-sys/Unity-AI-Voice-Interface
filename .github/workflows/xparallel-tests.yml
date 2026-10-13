@@ -24,19 +24,26 @@ jobs:
           python-version: "3.12"
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
-      - name: Check workbench JavaScript syntax
+      - name: Check Axaliai and XParallel JavaScript syntax
         run: |
           python - <<'PY'
           import re
           from pathlib import Path
-          html = Path("public/xparallel.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
-          if not scripts:
-              raise SystemExit("No inline workbench script found")
-          Path("/tmp/xparallel-workbench.js").write_text(scripts[-1], encoding="utf-8")
+          for source, target in [
+              ("public/xparallel.html", "/tmp/xparallel-workbench.js"),
+              ("public/axaliai.html", "/tmp/axaliai.js"),
+          ]:
+              html = Path(source).read_text(encoding="utf-8")
+              scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
+              if not scripts:
+                  raise SystemExit(f"No inline script found in {source}")
+              Path(target).write_text(scripts[-1], encoding="utf-8")
           PY
           node --check /tmp/xparallel-workbench.js
+          node --check /tmp/axaliai.js
       - name: Test memory retrieval and summarization
         run: python -m unittest discover -s tests -p "test_memory_service.py" -v
       - name: Test Parallel World planner
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
+      - name: Test persistent Axaliai conversation storage
+        run: python -m unittest discover -s tests -p "test_conversation_store.py" -v

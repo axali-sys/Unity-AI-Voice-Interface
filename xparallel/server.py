@@ -21,6 +21,7 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
+from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 
@@ -156,6 +157,21 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/conversations":
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            limit = params.get("limit", ["50"])[0]
+            try:
+                conversations = list_conversations(workspace, limit)
+            except (ValueError, TypeError):
+                return send_json(self, 400, {"error": "invalid_limit"})
+            return send_json(self, 200, {"workspace_id": workspace, "conversations": conversations})
+        if parsed.path.startswith("/conversations/"):
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            conversation_id = parsed.path.rsplit("/", 1)[-1]
+            conversation = get_conversation(conversation_id, workspace)
+            return send_json(self, 200 if conversation else 404, conversation or {"error": "not_found"})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
@@ -192,6 +208,24 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path == "/conversations":
+            workspace = workspace_context(data)["workspace_id"]
+            try:
+                result = save_conversation(data.get("conversation_id", ""), workspace, data.get("title", "New chat"), data.get("messages", []))
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            self.audit("conversation_saved", workspace, workspace_context(data)["actor"], {"conversation_id": result["conversation_id"], "message_count": result["message_count"]})
+            return send_json(self, 200, result)
+
+        if self.path == "/conversations/delete":
+            workspace = workspace_context(data)["workspace_id"]
+            conversation_id = str(data.get("conversation_id", "")).strip()
+            if not conversation_id:
+                return send_json(self, 400, {"error": "conversation_id_required"})
+            deleted = delete_conversation(conversation_id, workspace)
+            self.audit("conversation_deleted", workspace, workspace_context(data)["actor"], {"conversation_id": conversation_id, "deleted": deleted})
+            return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()
