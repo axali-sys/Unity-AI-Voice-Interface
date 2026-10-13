@@ -28,6 +28,22 @@ class PluginAdapterTests(unittest.TestCase):
         self.assertEqual(result["data"]["items"][0]["full_name"],"owner/repo")
         self.assertEqual(http.call_args.args[1]["Authorization"],"Bearer test-token")
 
+    def test_google_drive_search_uses_authorized_access_token(self):
+        response = {"files":[{"id":"abc123","name":"notes.txt","mimeType":"text/plain"}]}
+        with patch.dict(os.environ, {"GOOGLE_DRIVE_ACCESS_TOKEN":"drive-test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response) as http:
+            result=plugins.execute_plugin("google_drive","search_files",{"query":"notes"})
+        self.assertEqual(result["state"],"ok")
+        self.assertEqual(result["data"]["files"][0]["name"],"notes.txt")
+        self.assertEqual(http.call_args.args[1]["Authorization"],"Bearer drive-test-token")
+
+    def test_brave_web_search_maps_result_fields(self):
+        response = {"web":{"results":[{"title":"Docs","url":"https://example.test","description":"Official docs"}]}}
+        with patch.dict(os.environ, {"XP_WEB_SEARCH_API_KEY":"brave-test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response) as http:
+            result=plugins.execute_plugin("web_search","search",{"query":"example"})
+        self.assertEqual(result["state"],"ok")
+        self.assertEqual(result["results"][0]["title"],"Docs")
+        self.assertEqual(http.call_args.args[1]["X-Subscription-Token"],"brave-test-token")
+
     def test_web_search_missing_key_fails_closed(self):
         with patch.dict(os.environ, {}, clear=True):
             result=plugins.execute_plugin("web_search","search",{"query":"test"})
