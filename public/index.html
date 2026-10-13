@@ -3,40 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AXALIAI — OmniAI · UnitAI · XParallel</title>
+<meta name="theme-color" content="#090b12">
+<title>XParallel V3.5 PRO — Dual Space</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#07080c;color:#f5f7fb;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}.wrap{max-width:1100px;margin:auto;padding:28px}.hero{padding:30px 0 20px}.eyebrow{letter-spacing:.14em;text-transform:uppercase;color:#8fa3bf;font-size:12px}.h{font-size:clamp(34px,7vw,68px);line-height:1;margin:10px 0}.sub{color:#aab5c5;max-width:760px}.flow{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.pill{border:1px solid #263044;border-radius:999px;padding:10px 14px;background:#0d111a}.arrow{color:#6f7e95;align-self:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card{border:1px solid #202838;border-radius:18px;background:#0b0f17;padding:18px}.card h3{margin:0 0 8px}.muted{color:#8995a8}.ok{color:#72e0a0}.warn{color:#f0c674}.status{display:flex;justify-content:space-between;border-bottom:1px solid #1d2532;padding:9px 0}.status:last-child{border:0}.footer{margin-top:28px;color:#69758a;font-size:12px}
+:root{color-scheme:dark;--bg:#07080c;--panel:#0d111b;--panel2:#111827;--line:#273247;--text:#f4f7ff;--muted:#9aa8bd;--blue:#8ab4ff;--green:#71e0a0;--amber:#f1c66d;--red:#ff8585}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#121b2d 0,#07080c 48%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1050px;margin:auto;padding:20px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.logo{display:grid;place-items:center;width:44px;height:44px;border:1px solid #38547c;border-radius:14px;background:#111d31;color:var(--blue);font-weight:900;font-size:22px}.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}h1{font-size:clamp(29px,7vw,48px);line-height:1.06;letter-spacing:-.035em;margin:20px 0 8px}h2{font-size:18px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}.muted{color:var(--muted)}.tiny{font-size:12px}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted);white-space:nowrap}.hero{margin:22px 0 18px}.hero p{max-width:700px;margin:0;color:var(--muted)}.statusbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.status-chip{border:1px solid var(--line);border-radius:10px;background:#0b101a;padding:8px 11px;font-size:12px}.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{min-width:0;border:1px solid var(--line);border-radius:18px;background:linear-gradient(155deg,rgba(17,24,39,.96),rgba(9,12,19,.98));padding:16px;box-shadow:0 8px 28px #0002}.wide{grid-column:1/-1}.space-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.space-icon{font-size:23px}.metric{font-size:25px;font-weight:750;letter-spacing:-.04em}.metric-label{font-size:12px;color:var(--muted)}.feature-list{display:grid;gap:9px}.feature{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #202a3b;padding:8px 0}.feature:last-child{border-bottom:0}.feature label{min-width:0}.feature small{display:block;color:var(--muted);font-size:12px}.action{border:1px solid #354966;border-radius:11px;background:#17243a;color:var(--text);padding:10px 13px;font:inherit;cursor:pointer}.action.primary{background:#1c3a63;border-color:#426da8}.action:disabled{opacity:.5;cursor:wait}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.field{display:block;width:100%;margin:9px 0;padding:12px;border:1px solid var(--line);border-radius:11px;background:#080c14;color:var(--text);font:inherit}.result{white-space:pre-wrap;overflow-wrap:anywhere;color:#d4e1f4;font-size:12px;max-height:300px;overflow:auto;margin:10px 0 0}.app-card{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #29364b;border-radius:14px;background:#090e17}.app-icon{width:48px;height:48px;border-radius:13px;background:#163326;display:grid;place-items:center;font-size:24px;flex-shrink:0}.app-meta{flex:1;min-width:0}.app-meta strong{display:block}.toggle{appearance:none;width:42px;height:24px;border-radius:99px;background:#30394a;position:relative;cursor:pointer;flex-shrink:0}.toggle:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:#fff;transition:transform .15s}.toggle:checked{background:#426fae}.toggle:checked:before{transform:translateX(18px)}.toggle:disabled{opacity:.45;cursor:not-allowed}.notice{border-left:3px solid var(--amber);padding:9px 12px;background:#17140d;color:#d7c8a2;border-radius:0 9px 9px 0;font-size:12px}.footer{margin-top:18px;color:#6f7e94;font-size:12px}
+@media(max-width:560px){.wrap{padding:15px 11px 30px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:14px}.top{align-items:flex-start}.pill{white-space:normal;text-align:center}.hero{margin-top:18px}}
 </style>
 </head>
 <body>
 <main class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">X</div><div><div class="eyebrow">XParallel</div><strong>V3.5 PRO</strong></div></div>
+ <span class="pill">DUAL SPACE CONSOLE</span>
+</header>
 <section class="hero">
-<div class="eyebrow">AXALIAI live system</div>
-<div class="h">OmniAI × UnitAI × XParallel</div>
-<p class="sub">One gateway for intelligence, unified operations, controlled solution testing, and human-approved execution.</p>
-<div class="flow">
-<div class="pill">AXALIAI · Gateway</div><div class="arrow">→</div>
-<div class="pill">OmniAI · Intelligence</div><div class="arrow">→</div>
-<div class="pill">UnitAI · Operations</div><div class="arrow">→</div>
-<div class="pill">XParallel · Execution</div>
-</div>
+ <div class="eyebrow">Parallel environment control</div>
+ <h1>Your spaces.<br>Clearly separated.</h1>
+ <p>Inspect the public XParallel service, prepare a build plan, and review which Dual Space functions are available. Controls never claim to clone or isolate an app unless a verified backend capability exists.</p>
+ <div class="statusbar">
+  <div class="status-chip">API <strong id="xp-connection" class="warn">Not checked</strong></div>
+  <div class="status-chip">Sandbox <strong id="xp-sandbox" class="warn">Not verified</strong></div>
+  <div class="status-chip">Version <strong id="xp-version">—</strong></div>
+ </div>
 </section>
-<section id="layers" class="grid"></section>
-<section class="card" style="margin-top:14px">
-<h3>Security & execution</h3>
-<div id="security"></div>
+<section class="grid">
+ <article class="card">
+  <div class="space-head"><h2><span class="space-icon">◉</span> Original Space</h2><span class="pill">DEVICE SPACE</span></div>
+  <div class="metric">Original</div><div class="metric-label">Your normal device environment</div>
+  <div class="feature-list" style="margin-top:12px">
+   <div class="feature"><label>Apps and data<small>Managed by your Android device</small></label><span class="muted tiny">Device</span></div>
+   <div class="feature"><label>Isolation status<small>This web console cannot inspect device isolation</small></label><span class="warn tiny">Unverified</span></div>
+  </div>
+ </article>
+ <article class="card">
+  <div class="space-head"><h2><span class="space-icon">⧉</span> Parallel Space</h2><span class="pill">XPARALLEL</span></div>
+  <div class="metric" id="parallel-state">Standby</div><div class="metric-label">Backend-connected planning space</div>
+  <div class="feature-list" style="margin-top:12px">
+   <div class="feature"><label>Public API<small>Health and system manifest</small></label><span id="manifest-state" class="warn tiny">Not checked</span></div>
+   <div class="feature"><label>Sandbox engine<small>Availability flag only; not a live test</small></label><span id="engine-state" class="warn tiny">Unknown</span></div>
+  </div>
+ </article>
+ <article class="card wide">
+  <div class="space-head"><h2>Parallel Dual View</h2><span class="pill">SIDE-BY-SIDE</span></div>
+  <div class="grid">
+   <div class="app-card"><div class="app-icon">◉</div><div class="app-meta"><strong>Original Space</strong><span class="muted tiny">Device-managed environment</span></div><span class="pill">ORIGINAL</span></div>
+   <div class="app-card"><div class="app-icon">⧉</div><div class="app-meta"><strong>Parallel Space</strong><span class="muted tiny">XParallel planning environment</span></div><span class="pill">PLANNING</span></div>
+  </div>
+  <p class="muted tiny">This is a web dashboard comparison, not Android multi-window control or proof of a running clone.</p>
+ </article>
+ <article class="card">
+  <h2>Sandbox Storage</h2>
+  <div class="metric" id="storage-state">Not connected</div><div class="metric-label">Storage metrics are not exposed by the current public status endpoint.</div>
+  <div class="feature-list" style="margin-top:10px"><div class="feature"><label>Sandbox persistence<small>Requires a verified sandbox/storage API</small></label><span class="warn tiny">Unverified</span></div><div class="feature"><label>AI memory offload<small>Not enabled by this UI</small></label><span class="warn tiny">Planned</span></div></div>
+ </article>
+ <article class="card">
+  <h2>Privacy Controls</h2>
+  <div class="feature-list">
+   <div class="feature"><label>Disguise Icon<small>Android launcher integration required</small></label><span class="pill">Unavailable</span></div>
+   <div class="feature"><label>Incognito Launch<small>Private launch API not verified</small></label><input class="toggle" type="checkbox" disabled aria-label="Incognito launch unavailable"></div>
+   <div class="feature"><label>Clone App<small>Requires Android app-cloning capability</small></label><span class="pill">Unavailable</span></div>
+  </div>
+ </article>
+ <article class="card wide">
+  <h2>Connect & Plan</h2>
+  <p class="muted">The dashboard uses the current origin by default. If the API is hosted elsewhere, set the <code>data-xp-api-base</code> attribute on the HTML element to the backend's HTTPS base URL and allow this dashboard origin in <code>XP_PUBLIC_ORIGINS</code>.</p>
+  <div class="actions"><button id="xp-check" class="action primary" type="button">Check API connection</button><button id="xp-refresh" class="action" type="button">Refresh system status</button></div>
+  <label for="xp-query">Describe the task to plan</label>
+  <textarea id="xp-query" class="field" rows="3" maxlength="4000" placeholder="Example: prepare a safe test plan for a small web app"></textarea>
+  <div class="actions"><button id="xp-ask" class="action" type="button">Ask XParallel</button><button id="xp-plan" class="action primary" type="button">Generate build plan</button><button id="xp-route" class="action" type="button">Suggest route</button></div>
+  <p id="xp-message" class="muted" role="status" aria-live="polite">Ready. Check the API connection to begin.</p>
+  <pre id="xp-result" class="result"></pre>
+ </article>
+ <article class="card wide">
+  <h2>System & security status</h2><div id="system-status" class="muted">Not loaded.</div><pre id="system-result" class="result"></pre>
+  <div class="notice" style="margin-top:12px">Human approval remains required for protected execution. This console does not call private execution endpoints, store secret tokens, launch app clones, disguise icons, or claim incognito isolation.</div>
+ </article>
 </section>
-<div class="footer">Human approval remains required before execution. Security capabilities are shown as configured/not configured; this dashboard does not fabricate GPS, biometric, or blockchain verification.</div>
+<footer class="footer">XParallel Dual Space · Responsive web control panel · UI controls are labelled by verified capability.</footer>
 </main>
 <script>
-async function load(){
- const r=await fetch('/public/system'); const d=await r.json();
- document.getElementById('layers').innerHTML=d.layers.map(x=>'<article class="card"><h3>'+x.name+'</h3><div class="muted">'+x.role+'</div><p>'+x.purpose+'</p></article>').join('');
- const s=d.security;
- const rows=[['Unified ID',s.unified_id],['GPS whitelist',s.gps_whitelist],['Biometric',s.biometric],['Fraud monitoring',s.fraud_monitoring],['Ethereum audit',s.ethereum_audit],['Execution approval',d.execution.approval_required?'required':'not required']];
- document.getElementById('security').innerHTML=rows.map(x=>'<div class="status"><span>'+x[0]+'</span><span class="'+(x[1]==='not_configured'?'warn':'ok')+'">'+x[1]+'</span></div>').join('');
-}
-load().catch(e=>document.getElementById('security').textContent='System status unavailable');
+(() => {
+ 'use strict';
+ const configuredBase = document.documentElement.dataset.xpApiBase || window.location.origin;
+ const base = configuredBase.replace(/\/+$/, '');
+ const $ = (id) => document.getElementById(id);
+ const status = {connected:false, system:null};
+ const setStatus = (id,text,kind='warn') => { const el=$(id); el.textContent=text; el.className=kind; };
+ async function request(path, body) {
+  const response = await fetch(base + path, {
+   method: body ? 'POST' : 'GET',
+   headers: body ? {'Content-Type':'application/json'} : {},
+   body: body ? JSON.stringify(body) : undefined,
+   credentials:'omit',
+   redirect:'error'
+  });
+  const raw = await response.text();
+  let data;
+  try { data = raw ? JSON.parse(raw) : {}; }
+  catch { throw new Error('API returned unreadable data (HTTP '+response.status+').'); }
+  if (!response.ok) throw new Error((data.error || 'request_failed')+' (HTTP '+response.status+').');
+  return data;
+ }
+ async function checkHealth() {
+  $('xp-check').disabled=true;
+  setStatus('xp-connection','Checking…');
+  $('xp-message').textContent='Checking public API health…';
+  try {
+   const d=await request('/public/health');
+   status.connected=d.status==='ok';
+   setStatus('xp-connection',status.connected?'Connected':'Unexpected response',status.connected?'ok':'warn');
+   setStatus('xp-sandbox',d.sandbox_available===true?'Reported available':'Not reported available',d.sandbox_available===true?'ok':'warn');
+   $('xp-version').textContent=d.version || 'not reported';
+   $('parallel-state').textContent=status.connected?'API reachable':'Standby';
+   $('storage-state').textContent='Metrics unavailable';
+   $('xp-message').textContent=status.connected?'API health response received. This does not prove an end-to-end sandbox execution.':'API replied but did not report status=ok.';
+   $('xp-result').textContent=JSON.stringify(d,null,2);
+  } catch(e) {
+   status.connected=false; setStatus('xp-connection','Connection failed','bad');
+   setStatus('xp-sandbox','Not verified','warn'); $('parallel-state').textContent='Standby';
+   $('xp-message').textContent=e.message+' Check the backend URL, deployment and allowed origin.';
+  } finally { $('xp-check').disabled=false; }
+ }
+ async function refreshSystem() {
+  $('xp-refresh').disabled=true; $('system-status').textContent='Loading public manifests…';
+  try {
+   const [manifest,system]=await Promise.all([
+    request('/public/xparallel/access'),request('/public/system')
+   ]);
+   status.system={manifest,system};
+   setStatus('manifest-state','Loaded','ok');
+   const engine = system.services?.find(x=>x.id==='parallel-sandbox');
+   setStatus('engine-state',engine?.available===true?'Reported available':'Not verified',engine?.available===true?'ok':'warn');
+   $('system-status').textContent='Public access and system manifests received. Reported values are not a live execution test.';
+   $('system-result').textContent=JSON.stringify({access:manifest,system},null,2);
+  } catch(e) {
+   setStatus('manifest-state','Unavailable','bad');setStatus('engine-state','Unknown','warn');
+   $('system-status').textContent='Could not load manifests: '+e.message;
+  } finally { $('xp-refresh').disabled=false; }
+ }
+ async function sendTask(path,label) {
+  const query=$('xp-query').value.trim();
+  if(!query){$('xp-message').textContent='Enter a task description first.';return;}
+  if(!status.connected){$('xp-message').textContent='Check API connection first.';return;}
+  const buttons=[$('xp-ask'),$('xp-plan'),$('xp-route')]; buttons.forEach(b=>b.disabled=true);
+  $('xp-message').textContent=label+'…'; $('xp-result').textContent='';
+  try {
+   const d=await request(path,{query});
+   $('xp-message').textContent=label+' returned. No sandbox execution was started.';
+   $('xp-result').textContent=JSON.stringify(d,null,2);
+  } catch(e) { $('xp-message').textContent=label+' failed: '+e.message; }
+  finally {buttons.forEach(b=>b.disabled=false);}
+ }
+ $('xp-check').addEventListener('click',checkHealth);
+ $('xp-refresh').addEventListener('click',refreshSystem);
+ $('xp-ask').addEventListener('click',()=>sendTask('/public/ask','Ask XParallel'));
+ $('xp-plan').addEventListener('click',()=>sendTask('/public/build','Build plan'));
+ $('xp-route').addEventListener('click',()=>sendTask('/public/route','Route suggestion'));
+ refreshSystem();
+})();
 </script>
 </body>
 </html>
