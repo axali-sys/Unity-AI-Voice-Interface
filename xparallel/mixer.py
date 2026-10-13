@@ -121,12 +121,20 @@ async def _synthesize(query: str, answers: list[dict], entries: list[dict], time
         raise MixerUnavailable(f"synthesizer_failed: {result.get('error') or 'empty response'}")
     return result["text"], {"provider": chosen["provider"], "model_id": chosen["model_id"], "latency_ms": result["latency_ms"], "tokens_in": result["tokens_in"], "tokens_out": result["tokens_out"], "response_hash": result["response_hash"]}
 
-async def mix(query: str, memory_context: str = "") -> dict:
+async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None = None, allow_private: bool = False) -> dict:
     if os.getenv("XP_MIXER_ENABLED", "1").strip() == "0":
         return {"state": "mixer_disabled", "error": "Mixer disabled by XP_MIXER_ENABLED=0", "final_answer": "", "contributions": [], "skipped": []}
     entries = model_registry()
     if not query.strip():
         raise ValueError("query_required")
+    plugin_context = ""
+    plugin_results = []
+    if plugin_ids:
+        from xparallel.plugins import retrieve_plugin_context
+        retrieved = retrieve_plugin_context(query, plugin_ids, allow_private=allow_private)
+        plugin_context = retrieved.get("context", "")
+        plugin_results = retrieved.get("results", [])
+    combined_context = "\n\n".join(x for x in (memory_context, plugin_context) if x)
     cap = max(1, min(16, int(os.getenv("XP_MIXER_MAX_MODELS", "4"))))
     timeout = max(1, float(os.getenv("XP_MIXER_TIMEOUT", "45")))
     selected, skipped, seen = [], [], set()
@@ -144,8 +152,8 @@ async def mix(query: str, memory_context: str = "") -> dict:
         seen.add(family)
         selected.append(e)
     if not selected:
-        return {"state": "mixer_unavailable", "error": "No providers configured. Set at least one API key: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, MOONSHOT_API_KEY.", "final_answer": "", "contributions": [], "skipped": skipped, "synthesizer": None}
-    tasks = [asyncio.create_task(call_provider(e, query, memory_context)) for e in selected]
+        return {"state": "mixer_unavailable", "error": "No providers configured. Set at least one API key: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, MOONSHOT_API_KEY.", "final_answer": "", "contributions": [], "skipped": skipped, "synthesizer": None, "plugin_results": plugin_results}
+    tasks = [asyncio.create_task(call_provider(e, query, combined_context)) for e in selected]
     done, pending = await asyncio.wait(tasks, timeout=timeout)
     for task in pending:
         task.cancel()
@@ -156,9 +164,9 @@ async def mix(query: str, memory_context: str = "") -> dict:
         if r.get("error"):
             skipped.append({"provider": r["provider"], "model_id": r["model_id"], "reason": r["error"]})
     if not answers:
-        return {"state": "mixer_unavailable", "error": "No provider returned a usable answer; inspect skipped reasons and API configuration.", "final_answer": "", "contributions": [], "skipped": skipped, "calls": results, "synthesizer": None}
+        return {"state": "mixer_unavailable", "error": "No provider returned a usable answer; inspect skipped reasons and API configuration.", "final_answer": "", "contributions": [], "skipped": skipped, "calls": results, "synthesizer": None, "plugin_results": plugin_results}
     try:
         final, synthesizer = await asyncio.wait_for(_synthesize(query, answers, selected, max(1, timeout)), timeout=timeout)
     except Exception as exc:
-        return {"state": "synthesis_failed", "error": str(exc)[:400], "final_answer": "", "contributions": [{"provider": a["provider"], "model_id": a["model_id"], "excerpt": a["text"][:500], "latency_ms": a["latency_ms"]} for a in answers], "skipped": skipped, "calls": results, "synthesizer": None}
-    return {"state": "ok", "final_answer": final, "contributions": [{"provider": a["provider"], "model_id": a["model_id"], "excerpt": a["text"][:500], "latency_ms": a["latency_ms"]} for a in answers], "skipped": skipped, "calls": results, "synthesizer": synthesizer}
+        return {"state": "synthesis_failed", "error": str(exc)[:400], "final_answer": "", "contributions": [{"provider": a["provider"], "model_id": a["model_id"], "excerpt": a["text"][:500], "latency_ms": a["latency_ms"]} for a in answers], "skipped": skipped, "calls": results, "synthesizer": None, "plugin_results": plugin_results}
+    return {"state": "ok", "final_answer": final, "contributions": [{"provider": a["provider"], "model_id": a["model_id"], "excerpt": a["text"][:500], "latency_ms": a["latency_ms"]} for a in answers], "skipped": skipped, "calls": results, "synthesizer": synthesizer, "plugin_results": plugin_results}
