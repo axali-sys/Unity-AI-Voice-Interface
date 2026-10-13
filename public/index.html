@@ -166,7 +166,7 @@
    // additional cross-interface synthesis layer, not a replacement for plan/route.
    const d=await request(path,{query});
    let mix=null;
-   if(mixerOn) mix=await request('/public/mix',{query});
+   if(mixerOn) mix=await request('/public/mix',{query,plugins:['web_search']});
    $('xp-message').textContent=(mixerOn?'Axaliai Mixer + ':'')+label+' returned. No sandbox execution was started.';
    if(mixerOn && mix){
     $('xp-result').textContent='AXALIAI MIXER RESPONSE\n\n'+(mix.final_answer || mix.error || 'Mixer returned no final answer.')+'\n\nEXISTING '+label.toUpperCase()+' RESULT\n\n'+JSON.stringify(d,null,2);
