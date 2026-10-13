@@ -72,6 +72,7 @@
   <div class="actions"><button id="xp-check" class="action primary" type="button">Check API connection</button><button id="xp-refresh" class="action" type="button">Refresh system status</button></div>
   <label for="xp-query">Describe the task to plan</label>
   <textarea id="xp-query" class="field" rows="3" maxlength="4000" placeholder="Example: prepare a safe test plan for a small web app"></textarea>
+  <label style="display:flex;align-items:center;gap:9px;margin:10px 0"><input id="xp-mixer-toggle" type="checkbox"> <span><strong>Axaliai Mixer</strong><small style="display:block;color:var(--muted)">Fan out to configured providers and synthesize evidence</small></span></label>
   <div class="actions"><button id="xp-ask" class="action" type="button">Ask XParallel</button><button id="xp-plan" class="action primary" type="button">Generate build plan</button><button id="xp-route" class="action" type="button">Suggest route</button></div>
   <p id="xp-message" class="muted" role="status" aria-live="polite">Ready. Check the API connection to begin.</p>
   <pre id="xp-result" class="result"></pre>
@@ -150,9 +151,17 @@
   const buttons=[$('xp-ask'),$('xp-plan'),$('xp-route')]; buttons.forEach(b=>b.disabled=true);
   $('xp-message').textContent=label+'…'; $('xp-result').textContent='';
   try {
-   const d=await request(path,{query});
-   $('xp-message').textContent=label+' returned. No sandbox execution was started.';
-   $('xp-result').textContent=JSON.stringify(d,null,2);
+   const mixerOn=$('xp-mixer-toggle')?.checked && path==='/public/ask';
+   const d=await request(mixerOn?'/public/mix':path,{query});
+   $('xp-message').textContent=(mixerOn?'Axaliai Mixer':label)+' returned. No sandbox execution was started.';
+   if(mixerOn && d.final_answer!==undefined){
+    $('xp-result').textContent=d.final_answer || d.error || 'Mixer returned no final answer.';
+    let panel=$('xp-mixer-contributions');
+    if(!panel){panel=document.createElement('details');panel.id='xp-mixer-contributions';panel.className='card';panel.style.marginTop='12px';panel.innerHTML='<summary>Model contributions and skipped providers</summary><div class="result" id="xp-mixer-detail"></div>'; $('xp-result').after(panel);}
+    const items=(d.contributions||[]).map(x=>({type:'contribution',provider:x.provider,model_id:x.model_id,latency_ms:x.latency_ms,excerpt:x.excerpt}));
+    const skipped=(d.skipped||[]).map(x=>({type:'skipped',provider:x.provider,model_id:x.model_id,reason:x.reason}));
+    $('xp-mixer-detail').textContent=JSON.stringify({state:d.state,synthesizer:d.synthesizer,calls:d.calls,items,skipped},null,2);
+   } else { $('xp-result').textContent=JSON.stringify(d,null,2); const panel=$('xp-mixer-contributions');if(panel)panel.remove(); }
   } catch(e) { $('xp-message').textContent=label+' failed: '+e.message; }
   finally {buttons.forEach(b=>b.disabled=false);}
  }
