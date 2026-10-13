@@ -154,9 +154,13 @@ def plugin_catalog(sandbox_available: bool=False) -> dict[str,Any]:
         configured=bool(env and os.getenv(env,"").strip())
         ready=plugin["adapter"] in ADAPTERS
         if plugin["id"]=="xparallel_sandbox": ready=bool(sandbox_available)
-        if ready and (configured or not env): status="available"
+        needs_path = {"file_retrieval":"XP_FILE_RETRIEVAL_ROOT","ai_memory":"XP_AI_MEMORY_PATH"}.get(plugin["id"])
+        path_configured = bool(needs_path and os.getenv(needs_path, "").strip())
+        if ready and (configured or not env) and (not needs_path or path_configured) and (plugin["id"] != "xparallel_sandbox" or sandbox_available): status="available"
         elif env and not configured: status="credentials_missing"
-        else: status="configuration_required" if plugin["id"] in {"file_retrieval","ai_memory"} else "adapter_unavailable"
+        elif needs_path and not path_configured: status="configuration_required"
+        elif plugin["id"] == "xparallel_sandbox" and not sandbox_available: status="sandbox_unavailable"
+        else: status="adapter_unavailable"
         plugin.update(configured=configured,status=status,can_execute=status=="available")
         plugins.append(plugin)
     return {"service":"Axaliai Universal AI Mixer","state":"partial" if any(x["can_execute"] for x in plugins) else "configured_required","plugins":plugins,"security":{"credentials_from_environment_only":True,"least_privilege":True,"approval_required_for_consequential_actions":True,"catalog_does_not_grant_execution_permission":True}}
