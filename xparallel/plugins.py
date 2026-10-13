@@ -107,7 +107,7 @@ def _file_retrieval(action: str, p: dict) -> dict:
         for path in root.rglob("*"):
             try:
                 if path.is_file() and not path.is_symlink() and (not q or q in path.name.lower()):
-                    items.append({"path":str(path.relative_to(root),"size":path.stat().st_size})
+                    items.append({"path":str(path.relative_to(root)),"size":path.stat().st_size})
             except OSError: continue
             if len(items)>=50: break
         return {"state":"ok","plugin_id":"file_retrieval","files":items}
