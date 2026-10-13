@@ -20,6 +20,10 @@ from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
+from xparallel.memory_service import summarize_memories
+from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
+from xparallel.chat_service import chat as chat_with_ai
+from xparallel.parallel_world import create_parallel_plan
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -50,13 +54,14 @@ def send_json(handler, status, payload, cors=False):
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json")
     handler.send_header("Content-Length", str(len(body)))
-    if cors:
-        origin = handler.headers.get("Origin", "")
-        if origin in PUBLIC_ORIGINS:
-            handler.send_header("Access-Control-Allow-Origin", origin)
-            handler.send_header("Vary", "Origin")
-            handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+    origin = handler.headers.get("Origin", "")
+    # Allow configured frontend origins to call private endpoints with a bearer token.
+    # CORS is not authorization: every private route still checks XP_TOKEN.
+    if origin in PUBLIC_ORIGINS:
+        handler.send_header("Access-Control-Allow-Origin", origin)
+        handler.send_header("Vary", "Origin")
+        handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -122,13 +127,15 @@ class Handler(BaseHTTPRequestHandler):
         return data
 
     def do_OPTIONS(self):
-        if not self.path.startswith("/public/") or not public_allowed(self):
+        origin = self.headers.get("Origin", "")
+        if not public_allowed(self) or (origin and origin not in PUBLIC_ORIGINS):
             return send_json(self, 403, {"error": "origin_not_allowed"})
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", self.headers.get("Origin"))
-        self.send_header("Vary", "Origin")
+        if origin and origin in PUBLIC_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-XParallel-Approval")
         self.send_header("Access-Control-Max-Age", "600")
         self.end_headers()
 
@@ -150,9 +157,24 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/conversations":
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            limit = params.get("limit", ["50"])[0]
+            try:
+                conversations = list_conversations(workspace, limit)
+            except (ValueError, TypeError):
+                return send_json(self, 400, {"error": "invalid_limit"})
+            return send_json(self, 200, {"workspace_id": workspace, "conversations": conversations})
+        if parsed.path.startswith("/conversations/"):
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            conversation_id = parsed.path.rsplit("/", 1)[-1]
+            conversation = get_conversation(conversation_id, workspace)
+            return send_json(self, 200 if conversation else 404, conversation or {"error": "not_found"})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
-            workspace = params.get("workspace_id", ["default"])[0]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             query = params.get("q", [""])[0]
             if query:
@@ -186,6 +208,24 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path == "/conversations":
+            workspace = workspace_context(data)["workspace_id"]
+            try:
+                result = save_conversation(data.get("conversation_id", ""), workspace, data.get("title", "New chat"), data.get("messages", []))
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            self.audit("conversation_saved", workspace, workspace_context(data)["actor"], {"conversation_id": result["conversation_id"], "message_count": result["message_count"]})
+            return send_json(self, 200, result)
+
+        if self.path == "/conversations/delete":
+            workspace = workspace_context(data)["workspace_id"]
+            conversation_id = str(data.get("conversation_id", "")).strip()
+            if not conversation_id:
+                return send_json(self, 400, {"error": "conversation_id_required"})
+            deleted = delete_conversation(conversation_id, workspace)
+            self.audit("conversation_deleted", workspace, workspace_context(data)["actor"], {"conversation_id": conversation_id, "deleted": deleted})
+            return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()
@@ -243,28 +283,100 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 result = save_memory(
                     content=data.get("content", ""),
-                    workspace_id=str(data.get("workspace_id", "default")),
+                    workspace_id=workspace_context(data)["workspace_id"],
                     summary=str(data.get("summary", "")),
                     tags=data.get("tags") if isinstance(data.get("tags"), list) else [],
                 )
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
+            workspace = workspace_context(data)["workspace_id"]
+            self.audit("memory_saved", workspace, workspace_context(data)["actor"], {
+                "memory_id": result["id"], "created": result["created"],
+            })
             return send_json(self, 201 if result["created"] else 200, result)
 
         if self.path == "/memory/search":
             memory_query = str(data.get("query", "")).strip()
             if not memory_query:
                 return send_json(self, 400, {"error": "query_required"})
-            workspace = str(data.get("workspace_id", "default"))
+            workspace = workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 10)), 50))
-            return send_json(self, 200, {"memories": search_memories(memory_query, workspace, limit)})
+            memories = search_memories(memory_query, workspace, limit)
+            self.audit("memory_searched", workspace, workspace_context(data)["actor"], {
+                "result_count": len(memories), "query_length": len(memory_query),
+            })
+            return send_json(self, 200, {"memories": memories})
+
+        if self.path == "/chat":
+            messages = data.get("messages")
+            workspace = workspace_context(data)["workspace_id"]
+            use_memory = data.get("use_memory", True) is not False
+            try:
+                result = chat_with_ai(messages, workspace, use_memory)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
+                "model": result.get("model", "unknown"),
+                "message_count": len(messages) if isinstance(messages, list) else 0,
+            })
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})
+
+        if self.path == "/memory/summarize":
+            memory_query = str(data.get("query", "")).strip()
+            if not memory_query:
+                return send_json(self, 400, {"error": "query_required"})
+            workspace = workspace_context(data)["workspace_id"]
+            limit = max(1, min(int(data.get("limit", 5)), 10))
+            try:
+                result = summarize_memories(memory_query, workspace, limit)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            self.audit("memory_summarized", workspace, workspace_context(data)["actor"], {
+                "provider": result.get("provider", "unknown"),
+                "source_count": len(result.get("memories", [])),
+                "query_length": len(memory_query),
+            })
+            return send_json(self, 200, result)
+
+        if self.path == "/world/plan":
+            query = str(data.get("query", "")).strip()
+            if not query:
+                return send_json(self, 400, {"error": "query_required"})
+            if len(query) > 4000:
+                return send_json(self, 400, {"error": "query_too_large"})
+            workspace = workspace_context(data)["workspace_id"]
+            try:
+                result = create_parallel_plan(query, workspace)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            plan = result.get("plan", {})
+            self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
+                "provider": plan.get("provider", "unknown"),
+                "memory_source_count": len(plan.get("memory_sources", [])),
+            })
+            return send_json(self, 200, result)
 
         if self.path == "/memory/forget":
             memory_id = str(data.get("id", "")).strip()
             if not memory_id:
                 return send_json(self, 400, {"error": "id_required"})
-            workspace = str(data.get("workspace_id", "default"))
+            workspace = workspace_context(data)["workspace_id"]
             deleted = forget_memory(memory_id, workspace)
+            self.audit("memory_forgotten", workspace, workspace_context(data)["actor"], {
+                "memory_id": memory_id, "deleted": deleted,
+            })
             return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         query = str(data.get("query", "")).strip()

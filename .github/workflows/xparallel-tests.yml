@@ -1,0 +1,49 @@
+name: XParallel Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - "xparallel/**"
+      - "tests/**"
+      - "public/xparallel.html"
+      - ".github/workflows/xparallel-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python sources
+        run: python -m compileall -q xparallel tests
+      - name: Check Axaliai and XParallel JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          for source, target in [
+              ("public/xparallel.html", "/tmp/xparallel-workbench.js"),
+              ("public/axaliai.html", "/tmp/axaliai.js"),
+          ]:
+              html = Path(source).read_text(encoding="utf-8")
+              scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
+              if not scripts:
+                  raise SystemExit(f"No inline script found in {source}")
+              Path(target).write_text(scripts[-1], encoding="utf-8")
+          PY
+          node --check /tmp/xparallel-workbench.js
+          node --check /tmp/axaliai.js
+      - name: Test memory retrieval and summarization
+        run: python -m unittest discover -s tests -p "test_memory_service.py" -v
+      - name: Test Parallel World planner
+        run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
+      - name: Test persistent Axaliai conversation storage
+        run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
