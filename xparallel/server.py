@@ -18,6 +18,7 @@ from xparallel.store import get, load
 from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
+from xparallel.mixer import mix as mix_answers, MixerConfigError
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -143,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         is_public = self.path.startswith("/public/")
-        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify", "/public/graph/search"}
+        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify", "/public/graph/search", "/public/mix"}
         if is_public:
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -225,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/public/build":
             return send_json(self, 200, {"network": NETWORK, **plan(query)}, cors=True)
 
-        private = {"/ask", "/build", "/route", "/agent/plan", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
+        private = {"/ask", "/build", "/route", "/agent/plan", "/mix", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
         if self.path not in private:
             return send_json(self, 404, {"error": "not_found"})
 
