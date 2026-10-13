@@ -242,7 +242,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
             if not plugin_id or not action:
                 return send_json(self, 400, {"error": "plugin_id_and_action_required"})
-            result = execute_plugin(plugin_id, action, payload)
+            result = execute_plugin(plugin_id, action, payload, human_approved=self.execution_approved())
             workspace = workspace_context(data)["workspace_id"]
             audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
