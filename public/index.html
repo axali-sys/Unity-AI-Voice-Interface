@@ -174,7 +174,8 @@
     if(!panel){panel=document.createElement('details');panel.id='xp-mixer-contributions';panel.className='card';panel.style.marginTop='12px';panel.innerHTML='<summary>Model contributions and skipped providers</summary><div class="result" id="xp-mixer-detail"></div>'; $('xp-result').after(panel);}
     const items=(mix.contributions||[]).map(x=>({type:'contribution',provider:x.provider,model_id:x.model_id,latency_ms:x.latency_ms,excerpt:x.excerpt}));
     const skipped=(mix.skipped||[]).map(x=>({type:'skipped',provider:x.provider,model_id:x.model_id,reason:x.reason}));
-    $('xp-mixer-detail').textContent=JSON.stringify({state:mix.state,synthesizer:mix.synthesizer,calls:mix.calls,items,skipped},null,2);
+    const pluginResults=(mix.plugin_results||[]).map(x=>({type:'plugin',plugin_id:x.plugin_id,state:x.state,reason:x.reason,error:x.error}));
+    $('xp-mixer-detail').textContent=JSON.stringify({state:mix.state,synthesizer:mix.synthesizer,calls:mix.calls,items,skipped,pluginResults},null,2);
    } else { $('xp-result').textContent=JSON.stringify(d,null,2); const panel=$('xp-mixer-contributions');if(panel)panel.remove(); }
   } catch(e) { $('xp-message').textContent=label+' failed: '+e.message; }
   finally {buttons.forEach(b=>b.disabled=false);}
