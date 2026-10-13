@@ -1,4 +1,5 @@
 """XParallel V1 API: intent -> controlled sandbox -> evidence -> verified solution."""
+import asyncio
 import json
 import os
 import time
@@ -233,9 +234,32 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
 
+        if self.path == "/plugins/execute":
+            if not self.require_role("execute"):
+                return send_json(self, 403, {"error": "forbidden"})
+            plugin_id = str(data.get("plugin_id", "")).strip()
+            action = str(data.get("action", "")).strip()
+            payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
+            if not plugin_id or not action:
+                return send_json(self, 400, {"error": "plugin_id_and_action_required"})
+            result = execute_plugin(plugin_id, action, payload)
+            workspace = workspace_context(data)["workspace_id"]
+            audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
+            return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
+
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"}, cors=is_public)
+
+        if self.path in {"/public/mix", "/mix"}:
+            try:
+                result = asyncio.run(mix_answers(query))
+            except MixerConfigError as exc:
+                return send_json(self, 400, {"state": "mixer_config_error", "error": str(exc)}, cors=is_public)
+            except Exception as exc:
+                return send_json(self, 500, {"state": "mixer_error", "error": str(exc)[:300]}, cors=is_public)
+            result["plugins"] = plugin_catalog(sandbox_available=available())
+            return send_json(self, 200, {"network": NETWORK, **result}, cors=is_public)
 
         if self.path == "/public/ask":
             decision = route(query)
