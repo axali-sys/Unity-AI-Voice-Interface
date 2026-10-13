@@ -19,6 +19,7 @@ from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.mixer import mix as mix_answers, MixerConfigError
+from xparallel.plugins import plugin_catalog, execute_plugin
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -122,6 +123,10 @@ class Handler(BaseHTTPRequestHandler):
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
             return send_json(self, 200, gateway_manifest(), cors=True)
+        if self.path == "/public/plugins":
+            if not public_allowed(self):
+                return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
+            return send_json(self, 200, plugin_catalog(sandbox_available=available()), cors=True)
         if self.path == "/public/system":
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -132,6 +137,8 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()}, cors=True)
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
+        if self.path == "/plugins":
+            return send_json(self, 200, plugin_catalog(sandbox_available=available()))
         if self.path == "/registry":
             return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
@@ -160,6 +167,19 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path == "/plugins/execute":
+            if not self.require_role("execute"):
+                return send_json(self, 403, {"error": "forbidden"})
+            plugin_id = str(data.get("plugin_id", "")).strip()
+            action = str(data.get("action", "")).strip()
+            payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
+            if not plugin_id or not action:
+                return send_json(self, 400, {"error": "plugin_id_and_action_required"})
+            result = execute_plugin(plugin_id, action, payload)
+            workspace = workspace_context(data)["workspace_id"]
+            audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
+            return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()
@@ -226,7 +246,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/public/build":
             return send_json(self, 200, {"network": NETWORK, **plan(query)}, cors=True)
 
-        private = {"/ask", "/build", "/route", "/agent/plan", "/mix", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
+        private = {"/ask", "/build", "/route", "/agent/plan", "/mix", "/plugins/execute", "/experiment", "/execute", "/graph", "/graph/promote", "/billing/preview"}
         if self.path not in private:
             return send_json(self, 404, {"error": "not_found"})
 
