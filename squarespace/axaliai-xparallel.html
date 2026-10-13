@@ -42,7 +42,28 @@
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-      result.textContent = data.message || JSON.stringify(data, null, 2);
+      // Use the same server-side Universal Mixer as XParallel. Only public web
+      // search may be requested from this unauthenticated browser surface.
+      let answer = data.message || JSON.stringify(data, null, 2);
+      try {
+        const mixedResponse = await fetch(`${API}/public/mix`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: text, plugins: ["web_search"] })
+        });
+        const mixed = await mixedResponse.json();
+        if (mixedResponse.ok && mixed.state === "ok" && mixed.final_answer) {
+          answer = mixed.final_answer;
+          result.dataset.mixerState = "ok";
+        } else {
+          result.dataset.mixerState = mixed.state || "unavailable";
+          answer += "\\n\\nUniversal Mixer unavailable; showing the existing XParallel response.";
+        }
+      } catch (_) {
+        result.dataset.mixerState = "unavailable";
+        answer += "\\n\\nUniversal Mixer connection unavailable; showing the existing XParallel response.";
+      }
+      result.textContent = answer;
     } catch (error) {
       result.textContent = `Axaliai connection error: ${error.message}`;
     }
