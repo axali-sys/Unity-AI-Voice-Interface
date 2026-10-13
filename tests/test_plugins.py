@@ -48,7 +48,7 @@ class PluginAdapterTests(unittest.TestCase):
     def test_ai_memory_search_returns_matching_records(self):
         with tempfile.TemporaryDirectory() as tmp:
             memory=Path(tmp)/"memory.jsonl"
-            memory.write_text(json.dumps({"text":"XParallel sandbox approval protocol"})+"\\n"+json.dumps({"text":"unrelated music note"})+"\\n",encoding="utf-8")
+            memory.write_text(json.dumps({"text":"XParallel sandbox approval protocol"})+"\n"+json.dumps({"text":"unrelated music note"})+"\\n",encoding="utf-8")
             with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
                 result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval"})
         self.assertEqual(result["state"],"ok")
