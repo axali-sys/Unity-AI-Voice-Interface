@@ -21,6 +21,7 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
+from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
@@ -271,6 +272,24 @@ class Handler(BaseHTTPRequestHandler):
                 "result_count": len(memories), "query_length": len(memory_query),
             })
             return send_json(self, 200, {"memories": memories})
+
+        if self.path == "/chat":
+            messages = data.get("messages")
+            workspace = workspace_context(data)["workspace_id"]
+            use_memory = data.get("use_memory", True) is not False
+            try:
+                result = chat_with_ai(messages, workspace, use_memory)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except RuntimeError as exc:
+                error = str(exc)
+                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                return send_json(self, status, {"error": error})
+            self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
+                "model": result.get("model", "unknown"),
+                "message_count": len(messages) if isinstance(messages, list) else 0,
+            })
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})
 
         if self.path == "/memory/summarize":
             memory_query = str(data.get("query", "")).strip()
