@@ -58,5 +58,10 @@ export function createXParallelClient({ baseUrl, fetchImpl = fetch, timeoutMs = 
       if (typeof query !== "string" || !query.trim()) throw new Error("query_required");
       return request("/public/route", { method: "POST", body: { query: query.trim() } });
     },
+    mix: (query, plugins = ["web_search"]) => {
+      if (typeof query !== "string" || !query.trim()) throw new Error("query_required");
+      const allowed = Array.isArray(plugins) ? plugins.filter((id) => id === "web_search") : [];
+      return request("/public/mix", { method: "POST", body: { query: query.trim(), plugins: allowed } });
+    },
   });
 }
