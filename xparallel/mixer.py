@@ -136,7 +136,7 @@ async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None
         plugin_results = retrieved.get("results", [])
     combined_context = "\n\n".join(x for x in (memory_context, plugin_context) if x)
     cap = max(1, min(16, int(os.getenv("XP_MIXER_MAX_MODELS", "4"))))
-    timeout = max(1, float(os.getenv("XP_MIXER_TIMEOUT", "45")))
+    timeout = max(0.05, float(os.getenv("XP_MIXER_TIMEOUT", "45")) )
     selected, skipped, seen = [], [], set()
     for e in entries:
         family = e["provider"]
