@@ -76,6 +76,7 @@
   <div class="actions"><button id="xp-ask" class="action" type="button">Ask XParallel</button><button id="xp-plan" class="action primary" type="button">Generate build plan</button><button id="xp-route" class="action" type="button">Suggest route</button></div>
   <p id="xp-message" class="muted" role="status" aria-live="polite">Ready. Check the API connection to begin.</p>
   <pre id="xp-result" class="result"></pre>
+  <details class="card" style="margin-top:12px"><summary>Plugin Mixer · connected apps and tools</summary><p class="muted tiny">Catalog status only. A plugin is not executable until its adapter, credentials, permissions, and tests are verified.</p><div id="plugin-status" class="feature-list">Plugin catalog not loaded.</div></details>
  </article>
  <article class="card wide">
   <h2>System & security status</h2><div id="system-status" class="muted">Not loaded.</div><pre id="system-result" class="result"></pre>
@@ -138,7 +139,16 @@
    const engine = system.services?.find(x=>x.id==='parallel-sandbox');
    setStatus('engine-state',engine?.available===true?'Reported available':'Not verified',engine?.available===true?'ok':'warn');
    $('system-status').textContent='Public access and system manifests received. Reported values are not a live execution test.';
-   $('system-result').textContent=JSON.stringify({access:manifest,system},null,2);
+   const pluginManifest=await request('/public/plugins');
+    $('plugin-status').textContent='';
+    for(const plugin of (pluginManifest.plugins||[])){
+     const row=document.createElement('div');row.className='feature';
+     const label=document.createElement('label');label.textContent=plugin.name;
+     const small=document.createElement('small');small.textContent=plugin.kind+' · '+plugin.purpose;label.appendChild(small);
+     const state=document.createElement('span');state.className='pill';state.textContent=plugin.status;
+     row.append(label,state);$('plugin-status').appendChild(row);
+    }
+    $('system-result').textContent=JSON.stringify({access:manifest,system,plugins:pluginManifest},null,2);
   } catch(e) {
    setStatus('manifest-state','Unavailable','bad');setStatus('engine-state','Unknown','warn');
    $('system-status').textContent='Could not load manifests: '+e.message;
