@@ -177,7 +177,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
             if not plugin_id or not action:
                 return send_json(self, 400, {"error": "plugin_id_and_action_required"})
-            result = execute_plugin(plugin_id, action, payload)
+            result = execute_plugin(plugin_id, action, payload, human_approved=self.execution_approved())
             workspace = workspace_context(data)["workspace_id"]
             audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
@@ -253,7 +253,11 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path in {"/public/mix", "/mix"}:
             try:
-                result = asyncio.run(mix_answers(query))
+                plugin_ids = data.get("plugins") if isinstance(data.get("plugins"), list) else []
+                plugin_ids = [str(x) for x in plugin_ids if isinstance(x, str)][:5]
+                if is_public:
+                    plugin_ids = [x for x in plugin_ids if x == "web_search"]
+                result = asyncio.run(mix_answers(query, plugin_ids=plugin_ids, allow_private=not is_public))
             except MixerConfigError as exc:
                 return send_json(self, 400, {"state": "mixer_config_error", "error": str(exc)}, cors=is_public)
             except Exception as exc:
