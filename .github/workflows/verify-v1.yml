@@ -2,7 +2,7 @@ name: Verify Axaliai V1
 
 on:
   push:
-    branches: [main, axaliai-v1-verified-build]
+    branches: [main, axaliai-v1-verified-build, axaliai-mixer-v1]
   pull_request:
     branches: [main]
   workflow_dispatch:
