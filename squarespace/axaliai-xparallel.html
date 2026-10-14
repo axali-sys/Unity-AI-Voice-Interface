@@ -1,86 +1,346 @@
-<!-- Axaliai front end for Squarespace. Connects only to the public XParallel API. -->
-<div id="axaliai-app" style="max-width:860px;margin:0 auto;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-    <div>
-      <div style="font-size:28px;font-weight:700;letter-spacing:-.03em;">AXALIAI</div>
-      <div style="font-size:13px;opacity:.65;">DNA OF AI</div>
+<!-- Axaliai premium interface embed for Squarespace. Public API only; never place private tokens in browser code. -->
+<div id="axaliai-app" class="ax-shell">
+  <style>
+    #axaliai-app{--ax-bg:#080a12;--ax-panel:#10131f;--ax-panel2:#151a2a;--ax-line:rgba(193,204,255,.12);--ax-text:#f5f6ff;--ax-muted:#929bb7;--ax-violet:#9c8cff;--ax-cyan:#75e2ee;--ax-green:#8fe6bd;max-width:1180px;margin:18px auto;color:var(--ax-text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;isolation:isolate}
+    #axaliai-app *{box-sizing:border-box}
+    #axaliai-app button,#axaliai-app textarea{font:inherit}
+    #axaliai-app .ax-frame{position:relative;overflow:hidden;min-height:720px;border:1px solid rgba(190,199,255,.16);border-radius:28px;background:radial-gradient(ellipse at 72% -12%,rgba(113,94,255,.20),transparent 38%),radial-gradient(ellipse at 0% 45%,rgba(54,202,218,.07),transparent 30%),var(--ax-bg);box-shadow:0 30px 90px rgba(8,10,25,.32)}
+    #axaliai-app .ax-top{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--ax-line);background:rgba(8,10,18,.78)}
+    #axaliai-app .ax-brand{display:flex;align-items:center;gap:12px;min-width:0}
+    #axaliai-app .ax-mark{width:40px;height:40px;display:grid;place-items:center;flex:none;border:1px solid rgba(156,140,255,.45);border-radius:14px;background:linear-gradient(145deg,rgba(156,140,255,.25),rgba(117,226,238,.08));box-shadow:inset 0 1px rgba(255,255,255,.12);font-size:22px;font-weight:850;color:#e7e2ff}
+    #axaliai-app .ax-wordmark{font-size:16px;font-weight:820;letter-spacing:.14em;line-height:1.2}
+    #axaliai-app .ax-tagline{margin-top:4px;color:var(--ax-muted);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+    #axaliai-app .ax-topright{display:flex;align-items:center;gap:10px}
+    #axaliai-app .ax-status{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--ax-line);border-radius:999px;background:rgba(255,255,255,.025);color:#c7cce0;font-size:11px;white-space:nowrap}
+    #axaliai-app .ax-dot{width:7px;height:7px;border-radius:50%;background:var(--ax-green);box-shadow:0 0 12px rgba(143,230,189,.5)}
+    #axaliai-app .ax-main{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:644px}
+    #axaliai-app .ax-rail{padding:22px 14px;border-right:1px solid var(--ax-line);background:rgba(10,12,21,.48)}
+    #axaliai-app .ax-new{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:12px;border:1px solid rgba(156,140,255,.35);border-radius:13px;background:linear-gradient(110deg,rgba(156,140,255,.19),rgba(117,226,238,.07));color:#f7f5ff;font-size:13px;font-weight:700;cursor:pointer}
+    #axaliai-app .ax-navlabel{margin:27px 9px 10px;color:#717a99;font-size:10px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}
+    #axaliai-app .ax-navitem{display:flex;align-items:center;gap:11px;padding:10px 11px;margin:3px 0;border:1px solid transparent;border-radius:11px;color:#aab2cc;font-size:12px}
+    #axaliai-app .ax-navitem.ax-active{border-color:rgba(156,140,255,.15);background:rgba(156,140,255,.09);color:#f2efff}
+    #axaliai-app .ax-navicon{width:20px;text-align:center;color:#b5aaff;font-size:16px}
+    #axaliai-app .ax-railnote{margin-top:38px;padding:14px;border:1px solid var(--ax-line);border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.01))}
+    #axaliai-app .ax-railnote strong{display:block;font-size:12px}
+    #axaliai-app .ax-railnote p{margin:6px 0 0;color:var(--ax-muted);font-size:11px;line-height:1.6}
+    #axaliai-app .ax-work{position:relative;display:flex;flex-direction:column;min-width:0;padding:26px clamp(18px,4vw,52px) 22px}
+    #axaliai-app .ax-workhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    #axaliai-app .ax-kicker{display:flex;align-items:center;gap:8px;color:#b7adff;font-size:10px;font-weight:750;letter-spacing:.18em;text-transform:uppercase}
+    #axaliai-app .ax-kicker:before{content:"";width:18px;height:1px;background:linear-gradient(90deg,var(--ax-violet),var(--ax-cyan))}
+    #axaliai-app .ax-model{padding:7px 10px;border:1px solid var(--ax-line);border-radius:9px;background:rgba(255,255,255,.025);color:#c0c6dc;font-size:10px}
+    #axaliai-app .ax-welcome{max-width:660px;margin:56px auto 26px;text-align:center}
+    #axaliai-app .ax-orb{position:relative;width:68px;height:68px;display:grid;place-items:center;margin:0 auto 23px;border:1px solid rgba(170,157,255,.45);border-radius:24px;background:radial-gradient(circle at 32% 25%,rgba(255,255,255,.18),transparent 38%),linear-gradient(145deg,rgba(156,140,255,.25),rgba(69,190,211,.09));box-shadow:0 0 55px rgba(117,100,255,.14),inset 0 1px rgba(255,255,255,.16);color:#e6e1ff;font-size:30px}
+    #axaliai-app .ax-orb:after{content:"";position:absolute;inset:-7px;border:1px solid rgba(156,140,255,.12);border-radius:29px}
+    #axaliai-app .ax-title{margin:0;font-size:clamp(31px,4.3vw,48px);font-weight:720;letter-spacing:-.055em;line-height:1.08}
+    #axaliai-app .ax-title span{background:linear-gradient(100deg,#c5baff 8%,#8ee6ef 88%);-webkit-background-clip:text;background-clip:text;color:transparent}
+    #axaliai-app .ax-subtitle{max-width:500px;margin:15px auto 0;color:#a2abc5;font-size:13px;line-height:1.8}
+    #axaliai-app .ax-prompts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:620px;margin:0 auto 24px}
+    #axaliai-app .ax-prompt{display:flex;align-items:flex-start;gap:11px;min-height:78px;padding:13px;text-align:left;border:1px solid var(--ax-line);border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.014));color:var(--ax-text);cursor:pointer;transition:transform .18s,border-color .18s,background .18s}
+    #axaliai-app .ax-prompt:hover{transform:translateY(-2px);border-color:rgba(156,140,255,.42);background:rgba(156,140,255,.07)}
+    #axaliai-app .ax-prompticon{display:grid;place-items:center;flex:none;width:31px;height:31px;border:1px solid var(--ax-line);border-radius:10px;color:#c3baff;background:rgba(156,140,255,.08);font-size:15px}
+    #axaliai-app .ax-prompt strong{display:block;font-size:11px;font-weight:680}
+    #axaliai-app .ax-prompt small{display:block;margin-top:4px;color:var(--ax-muted);font-size:10px;line-height:1.5}
+    #axaliai-app .ax-chat{display:none;flex:1;min-height:280px;max-height:560px;overflow-y:auto;padding:24px 2px 12px;scroll-behavior:smooth}
+    #axaliai-app .ax-chat.ax-visible{display:block}
+    #axaliai-app .ax-welcome.ax-hidden,#axaliai-app .ax-prompts.ax-hidden{display:none}
+    #axaliai-app .ax-message{display:flex;gap:11px;margin:0 0 22px;align-items:flex-start}
+    #axaliai-app .ax-avatar{display:grid;place-items:center;flex:none;width:31px;height:31px;border:1px solid var(--ax-line);border-radius:11px;background:#17192a;color:#c9c0ff;font-size:13px;font-weight:800}
+    #axaliai-app .ax-user .ax-avatar{background:#20283a;color:#d7e9ff}
+    #axaliai-app .ax-msgbody{min-width:0;flex:1}
+    #axaliai-app .ax-msgname{margin:1px 0 7px;color:#a9b1ca;font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+    #axaliai-app .ax-msgtext{color:#e9ebf8;font-size:13px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere}
+    #axaliai-app .ax-user .ax-msgtext{color:#cbd2e8}
+    #axaliai-app .ax-msgtools{display:flex;align-items:center;gap:8px;margin-top:10px}
+    #axaliai-app .ax-toolbtn{padding:5px 8px;border:1px solid var(--ax-line);border-radius:8px;background:transparent;color:#aab3cd;font-size:10px;cursor:pointer}
+    #axaliai-app .ax-toolbtn:hover{border-color:rgba(156,140,255,.4);color:#fff}
+    #axaliai-app .ax-typing{display:flex;gap:5px;padding:7px 0}
+    #axaliai-app .ax-typing i{width:5px;height:5px;border-radius:50%;background:#aaa0ff;animation:axpulse 1.1s infinite ease-in-out}
+    #axaliai-app .ax-typing i:nth-child(2){animation-delay:.14s}#axaliai-app .ax-typing i:nth-child(3){animation-delay:.28s}
+    @keyframes axpulse{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+    #axaliai-app .ax-composerwrap{position:sticky;bottom:0;margin-top:auto;padding-top:15px;background:linear-gradient(180deg,rgba(8,10,18,0),#080a12 18%)}
+    #axaliai-app .ax-composer{padding:12px 12px 10px;border:1px solid rgba(185,191,255,.2);border-radius:19px;background:linear-gradient(150deg,rgba(24,27,44,.96),rgba(15,18,30,.98));box-shadow:0 12px 35px rgba(0,0,0,.22);transition:border-color .18s,box-shadow .18s}
+    #axaliai-app .ax-composer:focus-within{border-color:rgba(156,140,255,.65);box-shadow:0 0 0 3px rgba(156,140,255,.08),0 12px 35px rgba(0,0,0,.22)}
+    #axaliai-app .ax-textarea{display:block;width:100%;min-height:48px;max-height:150px;resize:vertical;padding:4px 5px 10px;border:0;outline:0;background:transparent;color:#f7f7ff;font-size:13px;line-height:1.6}
+    #axaliai-app .ax-textarea::placeholder{color:#78819e}
+    #axaliai-app .ax-composebottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #axaliai-app .ax-composehint{color:#77809c;font-size:10px}
+    #axaliai-app .ax-composeactions{display:flex;align-items:center;gap:8px}
+    #axaliai-app .ax-voice{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--ax-line);border-radius:12px;background:rgba(255,255,255,.025);color:#c4cbe2;cursor:pointer}
+    #axaliai-app .ax-voice:hover{border-color:rgba(117,226,238,.4);color:var(--ax-cyan)}
+    #axaliai-app .ax-send{height:36px;display:flex;align-items:center;gap:8px;padding:0 15px;border:0;border-radius:12px;background:linear-gradient(105deg,#b4a6ff,#8ce2ec);color:#101323;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(133,128,255,.18)}
+    #axaliai-app .ax-send:disabled{opacity:.45;cursor:wait}
+    #axaliai-app .ax-foot{display:flex;align-items:center;justify-content:center;gap:7px;margin:12px 0 0;color:#69728e;font-size:9px;text-align:center}
+    #axaliai-app .ax-footdot{width:4px;height:4px;border-radius:50%;background:#8177d6}
+    #axaliai-app .ax-error{color:#ffb5bd}
+    #axaliai-app .ax-sources{margin-top:11px;padding:10px 12px;border:1px solid var(--ax-line);border-radius:12px;background:rgba(255,255,255,.02);color:#aab3cd;font-size:10px}
+    #axaliai-app .ax-sources summary{cursor:pointer;color:#c9c2ff;font-weight:700}
+    #axaliai-app .ax-sources a{color:#8fe2ee;text-decoration:none}
+    #axaliai-app .ax-sources a:hover{text-decoration:underline}
+    @media(max-width:760px){#axaliai-app{margin:0 auto}#axaliai-app .ax-frame{min-height:calc(100svh - 20px);border-radius:20px}#axaliai-app .ax-top{height:66px;padding:0 15px}#axaliai-app .ax-mark{width:36px;height:36px;border-radius:12px}#axaliai-app .ax-wordmark{font-size:14px}#axaliai-app .ax-tagline{font-size:8px}#axaliai-app .ax-main{display:block;min-height:calc(100svh - 86px)}#axaliai-app .ax-rail{display:none}#axaliai-app .ax-work{min-height:calc(100svh - 86px);padding:20px 14px 15px}#axaliai-app .ax-welcome{margin:42px auto 23px}#axaliai-app .ax-orb{width:58px;height:58px;border-radius:20px;margin-bottom:20px}#axaliai-app .ax-title{font-size:clamp(31px,8vw,42px)}#axaliai-app .ax-subtitle{font-size:12px;max-width:340px}#axaliai-app .ax-prompts{gap:8px}#axaliai-app .ax-prompt{min-height:92px;padding:10px;gap:8px}#axaliai-app .ax-prompticon{width:27px;height:27px;font-size:13px}#axaliai-app .ax-prompt strong{font-size:10px}#axaliai-app .ax-prompt small{font-size:9px}#axaliai-app .ax-model{font-size:9px;padding:6px 8px}#axaliai-app .ax-status{font-size:10px;padding:7px 9px}#axaliai-app .ax-chat{max-height:none;min-height:250px;flex:1}#axaliai-app .ax-composehint{max-width:170px;line-height:1.4}}
+    @media(max-width:390px){#axaliai-app .ax-status{font-size:0;gap:0;padding:9px}#axaliai-app .ax-status .ax-dot{width:8px;height:8px}#axaliai-app .ax-prompts{grid-template-columns:1fr}#axaliai-app .ax-prompt{min-height:66px}#axaliai-app .ax-prompt small{font-size:10px}}
+    @media(prefers-reduced-motion:reduce){#axaliai-app *,#axaliai-app *:before,#axaliai-app *:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+  </style>
+  <div class="ax-frame">
+    <header class="ax-top">
+      <div class="ax-brand">
+        <div class="ax-mark" aria-hidden="true">✳</div>
+        <div><div class="ax-wordmark">AXALIAI</div><div class="ax-tagline">A little more than a chatbot</div></div>
+      </div>
+      <div class="ax-topright">
+        <div class="ax-status" title="Connection status"><span class="ax-dot" id="ax-status-dot"></span><span id="ax-status-text">Checking connection</span></div>
+      </div>
+    </header>
+    <div class="ax-main">
+      <aside class="ax-rail" aria-label="Axaliai navigation">
+        <button class="ax-new" id="ax-new-chat" type="button"><span>＋</span> New conversation</button>
+        <div class="ax-navlabel">Your workspace</div>
+        <div class="ax-navitem ax-active"><span class="ax-navicon">✧</span> Axaliai assistant</div>
+        <div class="ax-navitem"><span class="ax-navicon">◉</span> Voice conversation</div>
+        <div class="ax-navlabel">Shared intelligence layer</div>
+        <div class="ax-navitem"><span class="ax-navicon">⤢</span> Parallel Intelligence · AI Mixer</div>
+        <div class="ax-railnote"><strong>One shared intelligence layer.</strong><p>Parallel Intelligence and the AI Mixer serve Axaliai, Omnibox, UnitAI, and XParallel. Each workspace keeps its own design and context, so the mixer can shape its response for the active workspace.</p></div>
+      </aside>
+      <main class="ax-work">
+        <div class="ax-workhead"><div class="ax-kicker">Your AI workspace</div><div class="ax-model" id="ax-mode-label">AXALIAI · CORE</div></div>
+        <section class="ax-welcome" id="ax-welcome">
+          <div class="ax-orb" aria-hidden="true">✳</div>
+          <h1 class="ax-title">Ideas into action.<br><span>Without the noise.</span></h1>
+          <p class="ax-subtitle">Think, build, explore, and solve with an AI interface designed around your goals. Start anywhere — Axaliai will help you find the next step.</p>
+        </section>
+        <section class="ax-prompts" id="ax-prompts" aria-label="Suggested starting points">
+          <button class="ax-prompt" type="button" data-prompt="Help me turn an idea into a clear, practical plan with the next three steps."><span class="ax-prompticon">✦</span><span><strong>Shape an idea</strong><small>Turn a thought into a practical plan</small></span></button>
+          <button class="ax-prompt" type="button" data-prompt="Help me design and build a software product. Start by clarifying the goal, then propose an architecture and safe implementation steps."><span class="ax-prompticon">⌘</span><span><strong>Build something</strong><small>Plan a product or software system</small></span></button>
+          <button class="ax-prompt" type="button" data-prompt="Research this topic carefully, separate confirmed facts from uncertainty, and give me useful sources."><span class="ax-prompticon">⌕</span><span><strong>Explore a question</strong><small>Research, compare, and understand</small></span></button>
+          <button class="ax-prompt" type="button" data-prompt="Help me diagnose a problem systematically. Ask only for essential missing information, identify likely root causes, and suggest safe tests."><span class="ax-prompticon">◇</span><span><strong>Solve a problem</strong><small>Find root causes and next actions</small></span></button>
+        </section>
+        <section class="ax-chat" id="ax-chat" aria-live="polite" aria-label="Conversation"></section>
+        <div class="ax-composerwrap">
+          <form id="ax-form">
+            <div class="ax-composer">
+              <textarea id="ax-query" class="ax-textarea" rows="2" required maxlength="12000" aria-label="Message Axaliai" placeholder="Ask anything. What are you thinking about?"></textarea>
+              <div class="ax-composebottom">
+                <div class="ax-composehint">Shift + Enter for a new line · Voice input supported where available</div>
+                <div class="ax-composeactions">
+                  <button class="ax-voice" id="ax-voice" type="button" aria-label="Start voice input" title="Voice input">⌁</button>
+                  <button class="ax-send" id="ax-send" type="submit"><span>Send</span><span aria-hidden="true">↗</span></button>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div class="ax-foot"><span class="ax-footdot"></span><span>AI can make mistakes. Check important information.</span><span class="ax-footdot"></span><span>Private connectors require authorization.</span></div>
+        </div>
+      </main>
     </div>
-    <div style="font-size:13px;opacity:.75;">● Omni</div>
   </div>
+  <script>
+  (() => {
+    const API = "https://api.axaliai.com";
+    const root = document.getElementById("axaliai-app");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const form = root.querySelector("#ax-form");
+    const query = root.querySelector("#ax-query");
+    const chat = root.querySelector("#ax-chat");
+    const welcome = root.querySelector("#ax-welcome");
+    const prompts = root.querySelector("#ax-prompts");
+    const send = root.querySelector("#ax-send");
+    const voice = root.querySelector("#ax-voice");
+    const statusText = root.querySelector("#ax-status-text");
+    const statusDot = root.querySelector("#ax-status-dot");
+    let busy = false;
+    let activeRecognition = null;
 
-  <div id="axaliai-result" aria-live="polite" style="min-height:280px;padding:22px;border:1px solid rgba(0,0,0,.14);border-radius:18px;white-space:pre-wrap;overflow:auto;margin-bottom:14px;">
-    How can Axaliai help?
-  </div>
-
-  <form id="axaliai-form">
-    <div style="display:flex;gap:8px;align-items:flex-end;">
-      <button id="axaliai-voice" type="button" aria-label="Use microphone" title="Voice" style="width:48px;height:48px;border:1px solid rgba(0,0,0,.18);border-radius:14px;background:transparent;font-size:20px;cursor:pointer;">🎙</button>
-      <textarea id="axaliai-query" rows="2" required placeholder="Ask Axaliai…" style="flex:1;resize:vertical;padding:13px;border:1px solid rgba(0,0,0,.18);border-radius:14px;font:inherit;"></textarea>
-      <button type="submit" style="height:48px;padding:0 20px;border:0;border-radius:14px;cursor:pointer;font-weight:650;">Send</button>
-    </div>
-  </form>
-</div>
-
-<script>
-(() => {
-  const API = "https://api.axaliai.com";
-  const form = document.getElementById("axaliai-form");
-  const query = document.getElementById("axaliai-query");
-  const result = document.getElementById("axaliai-result");
-  const voice = document.getElementById("axaliai-voice");
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const text = query.value.trim();
-    if (!text) return;
-    result.textContent = "Axaliai is working…";
-    try {
-      const response = await fetch(`${API}/public/ask`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: text })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-      // Use the same server-side Universal Mixer as XParallel. Only public web
-      // search may be requested from this unauthenticated browser surface.
-      let answer = data.message || JSON.stringify(data, null, 2);
+    function setStatus(ok, label) {
+      statusText.textContent = label;
+      statusDot.style.background = ok ? "var(--ax-green)" : "#f2c879";
+      statusDot.style.boxShadow = ok ? "0 0 12px rgba(143,230,189,.5)" : "none";
+    }
+    async function checkHealth() {
       try {
-        const mixedResponse = await fetch(`${API}/public/mix`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: text, plugins: ["web_search"] })
-        });
-        const mixed = await mixedResponse.json();
-        if (mixedResponse.ok && mixed.state === "ok" && mixed.final_answer) {
-          answer = mixed.final_answer;
-          result.dataset.mixerState = "ok";
-        } else {
-          result.dataset.mixerState = mixed.state || "unavailable";
-          answer += "\\n\\nUniversal Mixer unavailable; showing the existing XParallel response.";
+        const r = await fetch(API + "/public/health", {method:"GET", cache:"no-store"});
+        if (!r.ok) throw new Error("health unavailable");
+        setStatus(true, "API connected");
+      } catch (_) { setStatus(false, "Connection not verified"); }
+    }
+    function makeMessage(role, text) {
+      const article = document.createElement("article");
+      article.className = "ax-message " + (role === "user" ? "ax-user" : "ax-assistant");
+      const avatar = document.createElement("div");
+      avatar.className = "ax-avatar";
+      avatar.textContent = role === "user" ? "Y" : "✳";
+      const body = document.createElement("div");
+      body.className = "ax-msgbody";
+      const name = document.createElement("div");
+      name.className = "ax-msgname";
+      name.textContent = role === "user" ? "You" : "Axaliai";
+      const message = document.createElement("div");
+      message.className = "ax-msgtext";
+      message.textContent = text || "";
+      body.append(name, message);
+      article.append(avatar, body);
+      chat.append(article);
+      return {article, body, message};
+    }
+    function showConversation() {
+      welcome.classList.add("ax-hidden");
+      prompts.classList.add("ax-hidden");
+      chat.classList.add("ax-visible");
+    }
+    function resetConversation() {
+      if (busy) return;
+      chat.replaceChildren();
+      chat.classList.remove("ax-visible");
+      welcome.classList.remove("ax-hidden");
+      prompts.classList.remove("ax-hidden");
+      query.value = "";
+      query.focus();
+    }
+    function addSources(body, results) {
+      if (!Array.isArray(results) || !results.length) return;
+      const details = document.createElement("details");
+      details.className = "ax-sources";
+      const summary = document.createElement("summary");
+      summary.textContent = "Sources and tool results (" + results.length + ")";
+      details.append(summary);
+      results.slice(0, 8).forEach((item) => {
+        const row = document.createElement("div");
+        row.style.marginTop = "8px";
+        const title = document.createElement("strong");
+        title.textContent = item.title || item.name || item.plugin_id || "Retrieved result";
+        row.append(title);
+        const snippet = document.createElement("div");
+        snippet.style.marginTop = "3px";
+        snippet.textContent = item.snippet || item.description || item.text || item.state || "";
+        row.append(snippet);
+        const url = item.url || item.link;
+        if (typeof url === "string" && /^https:\/\//i.test(url)) {
+          const link = document.createElement("a");
+          link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+          link.textContent = "Open source ↗";
+          link.style.display = "inline-block"; link.style.marginTop = "4px";
+          row.append(link);
         }
-      } catch (_) {
-        result.dataset.mixerState = "unavailable";
-        answer += "\\n\\nUniversal Mixer connection unavailable; showing the existing XParallel response.";
+        details.append(row);
+      });
+      body.append(details);
+    }
+    async function askMixer(text) {
+      const response = await fetch(API + "/public/mix", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({query:text, plugins:["web_search"]})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const err = new Error(data.error || "Mixer request failed (" + response.status + ")");
+        err.status = response.status; throw err;
       }
-      result.textContent = answer;
-    } catch (error) {
-      result.textContent = `Axaliai connection error: ${error.message}`;
+      const answer = data.final_answer || data.message || data.response;
+      if (typeof answer !== "string" || !answer.trim()) throw new Error("Mixer returned no answer");
+      return {answer, sources:data.plugin_results || data.sources || [], mode:"mixer"};
     }
-  });
-
-  voice.addEventListener("click", () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      result.textContent = "Voice input is not supported by this browser.";
-      return;
+    async function askStandard(text) {
+      const response = await fetch(API + "/public/ask", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({query:text})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Assistant request failed (" + response.status + ")");
+      const answer = data.message || data.response || data.final_answer;
+      if (typeof answer !== "string" || !answer.trim()) throw new Error("Assistant returned no answer");
+      return {answer, sources:[], mode:"standard"};
     }
-    const recognition = new SpeechRecognition();
-    recognition.lang = document.documentElement.lang || "en-US";
-    recognition.interimResults = false;
-    recognition.onresult = (event) => { query.value = event.results[0][0].transcript; query.focus(); };
-    recognition.onerror = () => { result.textContent = "Voice input was unavailable."; };
-    recognition.start();
-  });
-})();
-</script>
+    async function submitMessage(text) {
+      const clean = (text || "").trim();
+      if (!clean || busy) return;
+      busy = true; send.disabled = true;
+      showConversation();
+      makeMessage("user", clean);
+      const waiting = makeMessage("assistant", "");
+      const dots = document.createElement("div");
+      dots.className = "ax-typing"; dots.setAttribute("aria-label", "Axaliai is thinking");
+      for (let i=0;i<3;i++) dots.append(document.createElement("i"));
+      waiting.message.append(dots);
+      chat.scrollTop = chat.scrollHeight;
+      query.value = "";
+      try {
+        let result;
+        try {
+          result = await askMixer(clean);
+        } catch (mixerError) {
+          // Fall back to the legacy public assistant route when mixer orchestration is unavailable.
+          result = await askStandard(clean);
+          result.notice = "The shared mixer was unavailable for this turn; the standard assistant route answered instead.";
+        }
+        waiting.message.replaceChildren();
+        waiting.message.textContent = result.answer;
+        if (result.notice) {
+          const notice = document.createElement("div");
+          notice.style.cssText = "margin-top:9px;color:#f2c879;font-size:10px";
+          notice.textContent = result.notice;
+          waiting.body.append(notice);
+        }
+        addSources(waiting.body, result.sources);
+        const tools = document.createElement("div");
+        tools.className = "ax-msgtools";
+        const copy = document.createElement("button");
+        copy.type = "button"; copy.className = "ax-toolbtn"; copy.textContent = "Copy answer";
+        copy.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(result.answer); copy.textContent = "Copied"; }
+          catch (_) { copy.textContent = "Copy unavailable"; }
+        });
+        const speak = document.createElement("button");
+        speak.type = "button"; speak.className = "ax-toolbtn"; speak.textContent = "Read aloud";
+        speak.addEventListener("click", () => {
+          if (!("speechSynthesis" in window)) { speak.textContent = "Speech unavailable"; return; }
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(result.answer);
+          utterance.lang = document.documentElement.lang || "en-US";
+          window.speechSynthesis.speak(utterance);
+        });
+        tools.append(copy, speak); waiting.body.append(tools);
+        setStatus(true, result.mode === "mixer" ? "Mixer connected" : "Assistant connected");
+      } catch (error) {
+        waiting.message.replaceChildren();
+        waiting.message.classList.add("ax-error");
+        waiting.message.textContent = "I couldn't reach the assistant just now. Please try again in a moment. (" + String(error.message || "connection error").slice(0,140) + ")";
+        setStatus(false, "Assistant unavailable");
+      } finally {
+        busy = false; send.disabled = false; query.focus(); chat.scrollTop = chat.scrollHeight;
+      }
+    }
+    form.addEventListener("submit", (event) => { event.preventDefault(); submitMessage(query.value); });
+    query.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault(); form.requestSubmit();
+      }
+    });
+    root.querySelector("#ax-new-chat").addEventListener("click", resetConversation);
+    root.querySelectorAll("[data-prompt]").forEach((button) => button.addEventListener("click", () => {
+      query.value = button.getAttribute("data-prompt") || "";
+      query.focus();
+      if (window.matchMedia("(max-width: 760px)").matches) query.scrollIntoView({behavior:"smooth",block:"center"});
+    }));
+    voice.addEventListener("click", () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { setStatus(false, "Voice input unsupported"); return; }
+      if (activeRecognition) { activeRecognition.stop(); activeRecognition = null; voice.textContent = "⌁"; return; }
+      const recognition = new SpeechRecognition();
+      activeRecognition = recognition;
+      recognition.lang = document.documentElement.lang || "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      voice.textContent = "●";
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i=event.resultIndex;i<event.results.length;i++) transcript += event.results[i][0].transcript;
+        query.value = transcript;
+      };
+      recognition.onerror = () => setStatus(false, "Voice input unavailable");
+      recognition.onend = () => { activeRecognition = null; voice.textContent = "⌁"; query.focus(); };
+      try { recognition.start(); setStatus(true, "Listening"); }
+      catch (_) { activeRecognition = null; voice.textContent = "⌁"; setStatus(false, "Voice input unavailable"); }
+    });
+    checkHealth();
+  })();
+  </script>
+</div>
