@@ -28,6 +28,17 @@ class PluginAdapterTests(unittest.TestCase):
         self.assertEqual(result["data"]["items"][0]["full_name"],"owner/repo")
         self.assertEqual(http.call_args.args[1]["Authorization"],"Bearer test-token")
 
+    def test_github_list_repositories_accepts_api_array_response(self):
+        response = [{"full_name":"owner/repo","private":True,"html_url":"https://github.com/owner/repo","description":"private repo"}]
+        with patch.dict(os.environ, {"GITHUB_TOKEN":"test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response):
+            result=plugins.execute_plugin("github","list_repositories",{})
+        self.assertEqual(result["state"],"ok")
+        self.assertEqual(result["data"]["items"][0]["full_name"],"owner/repo")
+
+    def test_client_payload_cannot_self_approve_sandbox(self):
+        result=plugins.execute_plugin("xparallel_sandbox","run_tests",{"files":{"x.py":"YQ=="},"human_approved":True},human_approved=False)
+        self.assertEqual(result["state"],"approval_required")
+
     def test_google_drive_search_uses_authorized_access_token(self):
         response = {"files":[{"id":"abc123","name":"notes.txt","mimeType":"text/plain"}]}
         with patch.dict(os.environ, {"GOOGLE_DRIVE_ACCESS_TOKEN":"drive-test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response) as http:
@@ -74,7 +85,7 @@ class PluginAdapterTests(unittest.TestCase):
     def test_ai_memory_does_not_return_other_workspace_or_legacy_records(self):
         with tempfile.TemporaryDirectory() as tmp:
             memory=Path(tmp)/"memory.jsonl"
-            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel approval"})+"\\n"+json.dumps({"workspace_id":"beta","text":"XParallel private beta"})+"\\n"+json.dumps({"text":"XParallel legacy unscoped"})+"\\n",encoding="utf-8")
+            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel approval"})+"\n"+json.dumps({"workspace_id":"beta","text":"XParallel private beta"})+"\\n"+json.dumps({"text":"XParallel legacy unscoped"})+"\\n",encoding="utf-8")
             with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
                 result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel","workspace_id":"alpha"})
         self.assertEqual(result["state"],"ok")
