@@ -1,6 +1,6 @@
 """Least-privilege, stdlib-only adapters for Axaliai/XParallel plugins."""
 from __future__ import annotations
-import json, os, re, sqlite3, urllib.parse, urllib.request, urllib.error, uuid
+import json, os, re, sqlite3, socket, urllib.parse, urllib.request, urllib.error, uuid
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -138,7 +138,8 @@ def _memory(action: str, p: dict) -> dict:
             if not text_value: raise ValueError("memory_text_required")
             if len(text_value)>MAX_TEXT_CHARS: raise ValueError("memory_text_too_large")
             metadata=p.get("metadata") if isinstance(p.get("metadata"),dict) else {}
-            metadata_json=json.dumps(metadata,ensure_ascii=False)[:4000]
+            metadata_json=json.dumps(metadata,ensure_ascii=False)
+            if len(metadata_json)>4000: raise ValueError("memory_metadata_too_large")
             try: retention=int(p.get("retention_days",os.getenv("XP_AI_MEMORY_RETENTION_DAYS","365")))
             except (TypeError,ValueError): raise ValueError("invalid_retention_days")
             if retention<1 or retention>3650: raise ValueError("retention_days_must_be_between_1_and_3650")
@@ -190,6 +191,8 @@ def plugin_catalog(sandbox_available: bool=False) -> dict[str,Any]:
         if plugin["id"]=="xparallel_sandbox": ready=bool(sandbox_available)
         needs_path = {"file_retrieval":"XP_FILE_RETRIEVAL_ROOT","ai_memory":"XP_AI_MEMORY_DB"}.get(plugin["id"])
         path_configured = bool(needs_path and os.getenv(needs_path, "").strip())
+        if plugin["id"]=="file_retrieval" and path_configured:
+            path_configured=Path(os.getenv(needs_path,"")).is_dir()
         if ready and (configured or not env) and (not needs_path or path_configured) and (plugin["id"] != "xparallel_sandbox" or sandbox_available): status="available"
         elif env and not configured: status="credentials_missing"
         elif needs_path and not path_configured: status="configuration_required"
@@ -210,10 +213,24 @@ def execute_plugin(plugin_id: str, action: str, payload: dict[str,Any], *, human
         if plugin_id=="xparallel_sandbox": payload["human_approved"]=human_approved
         result=adapter(action,payload)
         return {**result,"plugin_id":plugin_id}
-    except PermissionError as exc: return {"state":"approval_required","plugin_id":plugin_id,"reason":str(exc),"action":action}
-    except (ValueError,urllib.error.HTTPError,urllib.error.URLError,TimeoutError,OSError) as exc:
-        # Never return credentials, request headers, or full response bodies.
-        return {"state":"plugin_error","plugin_id":plugin_id,"action":action,"error":str(exc)[:300]}
+    except PermissionError as exc:
+        return {"state":"approval_required","plugin_id":plugin_id,"reason":str(exc),"action":action}
+    except urllib.error.HTTPError as exc:
+        state="rate_limited" if exc.code==429 else "permission_denied" if exc.code in (401,403) else "unavailable"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":f"provider_http_{exc.code}"}
+    except urllib.error.URLError as exc:
+        state="timeout" if isinstance(exc.reason,(TimeoutError,socket.timeout)) else "unavailable"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":state}
+    except (TimeoutError,socket.timeout):
+        return {"state":"timeout","plugin_id":plugin_id,"action":action,"error":"timeout"}
+    except sqlite3.Error:
+        return {"state":"unavailable","plugin_id":plugin_id,"action":action,"error":"memory_storage_unavailable"}
+    except ValueError as exc:
+        message=str(exc)[:200]
+        state="credentials_missing" if message.startswith("credentials_missing:") else "configuration_required" if message.startswith("configuration_missing:") else "plugin_error"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":message}
+    except OSError:
+        return {"state":"unavailable","plugin_id":plugin_id,"action":action,"error":"local_resource_unavailable"}
 
 def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private: bool=False, workspace_id: str="") -> dict[str,Any]:
     """Run only explicitly selected read/retrieval actions and return bounded untrusted context."""
