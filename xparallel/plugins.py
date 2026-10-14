@@ -197,6 +197,8 @@ def plugin_catalog(sandbox_available: bool=False) -> dict[str,Any]:
             db_path=os.getenv(needs_path,"").strip()
             parent=Path(db_path).expanduser().parent
             path_configured=db_path != ":memory:" and parent.is_dir() and os.access(parent,os.W_OK)
+        if needs_path:
+            configured = path_configured
         if ready and (configured or not env) and (not needs_path or path_configured) and (plugin["id"] != "xparallel_sandbox" or sandbox_available): status="available"
         elif env and not configured: status="credentials_missing"
         elif needs_path and not path_configured: status="configuration_required"
