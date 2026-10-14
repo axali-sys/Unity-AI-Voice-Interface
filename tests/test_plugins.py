@@ -58,7 +58,7 @@ class PluginAdapterTests(unittest.TestCase):
     def test_web_search_missing_key_fails_closed(self):
         with patch.dict(os.environ, {}, clear=True):
             result=plugins.execute_plugin("web_search","search",{"query":"test"})
-        self.assertEqual(result["state"],"plugin_error")
+        self.assertEqual(result["state"],"credentials_missing")
         self.assertIn("credentials_missing",result["error"])
 
     def test_file_retrieval_reads_only_within_configured_root(self):
