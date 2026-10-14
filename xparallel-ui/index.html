@@ -50,4 +50,9 @@ document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{document.quer
 document.getElementById("connect").onclick=async()=>{try{const d=await json("/public/xparallel/access");const s=statusLine();if(s)s.textContent="Connected · "+d.gateway+" v"+d.version+" · "+d.capabilities.length+" capabilities";health.textContent="● CONNECTED"}catch(e){const s=statusLine();if(s)s.textContent="Gateway connection failed: "+e.message}};
 overview();check();
 </script>
-</body></html>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

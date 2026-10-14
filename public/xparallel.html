@@ -52,4 +52,9 @@ $("estimateStorage").onclick=()=>{let chars=0;try{for(let i=0;i<localStorage.len
 $("exportLocal").onclick=()=>{const data={exported_at:new Date().toISOString(),localStorage_payload_estimate:$("storageResult").textContent,warning:"This is not a complete server backup."};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="xparallel-local-storage-estimate.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 if(!state.token){$("settingsPanel").classList.remove("hidden");}
 </script>
-</body></html>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "unity-ai-voice-interface",
+  "version": "1.0.0",
+  "description": "Unity AI Voice Interface with XParallel API",
+  "private": true,
+  "scripts": {
+    "postinstall": "echo 'Vercel Analytics installed'"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
