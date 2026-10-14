@@ -228,16 +228,17 @@ class Handler(BaseHTTPRequestHandler):
             if not plugin_id or not action:
                 return send_json(self, 400, {"error": "plugin_id_and_action_required"})
             item = next((x for x in PLUGIN_REGISTRY if x["id"] == plugin_id), None)
+            context = self.authenticated_context(data)
+            if plugin_id == "ai_memory":
+                payload["workspace_id"] = context["workspace_id"]
             approved = False
             if item and item.get("approval_required"):
-                context = self.authenticated_context(data)
                 approved = consume_approval(str(data.get("approval_ticket", "")), plugin_id=plugin_id, action=action,
                                             payload=payload, workspace_id=context["workspace_id"],
                                             actor=context["actor"])
                 if not approved:
                     return send_json(self, 403, {"error": "valid_action_bound_approval_ticket_required"})
             result = execute_plugin(plugin_id, action, payload, human_approved=approved)
-            context = self.authenticated_context(data)
             audit = self.audit("plugin_execution_attempt", context["workspace_id"], context["actor"],
                                {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
