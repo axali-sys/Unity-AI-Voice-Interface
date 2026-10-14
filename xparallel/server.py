@@ -214,8 +214,8 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "approval_required_plugin_and_action_must_be_valid"})
             context = self.authenticated_context(data)
             ticket = issue_approval(plugin_id=plugin_id, action=action, payload=payload,
-                                    workspace_id=context["workspace_id"], actor="authenticated-token-holder")
-            self.audit("plugin_approval_issued", context["workspace_id"], "authenticated-token-holder",
+                                    workspace_id=context["workspace_id"], actor=context["actor"])
+            self.audit("plugin_approval_issued", context["workspace_id"], context["actor"],
                        {"plugin_id": plugin_id, "action": action})
             return send_json(self, 200, ticket)
 
@@ -233,12 +233,12 @@ class Handler(BaseHTTPRequestHandler):
                 context = self.authenticated_context(data)
                 approved = consume_approval(str(data.get("approval_ticket", "")), plugin_id=plugin_id, action=action,
                                             payload=payload, workspace_id=context["workspace_id"],
-                                            actor="authenticated-token-holder")
+                                            actor=context["actor"])
                 if not approved:
                     return send_json(self, 403, {"error": "valid_action_bound_approval_ticket_required"})
             result = execute_plugin(plugin_id, action, payload, human_approved=approved)
             context = self.authenticated_context(data)
-            audit = self.audit("plugin_execution_attempt", context["workspace_id"], "authenticated-token-holder",
+            audit = self.audit("plugin_execution_attempt", context["workspace_id"], context["actor"],
                                {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
 
