@@ -53,7 +53,10 @@ def _post(url: str, payload: dict, headers: dict, timeout: float) -> dict:
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", **headers}, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as response:
-            return json.loads(response.read().decode())
+            raw = response.read(1_000_001)
+        if len(raw) > 1_000_000:
+            raise RuntimeError("provider_response_too_large")
+        return json.loads(raw.decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read(1500).decode(errors="replace")
         raise RuntimeError(f"provider_http_{exc.code}: {detail}") from None
@@ -129,6 +132,9 @@ async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None
     entries = model_registry()
     if not query.strip():
         raise ValueError("query_required")
+    max_input_chars = max(256, min(100_000, int(os.getenv("XP_MIXER_MAX_INPUT_CHARS", "12000"))))
+    if len(query) > max_input_chars:
+        raise ValueError("query_too_large")
     plugin_context = ""
     plugin_results = []
     if plugin_ids:
