@@ -1,5 +1,6 @@
 """XParallel V1 API: intent -> controlled sandbox -> evidence -> verified solution."""
 import asyncio
+import hmac
 import json
 import os
 import time
@@ -11,7 +12,7 @@ from xparallel.router import route
 from xparallel.solution import create_solution, verify_solution
 from xparallel.graph import GRAPH
 from xparallel.persistence import REPOSITORY
-from xparallel.workspace import workspace_context
+from xparallel.workspace import workspace_context, workspace_id
 from xparallel.billing import usage_event, invoice_preview
 from xparallel.authz import authorize
 from xparallel.audit_repository import AUDIT_REPOSITORY
@@ -83,11 +84,41 @@ def public_rate_ok(handler):
     return True
 
 class Handler(BaseHTTPRequestHandler):
+    def workspace_principal(self):
+        """Resolve optional per-workspace bearer tokens; never trust workspace_id from request JSON."""
+        supplied = self.headers.get("Authorization", "")
+        try:
+            mapping = json.loads(os.getenv("XP_WORKSPACE_TOKENS_JSON", "{}"))
+        except (TypeError, json.JSONDecodeError):
+            mapping = {}
+        if isinstance(mapping, dict):
+            for workspace, config in mapping.items():
+                if not isinstance(config, dict):
+                    continue
+                expected = str(config.get("token", ""))
+                if expected and hmac.compare_digest(supplied, "Bearer " + expected):
+                    role = str(config.get("role", "owner"))
+                    if role not in {"owner", "admin", "operator", "viewer"}:
+                        role = "viewer"
+                    return {"workspace_id": workspace_id(workspace), "role": role, "actor": "workspace-token"}
+        return None
+
     def authorized(self):
-        return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
+        principal = self.workspace_principal()
+        return bool(principal) or (bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}")
 
     def role(self):
-        return DEFAULT_ROLE if self.authorized() else "viewer"
+        principal = self.workspace_principal()
+        if principal:
+            return principal["role"]
+        return DEFAULT_ROLE if bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}" else "viewer"
+
+    def authenticated_context(self, data):
+        principal = self.workspace_principal()
+        if principal:
+            return workspace_context({**data, "workspace_id": principal["workspace_id"], "actor": principal["actor"]})
+        # The legacy XP_TOKEN is a single-tenant administrative credential.
+        return workspace_context({**data, "workspace_id": os.getenv("XP_DEFAULT_WORKSPACE_ID", "default"), "actor": "owner-token"})
 
     def require_role(self, action):
         return authorize(self.role(), action)
@@ -181,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
             item = next((x for x in PLUGIN_REGISTRY if x["id"] == plugin_id), None)
             if not item or not item.get("approval_required") or not action:
                 return send_json(self, 400, {"error": "approval_required_plugin_and_action_must_be_valid"})
-            context = workspace_context(data)
+            context = self.authenticated_context(data)
             ticket = issue_approval(plugin_id=plugin_id, action=action, payload=payload,
                                     workspace_id=context["workspace_id"], actor="authenticated-token-holder")
             self.audit("plugin_approval_issued", context["workspace_id"], "authenticated-token-holder",
@@ -199,14 +230,14 @@ class Handler(BaseHTTPRequestHandler):
             item = next((x for x in PLUGIN_REGISTRY if x["id"] == plugin_id), None)
             approved = False
             if item and item.get("approval_required"):
-                context = workspace_context(data)
+                context = self.authenticated_context(data)
                 approved = consume_approval(str(data.get("approval_ticket", "")), plugin_id=plugin_id, action=action,
                                             payload=payload, workspace_id=context["workspace_id"],
                                             actor="authenticated-token-holder")
                 if not approved:
                     return send_json(self, 403, {"error": "valid_action_bound_approval_ticket_required"})
             result = execute_plugin(plugin_id, action, payload, human_approved=approved)
-            context = workspace_context(data)
+            context = self.authenticated_context(data)
             audit = self.audit("plugin_execution_attempt", context["workspace_id"], "authenticated-token-holder",
                                {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
@@ -274,7 +305,7 @@ class Handler(BaseHTTPRequestHandler):
                 plugin_ids = [str(x) for x in plugin_ids if isinstance(x, str)][:5]
                 if is_public:
                     plugin_ids = [x for x in plugin_ids if x == "web_search"]
-                context = workspace_context(data)
+                context = self.authenticated_context(data) if not is_public else {"workspace_id": "", "actor": "public"}
                 result = asyncio.run(mix_answers(query, plugin_ids=plugin_ids, allow_private=not is_public,
                                                  workspace_id="" if is_public else context["workspace_id"]))
             except MixerConfigError as exc:
