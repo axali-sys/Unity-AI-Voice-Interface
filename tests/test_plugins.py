@@ -85,7 +85,7 @@ class PluginAdapterTests(unittest.TestCase):
     def test_ai_memory_does_not_return_other_workspace_or_legacy_records(self):
         with tempfile.TemporaryDirectory() as tmp:
             memory=Path(tmp)/"memory.jsonl"
-            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel approval"})+"\n"+json.dumps({"workspace_id":"beta","text":"XParallel private beta"})+"\\n"+json.dumps({"text":"XParallel legacy unscoped"})+"\\n",encoding="utf-8")
+            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel approval"})+"\n"+json.dumps({"workspace_id":"beta","text":"XParallel private beta"})+"\\n"+json.dumps({"text":"XParallel legacy unscoped"})+"\n",encoding="utf-8")
             with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
                 result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel","workspace_id":"alpha"})
         self.assertEqual(result["state"],"ok")
