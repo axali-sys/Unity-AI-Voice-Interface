@@ -193,6 +193,10 @@ def plugin_catalog(sandbox_available: bool=False) -> dict[str,Any]:
         path_configured = bool(needs_path and os.getenv(needs_path, "").strip())
         if plugin["id"]=="file_retrieval" and path_configured:
             path_configured=Path(os.getenv(needs_path,"")).is_dir()
+        if plugin["id"]=="ai_memory" and path_configured:
+            db_path=os.getenv(needs_path,"").strip()
+            parent=Path(db_path).expanduser().parent
+            path_configured=db_path != ":memory:" and parent.is_dir() and os.access(parent,os.W_OK)
         if ready and (configured or not env) and (not needs_path or path_configured) and (plugin["id"] != "xparallel_sandbox" or sandbox_available): status="available"
         elif env and not configured: status="credentials_missing"
         elif needs_path and not path_configured: status="configuration_required"
