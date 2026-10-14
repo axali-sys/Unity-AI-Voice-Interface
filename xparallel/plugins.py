@@ -1,7 +1,8 @@
 """Least-privilege, stdlib-only adapters for Axaliai/XParallel plugins."""
 from __future__ import annotations
-import json, os, re, urllib.parse, urllib.request, urllib.error
+import json, os, re, sqlite3, socket, urllib.parse, urllib.request, urllib.error, uuid
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 PLUGIN_REGISTRY = [
@@ -15,13 +16,13 @@ PLUGIN_REGISTRY = [
 MAX_RESPONSE_BYTES = 1_000_000
 MAX_TEXT_CHARS = 12000
 
-def _http_json(url: str, headers: dict[str,str] | None = None, timeout: float = 8) -> dict:
+def _http_json(url: str, headers: dict[str,str] | None = None, timeout: float = 8) -> Any:
     req=urllib.request.Request(url,headers={"Accept":"application/json","User-Agent":"Axaliai-PluginAdapter/1.0",**(headers or {})})
     with urllib.request.urlopen(req,timeout=timeout) as r:
         raw=r.read(MAX_RESPONSE_BYTES+1)
     if len(raw)>MAX_RESPONSE_BYTES: raise ValueError("plugin_response_too_large")
     data=json.loads(raw.decode("utf-8"))
-    if not isinstance(data,dict): raise ValueError("invalid_plugin_response")
+    if not isinstance(data,(dict,list)): raise ValueError("invalid_plugin_response")
     return data
 
 def _text(value: Any, limit: int = MAX_TEXT_CHARS) -> str:
@@ -119,24 +120,58 @@ def _file_retrieval(action: str, p: dict) -> dict:
     raise ValueError("unsupported_file_retrieval_action")
 
 def _memory(action: str, p: dict) -> dict:
-    if action!="search": raise ValueError("unsupported_ai_memory_action")
-    path_text=os.getenv("XP_AI_MEMORY_PATH","").strip()
-    if not path_text: raise ValueError("configuration_missing:XP_AI_MEMORY_PATH")
-    path=Path(path_text).resolve()
-    if not path.is_file(): raise ValueError("memory_file_not_found")
-    query=str(p.get("query","")).strip().lower()
-    if not query: raise ValueError("query_required")
-    terms={x for x in re.findall(r"[a-z0-9]{3,}",query)}
-    hits=[]
-    with path.open("r",encoding="utf-8") as f:
-        for line in f:
-            try: item=json.loads(line)
-            except json.JSONDecodeError: item={"text":line.strip()}
-            rendered=_text(item)
-            score=sum(t in rendered.lower() for t in terms)
-            if score: hits.append((score,rendered))
-    hits.sort(key=lambda x:x[0],reverse=True)
-    return {"state":"ok","plugin_id":"ai_memory","results":[{"score":s,"text":t[:2000]} for s,t in hits[:5]]}
+    """Workspace-scoped SQLite memory with soft deletion and bounded retention."""
+    db_path=os.getenv("XP_AI_MEMORY_DB","").strip()
+    if not db_path: raise ValueError("configuration_missing:XP_AI_MEMORY_DB")
+    workspace=str(p.get("workspace_id","")).strip()
+    if not workspace: raise ValueError("workspace_id_required_for_memory_isolation")
+    now=datetime.now(timezone.utc)
+    with sqlite3.connect(db_path, timeout=5) as db:
+        db.execute("PRAGMA busy_timeout=5000")
+        db.execute("""CREATE TABLE IF NOT EXISTS memory_records (
+            id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, text TEXT NOT NULL,
+            metadata_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL,
+            expires_at TEXT, deleted_at TEXT)""")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_memory_workspace_created ON memory_records(workspace_id, created_at DESC)")
+        if action=="store":
+            text_value=str(p.get("text","")).strip()
+            if not text_value: raise ValueError("memory_text_required")
+            if len(text_value)>MAX_TEXT_CHARS: raise ValueError("memory_text_too_large")
+            metadata=p.get("metadata") if isinstance(p.get("metadata"),dict) else {}
+            metadata_json=json.dumps(metadata,ensure_ascii=False)
+            if len(metadata_json)>4000: raise ValueError("memory_metadata_too_large")
+            try: retention=int(p.get("retention_days",os.getenv("XP_AI_MEMORY_RETENTION_DAYS","365")))
+            except (TypeError,ValueError): raise ValueError("invalid_retention_days")
+            if retention<1 or retention>3650: raise ValueError("retention_days_must_be_between_1_and_3650")
+            memory_id=uuid.uuid4().hex
+            created=now.isoformat()
+            expires=(now+timedelta(days=retention)).isoformat()
+            db.execute("INSERT INTO memory_records(id,workspace_id,text,metadata_json,created_at,expires_at) VALUES(?,?,?,?,?,?)",
+                       (memory_id,workspace,text_value,metadata_json,created,expires))
+            return {"state":"ok","plugin_id":"ai_memory","action":action,"memory_id":memory_id,"workspace_id":workspace,"created_at":created,"expires_at":expires}
+        if action=="delete":
+            memory_id=str(p.get("memory_id","")).strip()
+            if not re.fullmatch(r"[A-Fa-f0-9-]{16,64}",memory_id): raise ValueError("valid_memory_id_required")
+            deleted=now.isoformat()
+            cur=db.execute("UPDATE memory_records SET deleted_at=? WHERE id=? AND workspace_id=? AND deleted_at IS NULL",
+                           (deleted,memory_id,workspace))
+            return {"state":"ok" if cur.rowcount else "not_found","plugin_id":"ai_memory","action":action,"workspace_id":workspace,"deleted":bool(cur.rowcount)}
+        if action!="search": raise ValueError("unsupported_ai_memory_action")
+        query=str(p.get("query","")).strip().lower()
+        if not query: raise ValueError("query_required")
+        terms={x for x in re.findall(r"[a-z0-9]{3,}",query)}
+        rows=db.execute("""SELECT id,text,metadata_json,created_at,expires_at FROM memory_records
+            WHERE workspace_id=? AND deleted_at IS NULL AND (expires_at IS NULL OR expires_at>?)
+            ORDER BY created_at DESC LIMIT 1000""",(workspace,now.isoformat())).fetchall()
+        hits=[]
+        for memory_id,text_value,metadata_json,created,expires in rows:
+            score=sum(term in text_value.lower() for term in terms)
+            if score:
+                hits.append((score,created,{"memory_id":memory_id,"text":text_value[:2000],
+                    "metadata":json.loads(metadata_json or "{}"),"created_at":created,"expires_at":expires}))
+        hits.sort(key=lambda x:(x[0],x[1]),reverse=True)
+        return {"state":"ok","plugin_id":"ai_memory","action":action,"workspace_id":workspace,
+                "results":[{"score":score,**record} for score,_,record in hits[:5]]}
 
 def _sandbox(action: str, p: dict) -> dict:
     if action!="run_tests": raise ValueError("unsupported_xparallel_sandbox_action")
@@ -154,8 +189,16 @@ def plugin_catalog(sandbox_available: bool=False) -> dict[str,Any]:
         configured=bool(env and os.getenv(env,"").strip())
         ready=plugin["adapter"] in ADAPTERS
         if plugin["id"]=="xparallel_sandbox": ready=bool(sandbox_available)
-        needs_path = {"file_retrieval":"XP_FILE_RETRIEVAL_ROOT","ai_memory":"XP_AI_MEMORY_PATH"}.get(plugin["id"])
+        needs_path = {"file_retrieval":"XP_FILE_RETRIEVAL_ROOT","ai_memory":"XP_AI_MEMORY_DB"}.get(plugin["id"])
         path_configured = bool(needs_path and os.getenv(needs_path, "").strip())
+        if plugin["id"]=="file_retrieval" and path_configured:
+            path_configured=Path(os.getenv(needs_path,"")).is_dir()
+        if plugin["id"]=="ai_memory" and path_configured:
+            db_path=os.getenv(needs_path,"").strip()
+            parent=Path(db_path).expanduser().parent
+            path_configured=db_path != ":memory:" and parent.is_dir() and os.access(parent,os.W_OK)
+        if needs_path:
+            configured = path_configured
         if ready and (configured or not env) and (not needs_path or path_configured) and (plugin["id"] != "xparallel_sandbox" or sandbox_available): status="available"
         elif env and not configured: status="credentials_missing"
         elif needs_path and not path_configured: status="configuration_required"
@@ -176,12 +219,26 @@ def execute_plugin(plugin_id: str, action: str, payload: dict[str,Any], *, human
         if plugin_id=="xparallel_sandbox": payload["human_approved"]=human_approved
         result=adapter(action,payload)
         return {**result,"plugin_id":plugin_id}
-    except PermissionError as exc: return {"state":"approval_required","plugin_id":plugin_id,"reason":str(exc),"action":action}
-    except (ValueError,urllib.error.HTTPError,urllib.error.URLError,TimeoutError,OSError) as exc:
-        # Never return credentials, request headers, or full response bodies.
-        return {"state":"plugin_error","plugin_id":plugin_id,"action":action,"error":str(exc)[:300]}
+    except PermissionError as exc:
+        return {"state":"approval_required","plugin_id":plugin_id,"reason":str(exc),"action":action}
+    except urllib.error.HTTPError as exc:
+        state="rate_limited" if exc.code==429 else "permission_denied" if exc.code in (401,403) else "unavailable"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":f"provider_http_{exc.code}"}
+    except urllib.error.URLError as exc:
+        state="timeout" if isinstance(exc.reason,(TimeoutError,socket.timeout)) else "unavailable"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":state}
+    except (TimeoutError,socket.timeout):
+        return {"state":"timeout","plugin_id":plugin_id,"action":action,"error":"timeout"}
+    except sqlite3.Error:
+        return {"state":"unavailable","plugin_id":plugin_id,"action":action,"error":"memory_storage_unavailable"}
+    except ValueError as exc:
+        message=str(exc)[:200]
+        state="credentials_missing" if message.startswith("credentials_missing:") else "configuration_required" if message.startswith("configuration_missing:") else "plugin_error"
+        return {"state":state,"plugin_id":plugin_id,"action":action,"error":message}
+    except OSError:
+        return {"state":"unavailable","plugin_id":plugin_id,"action":action,"error":"local_resource_unavailable"}
 
-def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private: bool=False) -> dict[str,Any]:
+def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private: bool=False, workspace_id: str="") -> dict[str,Any]:
     """Run only explicitly selected read/retrieval actions and return bounded untrusted context."""
     outputs=[]; chunks=[]
     allowed_public={"web_search"}
@@ -190,7 +247,9 @@ def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private:
         if pid=="xparallel_sandbox": outputs.append({"plugin_id":pid,"state":"not_run","reason":"sandbox_is_not_a_retrieval_plugin"}); continue
         if not allow_private and pid not in allowed_public:
             outputs.append({"plugin_id":pid,"state":"blocked","reason":"private_plugin_requires_authenticated_mixer"}); continue
-        result=execute_plugin(pid,action_by_id.get(pid,"search"),{"query":query})
+        payload={"query":query}
+        if pid=="ai_memory": payload["workspace_id"]=workspace_id
+        result=execute_plugin(pid,action_by_id.get(pid,"search"),payload)
         outputs.append({"plugin_id":pid,"state":result.get("state"),"error":result.get("error"),"reason":result.get("reason")})
         if result.get("state")=="ok":
             safe={k:v for k,v in result.items() if k not in {"state"}}

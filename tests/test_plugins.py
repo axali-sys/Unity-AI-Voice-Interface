@@ -28,6 +28,17 @@ class PluginAdapterTests(unittest.TestCase):
         self.assertEqual(result["data"]["items"][0]["full_name"],"owner/repo")
         self.assertEqual(http.call_args.args[1]["Authorization"],"Bearer test-token")
 
+    def test_github_list_repositories_accepts_api_array_response(self):
+        response = [{"full_name":"owner/repo","private":True,"html_url":"https://github.com/owner/repo","description":"private repo"}]
+        with patch.dict(os.environ, {"GITHUB_TOKEN":"test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response):
+            result=plugins.execute_plugin("github","list_repositories",{})
+        self.assertEqual(result["state"],"ok")
+        self.assertEqual(result["data"]["items"][0]["full_name"],"owner/repo")
+
+    def test_client_payload_cannot_self_approve_sandbox(self):
+        result=plugins.execute_plugin("xparallel_sandbox","run_tests",{"files":{"x.py":"YQ=="},"human_approved":True},human_approved=False)
+        self.assertEqual(result["state"],"approval_required")
+
     def test_google_drive_search_uses_authorized_access_token(self):
         response = {"files":[{"id":"abc123","name":"notes.txt","mimeType":"text/plain"}]}
         with patch.dict(os.environ, {"GOOGLE_DRIVE_ACCESS_TOKEN":"drive-test-token"}, clear=True), patch.object(plugins,"_http_json",return_value=response) as http:
@@ -47,7 +58,7 @@ class PluginAdapterTests(unittest.TestCase):
     def test_web_search_missing_key_fails_closed(self):
         with patch.dict(os.environ, {}, clear=True):
             result=plugins.execute_plugin("web_search","search",{"query":"test"})
-        self.assertEqual(result["state"],"plugin_error")
+        self.assertEqual(result["state"],"credentials_missing")
         self.assertIn("credentials_missing",result["error"])
 
     def test_file_retrieval_reads_only_within_configured_root(self):
@@ -61,15 +72,34 @@ class PluginAdapterTests(unittest.TestCase):
         self.assertEqual(blocked["state"],"plugin_error")
         self.assertIn("path_outside_allowed_root",blocked["error"])
 
-    def test_ai_memory_search_returns_matching_records(self):
+    def test_ai_memory_search_returns_persistent_workspace_records(self):
         with tempfile.TemporaryDirectory() as tmp:
-            memory=Path(tmp)/"memory.jsonl"
-            memory.write_text(json.dumps({"text":"XParallel sandbox approval protocol"})+"\n"+json.dumps({"text":"unrelated music note"})+"\n",encoding="utf-8")
-            with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
-                result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval"})
-        self.assertEqual(result["state"],"ok")
+            db=str(Path(tmp)/"memory.sqlite3")
+            with patch.dict(os.environ,{"XP_AI_MEMORY_DB":db},clear=True):
+                stored=plugins.execute_plugin("ai_memory","store",{"workspace_id":"alpha","text":"XParallel sandbox approval protocol"})
+                plugins.execute_plugin("ai_memory","store",{"workspace_id":"alpha","text":"unrelated music note"})
+                plugins.execute_plugin("ai_memory","store",{"workspace_id":"beta","text":"XParallel private other workspace"})
+                result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval","workspace_id":"alpha"})
+                persisted=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval","workspace_id":"alpha"})
+        self.assertEqual(stored["state"],"ok")
         self.assertTrue(result["results"])
         self.assertIn("approval",result["results"][0]["text"])
+        self.assertEqual(result["results"],persisted["results"])
+        self.assertEqual(len(result["results"]),1)
+
+    def test_ai_memory_workspace_isolation_and_soft_delete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db=str(Path(tmp)/"memory.sqlite3")
+            with patch.dict(os.environ,{"XP_AI_MEMORY_DB":db},clear=True):
+                stored=plugins.execute_plugin("ai_memory","store",{"workspace_id":"alpha","text":"XParallel private approval note"})
+                other=plugins.execute_plugin("ai_memory","search",{"query":"XParallel","workspace_id":"beta"})
+                denied=plugins.execute_plugin("ai_memory","delete",{"memory_id":stored["memory_id"],"workspace_id":"beta"})
+                deleted=plugins.execute_plugin("ai_memory","delete",{"memory_id":stored["memory_id"],"workspace_id":"alpha"})
+                after=plugins.execute_plugin("ai_memory","search",{"query":"XParallel","workspace_id":"alpha"})
+        self.assertEqual(other["results"],[])
+        self.assertEqual(denied["state"],"not_found")
+        self.assertTrue(deleted["deleted"])
+        self.assertEqual(after["results"],[])
 
     def test_private_connectors_are_blocked_from_public_mixer(self):
         with patch.dict(os.environ,{"GITHUB_TOKEN":"configured"},clear=True):

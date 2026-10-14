@@ -62,6 +62,19 @@ class MixerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(mixer.MixerConfigError):
             mixer.model_registry()
 
+    async def test_default_registry_uses_documented_current_model_ids(self):
+        entries = mixer.model_registry()
+        models = {e["provider"]:e["model_id"] for e in entries}
+        self.assertEqual(models["anthropic"], "claude-sonnet-4-6")
+        self.assertEqual(models["openai"], "gpt-6.1-sol")
+        self.assertEqual(models["google"], "gemini-3.8-flash")
+        self.assertNotIn("moonshot", models)
+
+    async def test_retired_openai_default_id_is_rejected(self):
+        os.environ["XP_MIXER_MODELS_JSON"] = '[{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]'
+        with self.assertRaises(mixer.MixerConfigError):
+            mixer.model_registry()
+
     async def test_synthesis_prompt_contains_all_answers(self):
         entries = [{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]
         seen = {}
@@ -88,6 +101,20 @@ class MixerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["state"], "ok")
         self.assertIn("retrieved-source-snippet", seen["context"])
         self.assertEqual(result["plugin_results"][0]["plugin_id"], "web_search")
+
+    async def test_mixer_rejects_oversized_input_before_provider_calls(self):
+        with patch.dict(os.environ, {"XP_MIXER_MAX_INPUT_CHARS":"256"}), patch.object(mixer, "model_registry", return_value=[]):
+            with self.assertRaisesRegex(ValueError, "query_too_large"):
+                await mixer.mix("x" * 257)
+
+    async def test_provider_response_body_is_bounded(self):
+        class FakeResponse:
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def read(self,n): return b"x" * n
+        with patch("xparallel.mixer.urllib.request.urlopen",return_value=FakeResponse()):
+            with self.assertRaisesRegex(RuntimeError,"provider_response_too_large"):
+                mixer._post("https://example.test",{}, {}, 1)
 
     async def test_timeout_budget_is_enforced(self):
         entries = [{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]

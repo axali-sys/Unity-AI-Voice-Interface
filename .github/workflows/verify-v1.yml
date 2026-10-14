@@ -2,9 +2,9 @@ name: Verify Axaliai V1
 
 on:
   push:
-    branches: [main, axaliai-v1-verified-build, axaliai-mixer-v1]
+    branches: [main, axaliai-v1-verified-build, axaliai-mixer-v1, axaliai-mixer-hardening]
   pull_request:
-    branches: [main]
+    branches: [main, xparallel-dual-space-expansion]
   workflow_dispatch:
 
 jobs:
