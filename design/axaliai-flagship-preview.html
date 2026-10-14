@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0b10">
+<title>Axaliai — Intelligence, in your hands</title>
+<style>
+:root{color-scheme:dark;--bg:#09090d;--panel:#111117;--panel2:#171720;--line:#292934;--text:#f5f4fa;--muted:#9999ad;--violet:#9b87ff;--cyan:#77e4e6;--good:#7fe0b0;--radius:20px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 58% -15%,#242044 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+button,input,textarea{font:inherit}button{cursor:pointer;color:inherit}.shell{display:grid;grid-template-columns:246px minmax(0,1fr);min-height:100vh}.sidebar{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:22px;background:#0b0b10eF}.brand{display:flex;align-items:center;gap:11px;padding:0 8px;font-size:20px;font-weight:750;letter-spacing:-.7px}.logo{height:35px;width:35px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,#b6a4ff,#6850d9 62%,#64d8e1);color:#111018;font-weight:900;box-shadow:0 0 28px #8971ff30}.newchat{border:1px solid #4c426d;background:#211d33;border-radius:13px;padding:12px 14px;text-align:left}.navlabel{color:#77778d;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;padding:0 10px;margin-bottom:-13px}.nav{display:grid;gap:5px}.nav button{border:1px solid transparent;background:transparent;text-align:left;padding:10px;border-radius:11px;color:#b8b8c8;display:flex;gap:11px;align-items:center}.nav button.active,.nav button:hover{background:#1a1925;border-color:#302b45;color:white}.nav .symbol{width:20px;text-align:center;color:#b9aaff}.sidebottom{margin-top:auto;display:grid;gap:12px}.memory-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#171522,#101015)}.tiny{font-size:12px;color:var(--muted)}.memory-title{font-weight:650;margin-bottom:4px}.profile{display:flex;align-items:center;gap:10px;padding:8px}.avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#2b2840;color:#d7cdff;font-weight:700}.main{min-width:0;display:flex;flex-direction:column;min-height:100vh}.topbar{height:72px;border-bottom:1px solid #24242e;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,4vw,52px);gap:16px}.workspace{display:flex;align-items:center;gap:9px;color:#d8d7e5;font-weight:650}.statusdot{width:7px;height:7px;background:var(--good);border-radius:50%;box-shadow:0 0 12px #7fe0b080}.topactions{display:flex;align-items:center;gap:9px}.pill{border:1px solid var(--line);border-radius:99px;padding:7px 11px;color:#c2c1d0;font-size:12px;background:#101016}.content{width:min(980px,100%);margin:0 auto;padding:clamp(28px,6vh,68px) clamp(18px,4vw,42px) 32px;flex:1}.eyebrow{font-size:11px;letter-spacing:2px;color:#b9aaff;text-transform:uppercase;font-weight:700}.hero{text-align:center;margin:0 auto 34px;max-width:700px}.hero h1{font-size:clamp(35px,5.4vw,60px);line-height:1.04;letter-spacing:-2.8px;margin:13px 0 15px;font-weight:720}.gradient{background:linear-gradient(100deg,#fff 8%,#c6baff 48%,#83e5e7 92%);-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{color:#a8a7bb;font-size:15px;max-width:550px;margin:0 auto}.composer{background:linear-gradient(150deg,#191821,#101015);border:1px solid #383444;border-radius:22px;padding:16px;box-shadow:0 18px 70px #0007,0 0 0 1px #a18aff0a;max-width:760px;margin:0 auto}.composer:focus-within{border-color:#7562b6;box-shadow:0 18px 70px #0007,0 0 0 3px #9b87ff18}.composer textarea{width:100%;resize:vertical;min-height:86px;max-height:220px;background:transparent;border:0;outline:0;color:var(--text);font-size:16px;padding:5px 5px 15px}.composer textarea::placeholder{color:#77778d}.composer-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.toolrow{display:flex;gap:7px;flex-wrap:wrap}.tool{background:#1b1a23;border:1px solid #34323f;border-radius:10px;padding:8px 10px;color:#c4c2d2;font-size:12px}.send{border:0;border-radius:12px;padding:10px 17px;color:#100e17;font-weight:750;background:linear-gradient(110deg,#c0b1ff,#80e3e4);box-shadow:0 4px 24px #9b87ff28}.suggestions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin:20px auto 40px}.suggestion{border:1px solid #292834;background:#101015;border-radius:99px;padding:9px 13px;font-size:12px;color:#c5c3d2}.section-head{display:flex;justify-content:space-between;align-items:end;margin:0 0 13px;gap:10px}.section-head h2{font-size:14px;margin:0;font-weight:650}.section-head span{font-size:11px;color:#77778d}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);background:linear-gradient(145deg,#15151d,#0f0f14);border-radius:17px;padding:16px;min-height:145px;transition:transform .18s,border-color .18s}.card:hover{transform:translateY(-2px);border-color:#51486b}.card-icon{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:#252139;color:#c7baff;margin-bottom:16px;font-size:17px}.card h3{font-size:13px;margin:0 0 6px}.card p{font-size:12px;line-height:1.55;color:#9999ad;margin:0}.products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:28px}.product{border:1px solid #2c2b37;background:#111117;border-radius:15px;padding:14px;text-align:left;min-width:0}.product strong{display:block;font-size:12px;margin:8px 0 4px}.product small{display:block;color:#9292a7;font-size:11px;line-height:1.45}.product .picon{color:#c4b7ff;font-size:18px}.product:hover,.product.selected{border-color:#7868b5;background:#1b1828}.footnote{text-align:center;color:#68687b;font-size:10px;margin:30px auto 0;max-width:700px}.response{display:none;max-width:760px;margin:18px auto 0;border:1px solid #373342;background:#111117;border-radius:16px;padding:18px}.response.show{display:block}.response h3{margin:0 0 9px;font-size:14px}.response p{white-space:pre-wrap;color:#c6c4d2;font-size:13px;margin:0}.response .demo-tag{font-size:10px;color:#d7c9ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px}.mobile-menu{display:none}
+@media(max-width:850px){.shell{grid-template-columns:72px minmax(0,1fr)}.sidebar{padding:18px 9px;align-items:center}.brand{padding:0;justify-content:center}.brand-name,.navlabel,.nav .label,.newchat .label,.memory-card,.profile .userinfo{display:none}.newchat{width:46px;height:44px;padding:0;text-align:center;display:grid;place-items:center;font-size:20px}.nav{width:100%}.nav button{justify-content:center;padding:12px 0}.nav .symbol{width:auto}.sidebottom{justify-items:center;width:100%}.profile{padding:0}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.products{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{padding:0 18px}.pill.hide-small{display:none}}
+@media(max-width:520px){.shell{grid-template-columns:1fr}.sidebar{display:none}.topbar{height:60px}.content{padding:36px 16px 24px}.hero h1{letter-spacing:-1.8px}.hero{margin-bottom:25px}.composer{padding:12px;border-radius:17px}.composer textarea{min-height:92px}.tool{padding:8px}.cards{grid-template-columns:1fr}.card{min-height:unset}.products{grid-template-columns:repeat(2,minmax(0,1fr))}.section-head span{display:none}.topactions .pill:first-child{display:none}.footnote{line-height:1.7}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">A</div><span class="brand-name">axaliai</span></div>
+  <button class="newchat" id="newChat"><span>＋</span> <span class="label">New conversation</span></button>
+  <div class="navlabel">Workspace</div>
+  <nav class="nav" aria-label="Main navigation">
+    <button class="active" data-page="Axaliai"><span class="symbol">✳</span><span class="label">Axaliai</span></button>
+    <button data-page="Omnibox"><span class="symbol">⌕</span><span class="label">Omnibox</span></button>
+    <button data-page="UnitAI"><span class="symbol">◈</span><span class="label">UnitAI</span></button>
+    <button data-page="XParallel"><span class="symbol">⟷</span><span class="label">XParallel</span></button>
+  </nav>
+  <div class="navlabel">Your space</div>
+  <nav class="nav">
+    <button data-page="Memory"><span class="symbol">⌁</span><span class="label">AI Memory</span></button>
+    <button data-page="Activity"><span class="symbol">◷</span><span class="label">Activity & runs</span></button>
+    <button data-page="Settings"><span class="symbol">⚙</span><span class="label">Settings</span></button>
+  </nav>
+  <div class="sidebottom">
+    <div class="memory-card"><div class="memory-title">Your intelligence layer</div><div class="tiny">Provider-aware · Permission-led · Evidence-first</div></div>
+    <div class="profile"><div class="avatar">A</div><div class="userinfo"><strong style="font-size:12px">Your workspace</strong><div class="tiny">Personal account</div></div></div>
+  </div>
+</aside>
+<main class="main">
+<header class="topbar">
+  <div class="workspace"><span class="statusdot"></span><span id="workspaceName">Axaliai workspace</span></div>
+  <div class="topactions"><span class="pill">✧ Parallel Intelligence</span><span class="pill hide-small">Preview interface</span></div>
+</header>
+<div class="content">
+  <section class="hero">
+    <div class="eyebrow">Your ideas, amplified</div>
+    <h1 id="headline">Intelligence that <span class="gradient">moves with you.</span></h1>
+    <p id="subheadline">One thoughtful interface for exploring ideas, creating things and getting from a question to a verified result.</p>
+  </section>
+  <section class="composer" aria-label="Ask Axaliai">
+    <textarea id="prompt" aria-label="Your message" placeholder="Ask anything. Imagine what we could build together…"></textarea>
+    <div class="composer-foot">
+      <div class="toolrow"><button class="tool" id="voice">◉ &nbsp;Voice</button><button class="tool" id="memory">⌁ &nbsp;Memory</button><button class="tool" id="mixer">✳ &nbsp;Mixer</button><button class="tool" id="attach">＋ &nbsp;Attach</button></div>
+      <button class="send" id="send">Ask Axaliai ↗</button>
+    </div>
+  </section>
+  <section class="response" id="response" aria-live="polite"><div class="demo-tag">Interface preview · no live AI call made</div><h3 id="responseTitle">Your request</h3><p id="responseBody"></p></section>
+  <div class="suggestions" aria-label="Suggested prompts">
+    <button class="suggestion" data-prompt="Help me turn an idea into a step-by-step plan.">✦ Build a plan</button>
+    <button class="suggestion" data-prompt="Explain this clearly, then help me go deeper.">⌘ Learn something</button>
+    <button class="suggestion" data-prompt="Help me create a polished first draft of my project.">✎ Create something</button>
+    <button class="suggestion" data-prompt="Help me test a system carefully and identify risks.">⤳ Analyze a system</button>
+  </div>
+  <div class="section-head"><h2>Explore your intelligence</h2><span>Tools appear as capabilities become available</span></div>
+  <section class="cards">
+    <article class="card"><div class="card-icon">✧</div><h3>Reason & explore</h3><p>Work through complex questions with clear steps, assumptions and useful explanations.</p></article>
+    <article class="card"><div class="card-icon">⌘</div><h3>Create & build</h3><p>Shape ideas into plans, writing, code and prototypes with reviewable results.</p></article>
+    <article class="card"><div class="card-icon">⌁</div><h3>Contextual memory</h3><p>Bring relevant context forward when secure, persistent memory is connected and enabled.</p></article>
+  </section>
+  <div class="section-head" style="margin-top:30px"><h2>One account. Four distinct workspaces.</h2><span>Shared intelligence, separate identities</span></div>
+  <section class="products">
+    <button class="product selected" data-page="Axaliai"><span class="picon">✳</span><strong>Axaliai</strong><small>Your flagship AI assistant</small></button>
+    <button class="product" data-page="Omnibox"><span class="picon">⌕</span><strong>Omnibox</strong><small>Universal search & input</small></button>
+    <button class="product" data-page="UnitAI"><span class="picon">◈</span><strong>UnitAI</strong><small>Dedicated AI workspace</small></button>
+    <button class="product" data-page="XParallel"><span class="picon">⟷</span><strong>XParallel</strong><small>Parallel execution environment</small></button>
+  </section>
+  <p class="footnote">Concept preview. AI provider calls, persistent memory, voice services, file processing and XParallel execution require their real integrations, secure configuration and server-side verification. No credentials are stored in this page.</p>
+</div>
+</main>
+</div>
+<script>
+const pages={
+ Axaliai:{name:"Axaliai workspace",title:'Intelligence that <span class="gradient">moves with you.</span>',sub:"One thoughtful interface for exploring ideas, creating things and getting from a question to a verified result.",placeholder:"Ask anything. Imagine what we could build together…",send:"Ask Axaliai ↗"},
+ Omnibox:{name:"Omnibox workspace",title:'One input. <span class="gradient">Every direction.</span>',sub:"A dedicated starting point to search, ask, navigate and initiate supported actions.",placeholder:"Search, ask, find or navigate…",send:"Explore ↗"},
+ UnitAI:{name:"UnitAI workspace",title:'Make room for <span class="gradient">new intelligence.</span>',sub:"A separate workspace for UnitAI capabilities, tools and its own specialized experiences.",placeholder:"What would you like to explore with UnitAI?",send:"Ask UnitAI ↗"},
+ XParallel:{name:"XParallel workspace",title:'Think beyond the <span class="gradient">usual boundaries.</span>',sub:"A separate environment for isolated workflows, system experiments and verifiable execution.",placeholder:"Describe a workflow or system you want to test…",send:"Prepare workflow ↗"},
+ Memory:{name:"AI Memory",title:'Context that stays <span class="gradient">under your control.</span>',sub:"Memory should be transparent, relevant, secure and removable—not an invisible promise.",placeholder:"What context would you like to organize or remember?",send:"Review memory ↗"},
+ Activity:{name:"Activity & runs",title:'See what actually <span class="gradient">happened.</span>',sub:"A future home for execution history, provider evidence, run status and verification results.",placeholder:"What activity or run do you want to inspect?",send:"Inspect ↗"},
+ Settings:{name:"Settings",title:'Your AI. <span class="gradient">Your choices.</span>',sub:"Manage providers, permissions, privacy, voice, memory and workspace preferences.",placeholder:"What setting or capability do you want to configure?",send:"Continue ↗"}
+};
+function selectPage(page){const p=pages[page]||pages.Axaliai;document.getElementById("workspaceName").textContent=p.name;document.getElementById("headline").innerHTML=p.title;document.getElementById("subheadline").textContent=p.sub;document.getElementById("prompt").placeholder=p.placeholder;document.getElementById("send").textContent=p.send;document.querySelectorAll("[data-page]").forEach(b=>{b.classList.toggle("active",b.dataset.page===page);b.classList.toggle("selected",b.dataset.page===page)});document.getElementById("response").classList.remove("show")}
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>selectPage(b.dataset.page)));
+document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>{document.getElementById("prompt").value=b.dataset.prompt;document.getElementById("prompt").focus()}));
+document.getElementById("send").addEventListener("click",()=>{const value=document.getElementById("prompt").value.trim();if(!value){document.getElementById("prompt").focus();return}document.getElementById("responseTitle").textContent="Request captured for preview";document.getElementById("responseBody").textContent="“"+value+"”\n\nThis is a design prototype only. It has not sent your request to an AI model or executed any action. The production version should route this request through the configured workspace mixer, show provider evidence, and report verified results.";document.getElementById("response").classList.add("show");document.getElementById("response").scrollIntoView({behavior:"smooth",block:"nearest"})});
+document.getElementById("newChat").addEventListener("click",()=>{document.getElementById("prompt").value="";document.getElementById("response").classList.remove("show");document.getElementById("prompt").focus()});
+document.getElementById("voice").addEventListener("click",()=>alert("Voice interface preview: connect the authenticated voice service to enable live listening and speaking."));
+document.getElementById("memory").addEventListener("click",()=>selectPage("Memory"));
+document.getElementById("mixer").addEventListener("click",()=>{document.getElementById("responseTitle").textContent="Parallel Intelligence · Mixer";document.getElementById("responseBody").textContent="The production mixer should show each configured provider, model ID, latency, token counts, response hash and explicit skip/failure reasons. Live provider status is not connected in this preview.";document.getElementById("response").classList.add("show")});
+document.getElementById("attach").addEventListener("click",()=>alert("File attachment preview: secure upload and file-processing integration is required."));
+</script>
+</body>
+</html>
