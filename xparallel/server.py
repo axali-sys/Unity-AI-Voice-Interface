@@ -20,7 +20,8 @@ from xparallel.v1_runner import available
 from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.mixer import mix as mix_answers, MixerConfigError
-from xparallel.plugins import plugin_catalog, execute_plugin
+from xparallel.plugins import PLUGIN_REGISTRY, plugin_catalog, execute_plugin
+from xparallel.approval import issue_approval, consume_approval
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -169,6 +170,24 @@ class Handler(BaseHTTPRequestHandler):
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
 
+        if self.path == "/plugins/approve":
+            if not self.require_role("execute"):
+                return send_json(self, 403, {"error": "forbidden"})
+            if not self.execution_approved():
+                return send_json(self, 403, {"error": "explicit_approval_credential_required"})
+            plugin_id = str(data.get("plugin_id", "")).strip()
+            action = str(data.get("action", "")).strip()
+            payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
+            item = next((x for x in PLUGIN_REGISTRY if x["id"] == plugin_id), None)
+            if not item or not item.get("approval_required") or not action:
+                return send_json(self, 400, {"error": "approval_required_plugin_and_action_must_be_valid"})
+            context = workspace_context(data)
+            ticket = issue_approval(plugin_id=plugin_id, action=action, payload=payload,
+                                    workspace_id=context["workspace_id"], actor="authenticated-token-holder")
+            self.audit("plugin_approval_issued", context["workspace_id"], "authenticated-token-holder",
+                       {"plugin_id": plugin_id, "action": action})
+            return send_json(self, 200, ticket)
+
         if self.path == "/plugins/execute":
             if not self.require_role("execute"):
                 return send_json(self, 403, {"error": "forbidden"})
@@ -177,9 +196,19 @@ class Handler(BaseHTTPRequestHandler):
             payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
             if not plugin_id or not action:
                 return send_json(self, 400, {"error": "plugin_id_and_action_required"})
-            result = execute_plugin(plugin_id, action, payload, human_approved=self.execution_approved())
-            workspace = workspace_context(data)["workspace_id"]
-            audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
+            item = next((x for x in PLUGIN_REGISTRY if x["id"] == plugin_id), None)
+            approved = False
+            if item and item.get("approval_required"):
+                context = workspace_context(data)
+                approved = consume_approval(str(data.get("approval_ticket", "")), plugin_id=plugin_id, action=action,
+                                            payload=payload, workspace_id=context["workspace_id"],
+                                            actor="authenticated-token-holder")
+                if not approved:
+                    return send_json(self, 403, {"error": "valid_action_bound_approval_ticket_required"})
+            result = execute_plugin(plugin_id, action, payload, human_approved=approved)
+            context = workspace_context(data)
+            audit = self.audit("plugin_execution_attempt", context["workspace_id"], "authenticated-token-holder",
+                               {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
             return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
 
         if self.path == "/fetch":
@@ -234,18 +263,6 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "results": results, "billing": usage_event("graph_search", workspace)}, cors=is_public)
 
-        if self.path == "/plugins/execute":
-            if not self.require_role("execute"):
-                return send_json(self, 403, {"error": "forbidden"})
-            plugin_id = str(data.get("plugin_id", "")).strip()
-            action = str(data.get("action", "")).strip()
-            payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
-            if not plugin_id or not action:
-                return send_json(self, 400, {"error": "plugin_id_and_action_required"})
-            result = execute_plugin(plugin_id, action, payload, human_approved=self.execution_approved())
-            workspace = workspace_context(data)["workspace_id"]
-            audit = self.audit("plugin_execution_attempt", workspace, workspace_context(data)["actor"], {"plugin_id": plugin_id, "action": action, "state": result.get("state")})
-            return send_json(self, 200 if result.get("state") == "ok" else 409, {**result, "audit": audit})
 
         query = str(data.get("query", "")).strip()
         if not query:
@@ -257,7 +274,9 @@ class Handler(BaseHTTPRequestHandler):
                 plugin_ids = [str(x) for x in plugin_ids if isinstance(x, str)][:5]
                 if is_public:
                     plugin_ids = [x for x in plugin_ids if x == "web_search"]
-                result = asyncio.run(mix_answers(query, plugin_ids=plugin_ids, allow_private=not is_public))
+                context = workspace_context(data)
+                result = asyncio.run(mix_answers(query, plugin_ids=plugin_ids, allow_private=not is_public,
+                                                 workspace_id="" if is_public else context["workspace_id"]))
             except MixerConfigError as exc:
                 return send_json(self, 400, {"state": "mixer_config_error", "error": str(exc)}, cors=is_public)
             except Exception as exc:
