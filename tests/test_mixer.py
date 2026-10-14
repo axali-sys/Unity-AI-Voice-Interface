@@ -62,6 +62,19 @@ class MixerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(mixer.MixerConfigError):
             mixer.model_registry()
 
+    async def test_default_registry_uses_documented_current_model_ids(self):
+        entries = mixer.model_registry()
+        models = {e["provider"]:e["model_id"] for e in entries}
+        self.assertEqual(models["anthropic"], "claude-sonnet-4-6")
+        self.assertEqual(models["openai"], "gpt-6.1-sol")
+        self.assertEqual(models["google"], "gemini-3.8-flash")
+        self.assertNotIn("moonshot", models)
+
+    async def test_retired_openai_default_id_is_rejected(self):
+        os.environ["XP_MIXER_MODELS_JSON"] = '[{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]'
+        with self.assertRaises(mixer.MixerConfigError):
+            mixer.model_registry()
+
     async def test_synthesis_prompt_contains_all_answers(self):
         entries = [{"provider":"openai","model_id":"gpt-4o","env_key":"OPENAI_API_KEY","api_base":"x"}]
         seen = {}
