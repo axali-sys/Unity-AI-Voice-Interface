@@ -1,36 +1,51 @@
-# Unity AI Voice Interface — Workspace Boundaries
+# Unity AI Voice Interface — Workspace Boundaries and Shared Intelligence
 
 ## Account model
 
-Unity AI Voice Interface is the shared account and application shell. It may provide shared sign-in, account settings, accessibility preferences, and a workspace launcher. **It is not one blended product UI.** Each workspace below must retain its own product identity, layout, navigation, terminology, and user flows.
+Unity AI Voice Interface is one account and application shell. It can share sign-in, account settings, accessibility preferences, entitlements, and approved backend services. **One account does not mean one blended product UI.** Each workspace retains its own product identity, design system, navigation, terminology, and user flows.
 
-## Separate workspaces
+## Four distinct workspaces
 
-| Workspace | Product purpose | UI boundary |
+| Workspace | Purpose | Design boundary |
 |---|---|---|
-| **Axaliai** | General-purpose AI interface for conversation, reasoning, and user-directed assistance | Its own chat-first assistant design. Do not label it “Omni”, and do not place Omnibox, UnitAI, or XParallel controls in its primary navigation. |
-| **Omnibox** | A separate workspace/product design; its precise feature scope should be defined in its own product specification | Own visual identity, home screen, navigation, and workflows. Do not treat “Omnibox” as a mode or synonym for Axaliai. |
-| **UnitAI** | A separate AI workspace/product design | Own visual identity and user flows. It may use shared platform services only through explicit interfaces; its design must not be absorbed into Axaliai or Omnibox. |
-| **XParallel** | Separate AI infrastructure and isolated execution/build environment for running, testing, and routing work | Own infrastructure-oriented design, environment/status views, approval gates, execution results, and safety controls. It is not an Axaliai chat theme or a tab inside Axaliai. |
+| **Axaliai** | General-purpose AI interface for conversation, reasoning, and user-directed assistance | Dedicated chat-first assistant experience. Not the home for the other products' controls. |
+| **Omnibox** | Independent product/workspace design | Own home screen, navigation, terminology, and workflows; not an Axaliai mode. |
+| **UnitAI** | Independent AI workspace/product design | Own visual identity and interaction model; not absorbed into Axaliai or Omnibox. |
+| **XParallel** | AI infrastructure and isolated execution/build environment for running, testing, routing, and fixing programs | Own infrastructure-oriented design, environment/status views, approval gates, execution results, and safety controls; not merely an Axaliai chat theme. |
 
-## Shared account, separate products
+## Shared Parallel Intelligence and AI Mixer
 
-- Keep the existing repository, account, authentication, API services, Git history, routes, and workflows intact.
-- Use a **workspace launcher/switcher** to enter each product. Switching workspaces changes the product surface, not the user account.
-- Shared services (identity, entitlements, provider adapters, audit events, and approved APIs) must be behind explicit contracts. Sharing backend services does not imply sharing UI or branding.
-- Each workspace owns its own navigation, copy, design tokens, interaction model, and tests. Do not reuse another workspace's branding or menu labels merely because the apps share an account.
-- Cross-workspace actions must be explicit, permission-checked, and show which workspace is receiving the request. XParallel execution still requires the existing approval/security model.
-- Do not imply a workspace is connected, live, or operational unless a real health/API check confirms it.
+**Parallel Intelligence is a shared platform capability used by all four workspaces.** It is not owned by, or exclusive to, XParallel.
 
-## Current change
+The shared AI Mixer coordinates the configured AI providers/adapters and any explicitly enabled tools, then synthesizes one response for the current request. The mixer must use the active workspace's identity and task context to shape that response:
 
-The Axaliai Squarespace embed is being kept Axaliai-only: its navigation and workspace label should not present Omnibox, UnitAI, or XParallel as Axaliai modes. The other three workspace designs should be implemented as separate entry surfaces in the same Unity AI Voice Interface account.
+- **Axaliai:** general-purpose conversation, reasoning, and user-directed assistance.
+- **Omnibox:** the response should reflect Omnibox's separately defined product purpose and request context.
+- **UnitAI:** the response should reflect UnitAI's separately defined product purpose and request context.
+- **XParallel:** the response should respect execution/workspace context, approval requirements, and infrastructure safety boundaries.
+
+Workspace-specific context must be explicit in the request contract (for example, a validated workspace identifier and task context), not inferred from visual branding alone. The mixer should return one synthesized answer plus auditable provider evidence where available: provider/model ID, latency, token usage, response hash, and explicit reasons for skipped providers. If no providers are configured or all fail, return a clear unavailable/error state; do not silently pretend a normal response was produced.
+
+## Shared account, separate product surfaces
+
+- Keep the existing repository, account, authentication, routes, API services, Git history, and workflows intact.
+- Use a **workspace launcher/switcher** to enter each product. Switching workspace changes the product surface and request context, not the user account.
+- Shared identity, provider adapters, mixer, audit events, and approved APIs sit behind explicit service contracts. Sharing backend capabilities does not mean sharing UI or branding.
+- Each workspace owns its navigation, design tokens, interaction model, and tests.
+- Cross-workspace actions must be explicit and permission-checked, and must identify the receiving workspace. XParallel execution still requires its existing approval/security model.
+- Never report a workspace or provider as connected/live unless a real health/API check confirms it.
+
+## Current Axaliai interface change
+
+The Axaliai embed remains Axaliai's own design. It now labels Parallel Intelligence and the AI Mixer as a **shared intelligence layer**, while making clear that Omnibox, UnitAI, and XParallel remain distinct workspace designs.
 
 ## Acceptance checklist
 
-- [ ] One account can reach each workspace through a workspace launcher.
-- [ ] Axaliai, Omnibox, UnitAI, and XParallel each have a distinct home screen and visual system.
-- [ ] No product's primary navigation contains another product's features as if they were its own.
+- [ ] One Unity AI Voice Interface account can enter all four distinct workspaces.
+- [ ] All four workspaces can use the same shared Parallel Intelligence/AI Mixer service.
+- [ ] Each request carries validated active-workspace context, and the mixer applies the corresponding response profile.
+- [ ] Provider evidence, skipped-provider reasons, and unavailable states are explicit and auditable.
+- [ ] No product's primary navigation absorbs another product's features as if they were its own.
 - [ ] Shared sign-in and account settings work without collapsing workspace identity.
 - [ ] Workspace-specific routes, permissions, health status, and tests are verified independently.
 - [ ] No production deployment or merge occurs without the user's explicit approval.
