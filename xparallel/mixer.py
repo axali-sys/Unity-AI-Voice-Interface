@@ -121,7 +121,7 @@ async def _synthesize(query: str, answers: list[dict], entries: list[dict], time
         raise MixerUnavailable(f"synthesizer_failed: {result.get('error') or 'empty response'}")
     return result["text"], {"provider": chosen["provider"], "model_id": chosen["model_id"], "latency_ms": result["latency_ms"], "tokens_in": result["tokens_in"], "tokens_out": result["tokens_out"], "response_hash": result["response_hash"]}
 
-async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None = None, allow_private: bool = False) -> dict:
+async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None = None, allow_private: bool = False, workspace_id: str = "") -> dict:
     if os.getenv("XP_MIXER_ENABLED", "1").strip() == "0":
         return {"state": "mixer_disabled", "error": "Mixer disabled by XP_MIXER_ENABLED=0", "final_answer": "", "contributions": [], "skipped": []}
     entries = model_registry()
@@ -131,7 +131,7 @@ async def mix(query: str, memory_context: str = "", plugin_ids: list[str] | None
     plugin_results = []
     if plugin_ids:
         from xparallel.plugins import retrieve_plugin_context
-        retrieved = retrieve_plugin_context(query, plugin_ids, allow_private=allow_private)
+        retrieved = retrieve_plugin_context(query, plugin_ids, allow_private=allow_private, workspace_id=workspace_id)
         plugin_context = retrieved.get("context", "")
         plugin_results = retrieved.get("results", [])
     combined_context = "\n\n".join(x for x in (memory_context, plugin_context) if x)
