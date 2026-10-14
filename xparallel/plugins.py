@@ -15,13 +15,13 @@ PLUGIN_REGISTRY = [
 MAX_RESPONSE_BYTES = 1_000_000
 MAX_TEXT_CHARS = 12000
 
-def _http_json(url: str, headers: dict[str,str] | None = None, timeout: float = 8) -> dict:
+def _http_json(url: str, headers: dict[str,str] | None = None, timeout: float = 8) -> Any:
     req=urllib.request.Request(url,headers={"Accept":"application/json","User-Agent":"Axaliai-PluginAdapter/1.0",**(headers or {})})
     with urllib.request.urlopen(req,timeout=timeout) as r:
         raw=r.read(MAX_RESPONSE_BYTES+1)
     if len(raw)>MAX_RESPONSE_BYTES: raise ValueError("plugin_response_too_large")
     data=json.loads(raw.decode("utf-8"))
-    if not isinstance(data,dict): raise ValueError("invalid_plugin_response")
+    if not isinstance(data,(dict,list)): raise ValueError("invalid_plugin_response")
     return data
 
 def _text(value: Any, limit: int = MAX_TEXT_CHARS) -> str:
@@ -125,6 +125,8 @@ def _memory(action: str, p: dict) -> dict:
     path=Path(path_text).resolve()
     if not path.is_file(): raise ValueError("memory_file_not_found")
     query=str(p.get("query","")).strip().lower()
+    workspace_id=str(p.get("workspace_id","")).strip()
+    if not workspace_id: raise ValueError("workspace_id_required_for_memory_isolation")
     if not query: raise ValueError("query_required")
     terms={x for x in re.findall(r"[a-z0-9]{3,}",query)}
     hits=[]
@@ -132,11 +134,14 @@ def _memory(action: str, p: dict) -> dict:
         for line in f:
             try: item=json.loads(line)
             except json.JSONDecodeError: item={"text":line.strip()}
-            rendered=_text(item)
+            # Legacy/unscoped records are intentionally invisible to tenant queries.
+            if not isinstance(item,dict) or str(item.get("workspace_id","")) != workspace_id:
+                continue
+            rendered=_text(item.get("text", item))
             score=sum(t in rendered.lower() for t in terms)
             if score: hits.append((score,rendered))
     hits.sort(key=lambda x:x[0],reverse=True)
-    return {"state":"ok","plugin_id":"ai_memory","results":[{"score":s,"text":t[:2000]} for s,t in hits[:5]]}
+    return {"state":"ok","plugin_id":"ai_memory","workspace_id":workspace_id,"results":[{"score":s,"text":t[:2000]} for s,t in hits[:5]]}
 
 def _sandbox(action: str, p: dict) -> dict:
     if action!="run_tests": raise ValueError("unsupported_xparallel_sandbox_action")
@@ -181,7 +186,7 @@ def execute_plugin(plugin_id: str, action: str, payload: dict[str,Any], *, human
         # Never return credentials, request headers, or full response bodies.
         return {"state":"plugin_error","plugin_id":plugin_id,"action":action,"error":str(exc)[:300]}
 
-def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private: bool=False) -> dict[str,Any]:
+def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private: bool=False, workspace_id: str="") -> dict[str,Any]:
     """Run only explicitly selected read/retrieval actions and return bounded untrusted context."""
     outputs=[]; chunks=[]
     allowed_public={"web_search"}
@@ -190,7 +195,9 @@ def retrieve_plugin_context(query: str, plugin_ids: list[str], *, allow_private:
         if pid=="xparallel_sandbox": outputs.append({"plugin_id":pid,"state":"not_run","reason":"sandbox_is_not_a_retrieval_plugin"}); continue
         if not allow_private and pid not in allowed_public:
             outputs.append({"plugin_id":pid,"state":"blocked","reason":"private_plugin_requires_authenticated_mixer"}); continue
-        result=execute_plugin(pid,action_by_id.get(pid,"search"),{"query":query})
+        payload={"query":query}
+        if pid=="ai_memory": payload["workspace_id"]=workspace_id
+        result=execute_plugin(pid,action_by_id.get(pid,"search"),payload)
         outputs.append({"plugin_id":pid,"state":result.get("state"),"error":result.get("error"),"reason":result.get("reason")})
         if result.get("state")=="ok":
             safe={k:v for k,v in result.items() if k not in {"state"}}
