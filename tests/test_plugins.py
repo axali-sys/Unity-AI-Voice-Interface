@@ -64,13 +64,22 @@ class PluginAdapterTests(unittest.TestCase):
     def test_ai_memory_search_returns_matching_records(self):
         with tempfile.TemporaryDirectory() as tmp:
             memory=Path(tmp)/"memory.jsonl"
-            memory.write_text(json.dumps({"text":"XParallel sandbox approval protocol"})+"\n"+json.dumps({"text":"unrelated music note"})+"\n",encoding="utf-8")
+            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel sandbox approval protocol"})+"\n"+json.dumps({"workspace_id":"alpha","text":"unrelated music note"})+"\n"+json.dumps({"workspace_id":"beta","text":"XParallel private other workspace"})+"\n"+json.dumps({"text":"XParallel legacy unscoped record"})+"\n",encoding="utf-8")
             with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
-                result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval"})
+                result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel approval","workspace_id":"alpha"})
         self.assertEqual(result["state"],"ok")
         self.assertTrue(result["results"])
         self.assertIn("approval",result["results"][0]["text"])
 
+    def test_ai_memory_does_not_return_other_workspace_or_legacy_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            memory=Path(tmp)/"memory.jsonl"
+            memory.write_text(json.dumps({"workspace_id":"alpha","text":"XParallel approval"})+"\\n"+json.dumps({"workspace_id":"beta","text":"XParallel private beta"})+"\\n"+json.dumps({"text":"XParallel legacy unscoped"})+"\\n",encoding="utf-8")
+            with patch.dict(os.environ,{"XP_AI_MEMORY_PATH":str(memory)},clear=True):
+                result=plugins.execute_plugin("ai_memory","search",{"query":"XParallel","workspace_id":"alpha"})
+        self.assertEqual(result["state"],"ok")
+        self.assertEqual(len(result["results"]),1)
+        self.assertIn("approval",result["results"][0]["text"])
     def test_private_connectors_are_blocked_from_public_mixer(self):
         with patch.dict(os.environ,{"GITHUB_TOKEN":"configured"},clear=True):
             result=plugins.retrieve_plugin_context("repo",["github"],allow_private=False)
