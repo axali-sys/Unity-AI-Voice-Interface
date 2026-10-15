@@ -44,7 +44,7 @@ The response preserves the existing `{ "plan": ... }` envelope and adds a `plan.
 Run the repository's existing test suite plus the new focused tests:
 
 ```bash
-python -m unittest tests.test_roaming_ai
+python -m unittest discover -s tests -p 'test_roaming_ai.py'
 python -m unittest discover -s tests
 ```
 
