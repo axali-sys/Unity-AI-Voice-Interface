@@ -192,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         is_public = self.path.startswith("/public/")
-        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify", "/public/graph/search"}
+        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/chat", "/public/solution", "/public/verify", "/public/graph/search"}
         if is_public:
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -307,10 +307,13 @@ class Handler(BaseHTTPRequestHandler):
             })
             return send_json(self, 200, {"memories": memories})
 
-        if self.path == "/chat":
+        if self.path in {"/public/chat", "/chat"}:
             messages = data.get("messages")
-            workspace = workspace_context(data)["workspace_id"]
-            use_memory = data.get("use_memory", True) is not False
+            is_public_chat = self.path == "/public/chat"
+            # Public Axaliai chat is origin-allowlisted and rate-limited above.
+            # It deliberately uses an isolated public workspace and never reads private memory.
+            workspace = "public" if is_public_chat else workspace_context(data)["workspace_id"]
+            use_memory = False if is_public_chat else data.get("use_memory", True) is not False
             try:
                 result = chat_with_ai(messages, workspace, use_memory)
             except ValueError as exc:
@@ -323,7 +326,7 @@ class Handler(BaseHTTPRequestHandler):
                 "model": result.get("model", "unknown"),
                 "message_count": len(messages) if isinstance(messages, list) else 0,
             })
-            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result}, cors=is_public_chat)
 
         if self.path == "/memory/summarize":
             memory_query = str(data.get("query", "")).strip()
