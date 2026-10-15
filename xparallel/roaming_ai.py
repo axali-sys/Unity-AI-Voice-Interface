@@ -50,11 +50,13 @@ def _agent_call(role: str, prompt: str, workspace_id: str) -> dict[str, Any]:
 
 def run_roaming_task(objective: str, workspace_id: str = "default") -> dict[str, Any]:
     """Run planner -> evidence gatherer -> arbiter, with bounded inputs and no execution."""
-    objective = _bounded_text(objective, MAX_OBJECTIVE_CHARS)
-    if not objective:
+    if not isinstance(objective, str):
         raise ValueError("query_required")
+    objective = objective.strip()
     if len(objective) > MAX_OBJECTIVE_CHARS:
         raise ValueError("query_too_large")
+    if not objective:
+        raise ValueError("query_required")
     workspace_id = _bounded_text(workspace_id, 120) or "default"
 
     started = time.monotonic()
