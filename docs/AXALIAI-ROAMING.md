@@ -1,4 +1,8 @@
-# AXALIAI Roaming Access
+# AXALIAI — The First Roaming AI
+
+**Brand positioning:** “The First Roaming AI.” Supporting line: “Your AI workspace, wherever you go.” This is AXALIAI's chosen positioning, not an independently verified claim that no other roaming AI exists.
+
+# Roaming Access
 
 AXALIAI can be opened from the hosting provider's HTTPS URL; it does not require `axaliai.com` to be the entry point.
 
