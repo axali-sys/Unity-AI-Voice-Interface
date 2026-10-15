@@ -1,8 +1,8 @@
 {
   "id": "/axaliai.html",
-  "name": "AXALIAI — Unity AI Workspace",
+  "name": "AXALIAI — The First Roaming AI",
   "short_name": "AXALIAI",
-  "description": "Roaming AI workspace with separate AXALIAI and XParallel interfaces.",
+  "description": "The First Roaming AI. Your AI workspace, wherever you go, with separate AXALIAI and XParallel interfaces.",
   "start_url": "/axaliai.html",
   "scope": "/",
   "display": "standalone",
