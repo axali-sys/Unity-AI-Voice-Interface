@@ -81,7 +81,7 @@ document.getElementById('run').onclick=()=>{
  const v=document.getElementById('command').value.trim().toLowerCase();
  if(!v){document.getElementById('result').textContent='Enter a command.';return}
  const hit=apps.find(a=>v.includes(a.n.toLowerCase()));
- document.getElementById('result').textContent=hit?'Opening '+hit.n+' as a separate platform.':'Axaliai found the social gateway. Choose a platform from the grid.';
+ document.getElementById('result').textContent=hit?'Opening '+hit.n+' as a separate platform.':'OneAI found the social gateway. Choose a platform from the grid.';
  if(hit) window.open(hit.u,'_blank','noopener,noreferrer');
 };
 drawTabs();render();
