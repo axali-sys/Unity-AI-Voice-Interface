@@ -186,16 +186,27 @@ async def mix(query: str, memory_context: str = "") -> dict:
             skipped.append({"provider": call["provider"], "model_id": call["model_id"], "reason": call.get("error") or call["status"]})
     answers = [call for call in calls if call.get("status") == "success" and call.get("text")]
     if not answers:
-        return {"state": "mixer_unavailable", "error": "No configured provider returned a usable answer.", "final_answer": "", "calls": calls, "skipped": skipped, "synthesizer": None}
+        public_calls = [{k: v for k, v in call.items() if k != "text"} for call in calls]
+        return {"state": "mixer_unavailable", "error": "No configured provider returned a usable answer.", "final_answer": "", "calls": public_calls, "skipped": skipped, "synthesizer": None}
     if len(answers) == 1:
-        return {"state": "partial", "final_answer": answers[0]["text"], "calls": calls, "skipped": skipped, "synthesizer": None, "synthesis_note": "One provider succeeded; returned its answer without claiming cross-provider synthesis."}
+        public_calls = [{k: v for k, v in call.items() if k != "text"} for call in calls]
+        return {"state": "partial", "final_answer": answers[0]["text"], "calls": public_calls, "skipped": skipped, "synthesizer": None, "synthesis_note": "One provider succeeded; returned its answer without claiming cross-provider synthesis."}
     evidence = "\n\n".join(f"[{item['provider']} / {item['model_id']}]\n{item['text']}" for item in answers)
-    synth_entry = next((entry for entry in eligible if entry["provider"] == os.getenv("XP_MIXER_SYNTHESIZER", "").strip()), answers[0] and next(e for e in eligible if e["provider"] == answers[0]["provider"]))
-    synth = await asyncio.wait_for(
-        _call_async(synth_entry, f"Question:\n{query}\n\nAnswers to synthesize:\n{evidence}", SYNTHESIS_SYSTEM),
-        timeout=timeout,
-    )
+    requested_synth = os.getenv("XP_MIXER_SYNTHESIZER", "").strip().lower()
+    synth_entry = next((entry for entry in eligible if entry["provider"] == requested_synth), None)
+    if synth_entry is None:
+        synth_entry = next(entry for entry in eligible if entry["provider"] == answers[0]["provider"])
+    try:
+        synth = await asyncio.wait_for(
+            _call_async(synth_entry, f"Question:\n{query}\n\nAnswers to synthesize:\n{evidence}", SYNTHESIS_SYSTEM),
+            timeout=timeout,
+        )
+    except (asyncio.TimeoutError, TimeoutError):
+        synth = {"provider": synth_entry["provider"], "model_id": synth_entry["model_id"], "status": "timeout",
+                 "latency_ms": round(timeout * 1000), "input_tokens": None, "output_tokens": None,
+                 "usage_kind": "provider_reported", "response_hash": None, "error": "synthesis_timeout", "text": ""}
     calls.append({k: v for k, v in synth.items() if k != "text"} | {"call_role": "synthesizer"})
+    public_calls = [{k: v for k, v in call.items() if k != "text"} for call in calls]
     if synth.get("status") == "success":
-        return {"state": "ok", "final_answer": synth["text"], "calls": calls, "skipped": skipped, "synthesizer": {"provider": synth_entry["provider"], "model_id": synth_entry["model_id"], "response_hash": synth["response_hash"], "latency_ms": synth["latency_ms"], "input_tokens": synth["input_tokens"], "output_tokens": synth["output_tokens"]}}
-    return {"state": "partial", "final_answer": answers[0]["text"], "calls": calls, "skipped": skipped + [{"provider": synth_entry["provider"], "reason": "synthesis_failed_returned_first_successful_answer"}], "synthesizer": None}
+        return {"state": "ok", "final_answer": synth["text"], "calls": public_calls, "skipped": skipped, "synthesizer": {"provider": synth_entry["provider"], "model_id": synth_entry["model_id"], "response_hash": synth["response_hash"], "latency_ms": synth["latency_ms"], "input_tokens": synth["input_tokens"], "output_tokens": synth["output_tokens"]}}
+    return {"state": "partial", "final_answer": answers[0]["text"], "calls": public_calls, "skipped": skipped + [{"provider": synth_entry["provider"], "reason": "synthesis_failed_returned_first_successful_answer"}], "synthesizer": None}
