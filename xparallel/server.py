@@ -151,6 +151,7 @@ class Handler(BaseHTTPRequestHandler):
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
             manifest = system_manifest()
+            manifest["status"] = "configuration_report_only"
             manifest["operational_status"] = "configuration_report_only"
             manifest["roaming"] = roaming_status()
             manifest["mixer"] = {
