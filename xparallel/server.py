@@ -45,8 +45,20 @@ class Handler(BaseHTTPRequestHandler):
         return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
 
     def do_GET(self):
-        if self.path == "/health":
+        if self.path in ("/health", "/public/health"):
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()})
+        if self.path == "/public/system":
+            return send_json(self, 200, {
+                "network": NETWORK, "version": VERSION, "services": SERVICES,
+                "provider_mixer": "unverified", "memory_persistence": "unverified",
+                "identity_provider": "unverified",
+            })
+        if self.path == "/public/xparallel/access":
+            return send_json(self, 200, {
+                "network": NETWORK, "api_authentication_required": True,
+                "execution_approval_required": True, "sandbox_available": available(),
+                "execution_endpoint_exposed_to_public_ui": False,
+            })
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         if self.path == "/registry":
@@ -60,19 +72,44 @@ class Handler(BaseHTTPRequestHandler):
         return send_json(self, 404, {"error": "not_found"})
 
     def do_POST(self):
-        if not self.authorized():
+        public_paths = ("/public/ask", "/public/build", "/public/route")
+        is_public = self.path in public_paths
+        if not is_public and not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
-        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute"):
+        if self.path not in ("/ask", "/build", "/route", "/fetch", "/agent/plan", "/experiment", "/execute", *public_paths):
             return send_json(self, 404, {"error": "not_found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length > 2_000_000:
+            max_length = 20_000 if is_public else 2_000_000
+            if length > max_length:
                 return send_json(self, 413, {"error": "request_too_large"})
             data = json.loads(self.rfile.read(length) or b"{}")
             if not isinstance(data, dict):
                 return send_json(self, 400, {"error": "json_object_required"})
         except (ValueError, json.JSONDecodeError):
             return send_json(self, 400, {"error": "invalid_json"})
+
+        if is_public:
+            query = str(data.get("query", "")).strip()
+            if not query:
+                return send_json(self, 400, {"error": "query_required"})
+            if len(query) > 12_000:
+                return send_json(self, 413, {"error": "query_too_large"})
+            if self.path == "/public/ask":
+                return send_json(self, 503, {
+                    "error": "mixer_unavailable",
+                    "message": "No live AI provider call is available through this API yet.",
+                    "setup": [
+                        "Configure provider credentials as server-side environment secrets.",
+                        "Implement and test provider adapters for the selected model families.",
+                        "Record provider, model ID, latency, token counts, response hash, errors, and skipped-provider reasons.",
+                        "Return a synthesized answer only after the configured mixer completes successfully.",
+                    ],
+                    "providers": [],
+                })
+            if self.path == "/public/route":
+                return send_json(self, 200, {"network": NETWORK, **route(query)})
+            return send_json(self, 200, {"network": NETWORK, **plan(query)})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()

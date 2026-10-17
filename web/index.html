@@ -1,90 +1,184 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07080c">
-<title>OneAI — All Social</title>
+<meta name="theme-color" content="#080b12">
+<meta name="description" content="OneAI — one interface for connected intelligence, tools, memory, identity, and XParallel infrastructure.">
+<title>OneAI — Connected Intelligence</title>
 <style>
-:root{--bg:#07080c;--panel:#10131a;--panel2:#0d1016;--line:#252a34;--muted:#8f99a8;--text:#f5f7fb}
-*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at 50% -10%,#18202e 0,#07080c 38%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-main{width:min(1180px,100%);margin:auto;padding:22px 16px 42px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
-.brand{display:flex;align-items:center;gap:10px}.mark{width:42px;height:42px;border-radius:13px;background:#f5f7fb;color:#07080c;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:22px;margin:0}.brand small{display:block;color:var(--muted);margin-top:2px}
-.pill{border:1px solid var(--line);background:#0d1016;border-radius:999px;padding:8px 12px;color:#b9c1cd;font-size:12px}
-.hero{border:1px solid var(--line);background:linear-gradient(135deg,#111722,#0d1016);border-radius:26px;padding:24px;margin-bottom:16px}
-.hero h2{font-size:clamp(28px,7vw,46px);line-height:1.02;margin:0 0 10px;letter-spacing:-1.5px}.hero p{margin:0;color:#aeb6c3;max-width:650px;line-height:1.55}
-.search{display:flex;gap:10px;margin-top:20px}.search input{flex:1;min-width:0;padding:15px 16px;border:1px solid var(--line);border-radius:15px;background:#090b10;color:#fff;font-size:15px;outline:none}.search input:focus{border-color:#697386}
-.section{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px}.section h3{font-size:15px;margin:0}.count{color:var(--muted);font-size:12px}
-.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:3px;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#0d1016;color:#9fa8b6;border-radius:999px;padding:8px 12px;font-size:12px;cursor:pointer}.tab.active{background:#f5f7fb;color:#07080c;border-color:#f5f7fb}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);background:rgba(16,19,26,.92);border-radius:20px;padding:15px;min-height:142px;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#5e6879;background:#131720}.icon{width:44px;height:44px;border-radius:14px;background:#181d27;display:grid;place-items:center;font-weight:900;font-size:20px}.name{font-weight:750;margin-top:12px}.type{font-size:11px;color:var(--muted);margin-top:4px}.open{font-size:11px;color:#c8ced8;margin-top:14px}
-.command{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--panel2)}.command strong{font-size:14px}.command p{font-size:12px;color:var(--muted);line-height:1.5}.command-row{display:flex;gap:8px}.command-row input{flex:1;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#080a0f;color:#fff}.command button{padding:12px 15px;border:0;border-radius:12px;background:#f5f7fb;color:#07080c;font-weight:750}.result{color:#b9c1cc;font-size:12px;margin-top:10px;min-height:18px}
-.note{margin-top:18px;text-align:center;color:#707a89;font-size:11px;line-height:1.5}
-@media(min-width:650px){main{padding:30px 24px 56px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(min-width:950px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.hero{padding:32px}.top{margin-bottom:28px}}
+:root{color-scheme:dark;--bg:#080b12;--panel:#0e131d;--panel2:#111927;--line:#222d3d;--muted:#8d9ab0;--text:#eef3fb;--soft:#c3cede;--accent:#a9c8ff;--accent2:#c7b5ff;--good:#7bd9b0;--warn:#f3cb7d;--bad:#ff9b9b}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{background:radial-gradient(ellipse at 50% -25%,#1d2b48 0,transparent 48%),var(--bg)}button,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}button:disabled{opacity:.5;cursor:wait}.app{display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100dvh;max-width:1600px;margin:auto}.sidebar{border-right:1px solid var(--line);padding:22px 14px;background:rgba(8,11,18,.78);display:flex;flex-direction:column;gap:24px}.brand{display:flex;align-items:center;gap:11px;padding:0 9px}.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(140deg,#dce8ff,#a4bfff);color:#11182a;font-weight:950;font-size:22px;box-shadow:0 5px 25px #8cb4ff20}.brand-name{font-size:18px;font-weight:850;letter-spacing:-.5px}.brand-tag{font-size:10px;color:var(--muted);margin-top:3px}.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6f7c91;padding:0 11px;margin:0 0 8px}.nav{display:grid;gap:5px}.nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;color:#a9b5c8;background:transparent;border:1px solid transparent;padding:11px;border-radius:12px;font-size:13px}.nav button .glyph{width:22px;text-align:center;font-size:16px}.nav button.active{color:#f4f7ff;background:#172236;border-color:#293951}.nav button:hover:not(.active){background:#111927;color:#f0f4fb}.nav .tag{margin-left:auto;font-size:9px;border:1px solid #344156;border-radius:6px;padding:3px 5px;color:#9caac0}.side-bottom{margin-top:auto}.status-card{border:1px solid var(--line);border-radius:15px;padding:13px;background:#0c111a}.status-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#738097;margin-right:6px}.dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.status-card p{font-size:10px;color:var(--muted);line-height:1.5;margin:9px 0 0}.main{min-width:0;display:flex;flex-direction:column;min-height:100dvh}.topbar{height:70px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:16px;background:#080b12a8;backdrop-filter:blur(16px);position:sticky;top:0;z-index:3}.crumb{font-size:12px;color:var(--muted)}.crumb strong{color:var(--text);font-weight:700}.top-actions{display:flex;align-items:center;gap:8px}.small-btn{background:#101725;border:1px solid #263247;border-radius:10px;padding:9px 11px;color:#c4cfdf;font-size:11px}.avatar{width:31px;height:31px;border-radius:11px;display:grid;place-items:center;background:#1a263a;color:#c7d8ff;font-weight:800;font-size:12px}.content{width:min(1020px,100%);margin:0 auto;padding:34px 28px 22px;flex:1}.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#a9c8ff;font-weight:800}.hero{margin:8px 0 24px}.hero h1{font-size:clamp(30px,4vw,48px);letter-spacing:-2px;line-height:1.06;margin:11px 0 12px;max-width:760px}.hero h1 span{color:#b7caff}.hero p{font-size:14px;line-height:1.7;color:#9eacc1;max-width:690px;margin:0}.system-strip{display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 26px}.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#0c111a;color:#aebbd0;font-size:10px}.chip b{font-weight:700;color:#e1e8f4}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 0 12px}.section-title h2{font-size:13px;margin:0;font-weight:750}.section-title span{font-size:10px;color:var(--muted)}.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.module{border:1px solid var(--line);border-radius:17px;padding:16px;background:linear-gradient(145deg,#111927,#0d121c);min-height:145px;text-align:left;color:inherit;transition:border-color .16s,transform .16s}.module:hover{border-color:#526789;transform:translateY(-2px)}.module .module-icon{width:35px;height:35px;display:grid;place-items:center;background:#1b2940;border:1px solid #293b57;border-radius:11px;font-size:16px;color:#c5d7ff}.module h3{font-size:12px;margin:13px 0 5px}.module p{font-size:10px;line-height:1.5;color:var(--muted);margin:0}.module .state{font-size:9px;color:#a9c8ff;margin-top:11px;display:flex;align-items:center;gap:5px}.workbench{border:1px solid #2a3548;border-radius:20px;overflow:hidden;background:#0c111a;margin-top:24px}.work-head{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid var(--line);gap:12px}.work-title{font-size:12px;font-weight:750}.work-subtitle{font-size:10px;color:var(--muted);margin-top:4px}.work-state{font-size:9px;color:#b6c9f1;border:1px solid #344662;border-radius:7px;padding:5px 7px;white-space:nowrap}.messages{padding:18px;display:grid;gap:15px;max-height:430px;overflow:auto}.message{display:flex;gap:10px;align-items:flex-start}.message.user{flex-direction:row-reverse}.message-icon{flex:0 0 29px;height:29px;border-radius:10px;background:#1b2940;display:grid;place-items:center;color:#d3e1ff;font-size:11px;font-weight:850}.message.user .message-icon{background:#26303d;color:#d6dfec}.bubble{max-width:min(680px,calc(100% - 40px));font-size:12px;line-height:1.65;color:#c3cede;background:#111927;border:1px solid #222e40;border-radius:4px 13px 13px 13px;padding:11px 13px;white-space:pre-wrap;overflow-wrap:anywhere}.message.user .bubble{background:#192438;border-color:#2b3c57;border-radius:13px 4px 13px 13px;color:#edf3ff}.bubble .meta{font-size:9px;color:#8392a9;margin-top:8px}.composer{border-top:1px solid var(--line);padding:13px;display:flex;align-items:flex-end;gap:9px}.composer textarea{flex:1;resize:vertical;min-height:43px;max-height:150px;background:#090d15;border:1px solid #273349;border-radius:12px;padding:12px;color:var(--text);font-size:12px;line-height:1.5}.send{border:0;border-radius:11px;padding:0 17px;height:43px;background:#d7e4ff;color:#10192a;font-size:12px;font-weight:850}.composer-note{font-size:9px;color:#6f7d92;padding:0 15px 13px}.prompt-row{display:flex;gap:7px;flex-wrap:wrap;padding:0 13px 13px}.prompt{font-size:10px;color:#aabbd4;background:#111927;border:1px solid #263348;border-radius:9px;padding:8px 10px}.workspace-view{display:none}.workspace-view.active{display:block}.view-hero{border:1px solid #2a3548;border-radius:20px;background:linear-gradient(130deg,#141e30,#0e131d);padding:24px;margin-bottom:15px}.view-hero h1{font-size:28px;letter-spacing:-1px;margin:8px 0}.view-hero p{color:#a6b3c7;font-size:12px;line-height:1.7;max-width:650px}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.info-card{padding:16px;border:1px solid var(--line);border-radius:15px;background:#0e141f}.info-card h3{font-size:12px;margin:0 0 8px}.info-card p{font-size:11px;color:var(--muted);line-height:1.6;margin:0}.provider-list{display:grid;gap:9px;margin-top:16px}.provider{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0d131e}.provider-logo{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:#1a2435;font-size:12px;font-weight:850}.provider-name{font-size:12px;font-weight:700}.provider-note{font-size:10px;color:var(--muted);margin-top:4px}.provider-status{margin-left:auto;font-size:9px;color:#a2afc3;border:1px solid #303c50;border-radius:6px;padding:5px 7px}.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.action-row button{border:1px solid #30415c;background:#172238;color:#d8e4fa;border-radius:10px;padding:10px 12px;font-size:11px}.action-row button.primary{background:#d7e4ff;color:#10192a;border-color:#d7e4ff;font-weight:800}.field{display:grid;gap:7px;margin-top:15px}.field label{font-size:10px;color:#a9b8cd}.field input,.field textarea{width:100%;background:#080d15;border:1px solid #2a3548;border-radius:10px;padding:11px;color:#eaf0fb;font-size:12px}.field textarea{min-height:90px;resize:vertical}.notice{margin-top:12px;padding:11px 13px;border-radius:10px;background:#101927;border:1px solid #2a394f;color:#a9bad1;font-size:11px;line-height:1.6}.notice.warn{border-color:#4d4028;color:#e7cb91;background:#1b1710}.footer{border-top:1px solid #1b2432;padding:14px 28px;display:flex;justify-content:space-between;gap:12px;color:#647187;font-size:9px}.mobile-menu{display:none}
+@media(max-width:850px){.app{grid-template-columns:68px minmax(0,1fr)}.sidebar{padding:18px 8px;align-items:center}.brand{padding:0}.brand-copy,.nav-label,.nav button .nav-text,.nav .tag,.status-card{display:none}.nav{width:100%}.nav button{justify-content:center;padding:12px 5px}.nav button .glyph{font-size:18px}.side-bottom{display:none}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{padding:0 18px}.content{padding:28px 18px 20px}}
+@media(max-width:560px){.app{display:block}.sidebar{display:none}.topbar{height:60px;padding:0 14px}.content{padding:24px 13px 18px}.hero h1{letter-spacing:-1.3px}.hero p{font-size:12px}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.module{padding:12px;min-height:140px}.module h3{font-size:11px}.module p{font-size:9px}.top-actions .small-btn{padding:8px;font-size:10px}.avatar{display:none}.workbench{border-radius:15px}.messages{padding:12px;max-height:420px}.composer{padding:10px}.send{padding:0 12px}.footer{padding:12px 14px}.info-grid{grid-template-columns:1fr}.view-hero{padding:18px}.view-hero h1{font-size:25px}.brand-name{font-size:16px}.mobile-menu{display:inline-flex}.topbar .crumb{font-size:11px}}
 </style>
 </head>
 <body>
-<main>
-<header class="top">
-  <div class="brand"><div class="mark">1</div><div><h1>OneAI</h1><small>One interface. Connected intelligence.</small></div></div>
-  <div class="pill">ALL SOCIAL</div>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">1</div><div class="brand-copy"><div class="brand-name">OneAI</div><div class="brand-tag">CONNECTED INTELLIGENCE</div></div></div>
+  <div style="width:100%"><div class="nav-label">Workspace</div><nav class="nav" id="nav">
+    <button class="active" data-view="home"><span class="glyph">✧</span><span class="nav-text">OneAI Assistant</span></button>
+    <button data-view="mixer"><span class="glyph">⎇</span><span class="nav-text">Parallel Intelligence</span><span class="tag">MIXER</span></button>
+    <button data-view="omni"><span class="glyph">◈</span><span class="nav-text">Omni</span></button>
+    <button data-view="jellybox"><span class="glyph">▤</span><span class="nav-text">Jellybox Memory</span></button>
+    <button data-view="uid"><span class="glyph">⌘</span><span class="nav-text">UIDaaS</span></button>
+    <button data-view="xparallel"><span class="glyph">⟷</span><span class="nav-text">XParallel</span></button>
+  </nav></div>
+  <div class="side-bottom"><div class="status-card"><div class="status-head"><span><i class="dot" id="sideDot"></i>System status</span><span id="sideStatus">Checking</span></div><p id="sideStatusNote">Checking whether the public API is available. Provider and memory health are reported only when verified.</p></div></div>
+</aside>
+<main class="main">
+<header class="topbar">
+  <div class="crumb"><span class="mobile-menu">☰ &nbsp; </span><strong id="crumbName">OneAI Assistant</strong><span> / Workspace</span></div>
+  <div class="top-actions"><button class="small-btn" id="refreshBtn">↻ Refresh status</button><div class="avatar" title="OneAI">1</div></div>
 </header>
-
-<section class="hero">
-  <h2>All your social.<br>One front door.</h2>
-  <p>See independent social platforms together in one OneAI interface. Choose a platform and continue to its own service.</p>
-  <div class="search"><input id="q" autocomplete="off" placeholder="Search social platforms…"></div>
+<div class="content">
+<section class="workspace-view active" id="view-home">
+  <div class="hero"><div class="eyebrow">One interface. Connected intelligence.</div><h1>Think across systems.<br><span>Build beyond limits.</span></h1><p>OneAI brings your AI workspace together. Ask questions, coordinate tools, explore ideas, and route approved build requests to XParallel — while identity, memory, orchestration, and provider integrations remain independently controlled.</p></div>
+  <div class="system-strip"><span class="chip"><i class="dot" id="apiDot"></i><b id="apiLabel">API status unknown</b></span><span class="chip">Parallel Intelligence <b>Provider status unverified</b></span><span class="chip">XParallel <b>Approval-gated</b></span></div>
+  <div class="section-title"><h2>Your connected workspace</h2><span>Separate modules · shared experience</span></div>
+  <div class="module-grid">
+    <button class="module" data-view="mixer"><span class="module-icon">⎇</span><h3>Parallel Intelligence</h3><p>AI Mixer orchestration across configured providers, with per-call evidence.</p><span class="state"><i class="dot"></i>Provider status unverified</span></button>
+    <button class="module" data-view="omni"><span class="module-icon">◈</span><h3>Omni</h3><p>Coordinate tasks and route work to the appropriate capability.</p><span class="state"><i class="dot"></i>Integration status unverified</span></button>
+    <button class="module" data-view="jellybox"><span class="module-icon">▤</span><h3>Jellybox</h3><p>Memory, retrieval, summarization, and context budgeting.</p><span class="state"><i class="dot"></i>Persistence not verified</span></button>
+    <button class="module" data-view="uid"><span class="module-icon">⌘</span><h3>UIDaaS</h3><p>Identity, scoped authorization, credentials, and auditability.</p><span class="state"><i class="dot"></i>Identity status unverified</span></button>
+    <button class="module" data-view="xparallel"><span class="module-icon">⟷</span><h3>XParallel</h3><p>Isolated build and test workflows, with human approval for execution.</p><span class="state"><i class="dot"></i>Execution requires approval</span></button>
+    <button class="module" data-view="home"><span class="module-icon">✧</span><h3>OneAI Assistant</h3><p>One entry point for questions, planning, and connected capabilities.</p><span class="state"><i class="dot"></i>Backend connection required</span></button>
+  </div>
+  <section class="workbench">
+    <div class="work-head"><div><div class="work-title">Talk to OneAI</div><div class="work-subtitle">Replies are returned by the configured backend; unavailable endpoints are shown as errors, never simulated.</div></div><span class="work-state" id="chatState">Awaiting input</span></div>
+    <div class="messages" id="messages" aria-live="polite"><div class="message"><div class="message-icon">1</div><div class="bubble">Welcome to OneAI. What would you like to understand, plan, or build?<div class="meta">Interface ready · live AI response not yet verified</div></div></div></div>
+    <div class="prompt-row"><button class="prompt" data-prompt="Explain how OneAI and its modules should work together.">Explain the architecture</button><button class="prompt" data-prompt="Create a safe implementation plan for an XParallel build request.">Plan an XParallel build</button><button class="prompt" data-prompt="Check which OneAI services are operational and what evidence is available.">Check system readiness</button></div>
+    <form class="composer" id="chatForm"><textarea id="chatInput" aria-label="Message OneAI" placeholder="Message OneAI…" rows="1" required></textarea><button class="send" id="sendBtn" type="submit">Send ↗</button></form><div class="composer-note">Do not enter passwords, API keys, or private credentials. The browser never receives server secrets.</div>
+  </section>
 </section>
 
-<div class="tabs" id="tabs"></div>
-<div class="section"><h3>Social platforms</h3><span class="count" id="count"></span></div>
-<section id="grid" class="grid"></section>
-
-<section class="command">
-  <strong>OneAI command</strong>
-  <p>Use OneAI as the front door. Platform accounts and actions remain separate and require their own authorization.</p>
-  <div class="command-row"><input id="command" placeholder="e.g. Find a video platform"><button id="run">Go</button></div>
-  <div id="result" class="result">Ready.</div>
+<section class="workspace-view" id="view-mixer">
+  <div class="view-hero"><div class="eyebrow">Shared intelligence layer</div><h1>Parallel Intelligence</h1><p>The AI Mixer is intended to call only explicitly configured providers, synthesize their responses, and expose evidence for each call. This interface does not claim a provider is connected until the backend confirms it.</p><div class="action-row"><button class="primary" id="mixerCheck">Check public API</button><button id="mixerTry">Ask OneAI to explain provider setup</button></div><div class="notice" id="mixerNotice">Provider status is unverified. No live provider call has been confirmed from this interface.</div></div>
+  <div class="section-title"><h2>Provider registry</h2><span>Configuration evidence required</span></div>
+  <div class="provider-list">
+    <div class="provider"><div class="provider-logo">A</div><div><div class="provider-name">Anthropic Claude</div><div class="provider-note">Requires configured credentials and a successful provider response.</div></div><span class="provider-status">Unverified</span></div>
+    <div class="provider"><div class="provider-logo">O</div><div><div class="provider-name">OpenAI</div><div class="provider-note">Requires configured credentials and a successful provider response.</div></div><span class="provider-status">Unverified</span></div>
+    <div class="provider"><div class="provider-logo">G</div><div><div class="provider-name">Google Gemini</div><div class="provider-note">Requires configured credentials and a successful provider response.</div></div><span class="provider-status">Unverified</span></div>
+    <div class="provider"><div class="provider-logo">K</div><div><div class="provider-name">Moonshot AI Kimi</div><div class="provider-note">Requires configured credentials and a successful provider response.</div></div><span class="provider-status">Unverified</span></div>
+  </div>
+  <div class="notice warn">Acceptance requirement: each provider call must record provider, model ID, latency, token counts, response hash, errors, and explicit skip reasons. A zero-provider state must return mixer_unavailable and setup guidance — no silent fallback.</div>
 </section>
-<div class="note">OneAI unifies the interface — it does not merge or impersonate the independent platforms.</div>
+
+<section class="workspace-view" id="view-omni">
+  <div class="view-hero"><div class="eyebrow">Task coordination</div><h1>Omni</h1><p>Omni is the orchestration module: it should interpret task intent, select capabilities, and coordinate work without replacing provider-specific or infrastructure responsibilities.</p><div class="action-row"><button class="primary" id="omniAsk">Ask OneAI about task routing</button><button id="omniRoute">Try route endpoint</button></div><div class="notice" id="omniNotice">Routing integration is not verified. Requests will use the configured public endpoint if available.</div></div>
+  <div class="info-grid"><div class="info-card"><h3>Intent routing</h3><p>Classify a request and identify the right service, tools, and constraints before acting.</p></div><div class="info-card"><h3>Human control</h3><p>Explain the proposed action and request approval before any real-world or execution-sensitive step.</p></div><div class="info-card"><h3>Shared contracts</h3><p>Use explicit request/response contracts so each module can be tested independently.</p></div><div class="info-card"><h3>Evidence</h3><p>Report what ran, what was skipped, and which parts are still unavailable.</p></div></div>
+</section>
+
+<section class="workspace-view" id="view-jellybox">
+  <div class="view-hero"><div class="eyebrow">Context and memory</div><h1>Jellybox</h1><p>Jellybox is intended to manage context budgets, retrieval, summarization, and persistent memory. A visible memory interface is not proof that memory is stored or retrieved.</p><div class="action-row"><button class="primary" id="memoryCheck">Check public API</button><button id="memoryAsk">Ask about memory integration</button></div><div class="notice warn" id="memoryNotice">Persistent storage and retrieval have not been verified from this interface. Do not treat this session as durable memory.</div></div>
+  <div class="info-grid"><div class="info-card"><h3>Retrieval</h3><p>Fetch relevant, authorized context rather than blindly attaching entire conversation histories.</p></div><div class="info-card"><h3>Summarization</h3><p>Compress older context while preserving decisions, constraints, provenance, and uncertainty.</p></div><div class="info-card"><h3>Privacy controls</h3><p>Support retention limits, deletion workflows, access scopes, and user-visible memory controls.</p></div><div class="info-card"><h3>Production gate</h3><p>Requires a persistence provider, retrieval tests, authorization, and documented failure behavior.</p></div></div>
+</section>
+
+<section class="workspace-view" id="view-uid">
+  <div class="view-hero"><div class="eyebrow">Identity and authorization</div><h1>UIDaaS</h1><p>UIDaaS is the identity and access layer. It should issue scoped credentials and enforce authorization server-side; the browser must never hold infrastructure approval tokens or provider API keys.</p><div class="action-row"><button class="primary" id="uidCheck">Check public API</button><button id="uidAsk">Ask about secure access design</button></div><div class="notice" id="uidNotice">Identity provider and audit integration are unverified. No credentials are requested or stored by this page.</div></div>
+  <div class="info-grid"><div class="info-card"><h3>Authentication</h3><p>Establish the user or service identity before granting access.</p></div><div class="info-card"><h3>Authorization</h3><p>Apply least privilege, scoped tokens, and server-side permission checks.</p></div><div class="info-card"><h3>Audit trail</h3><p>Record access decisions and sensitive actions without logging secrets.</p></div><div class="info-card"><h3>Execution approval</h3><p>Keep human approval credentials separate from ordinary API authentication.</p></div></div>
+</section>
+
+<section class="workspace-view" id="view-xparallel">
+  <div class="view-hero"><div class="eyebrow">AI infrastructure · isolated execution</div><h1>XParallel</h1><p>XParallel is the separate parallel environment for planning, building, testing, and repairing software systems. OneAI can request a plan through a public endpoint; actual execution must remain isolated and explicitly approved.</p><div class="action-row"><button class="primary" id="xpHealth">Check public API</button><button id="xpAccess">Check XParallel access</button></div><div class="notice" id="xpNotice">No XParallel access or execution capability is assumed. The current public endpoint contract must be verified.</div></div>
+  <div class="info-grid"><div class="info-card"><h3>Plan a build</h3><p>Describe the task and request a plan without running code.</p><div class="field"><label for="buildQuery">Build request</label><textarea id="buildQuery" placeholder="Describe what should be built or repaired…"></textarea></div><div class="action-row"><button class="primary" id="buildBtn">Request build plan</button></div><div class="notice" id="buildResult">No build request submitted.</div></div><div class="info-card"><h3>Route a task</h3><p>Ask the routing layer to classify a request and suggest the next capability.</p><div class="field"><label for="routeQuery">Task to route</label><input id="routeQuery" placeholder="e.g. diagnose a failing API route"></div><div class="action-row"><button class="primary" id="routeBtn">Route task</button></div><div class="notice" id="routeResult">No route request submitted.</div></div></div>
+  <div class="notice warn">Safety boundary: this UI does not expose /execute or /experiment and does not send approval credentials. Planning is not execution. Any future execution flow must use server-side authorization plus separate, explicit human approval.</div>
+</section>
+</div>
+<footer class="footer"><span>OneAI · unified experience, distinct services</span><span id="footerStatus">API status not yet checked</span></footer>
 </main>
-
+</div>
 <script>
-const apps=[
- {n:'Instagram',i:'◎',c:'Social',u:'https://www.instagram.com/'},
- {n:'Facebook',i:'f',c:'Social',u:'https://www.facebook.com/'},
- {n:'TikTok',i:'♪',c:'Video',u:'https://www.tiktok.com/'},
- {n:'YouTube',i:'▶',c:'Video',u:'https://www.youtube.com/'},
- {n:'X',i:'𝕏',c:'Social',u:'https://x.com/'},
- {n:'LinkedIn',i:'in',c:'Professional',u:'https://www.linkedin.com/'},
- {n:'Threads',i:'@',c:'Social',u:'https://www.threads.net/'},
- {n:'Reddit',i:'R',c:'Community',u:'https://www.reddit.com/'},
- {n:'Pinterest',i:'P',c:'Visual',u:'https://www.pinterest.com/'},
- {n:'WhatsApp',i:'◉',c:'Messaging',u:'https://www.whatsapp.com/'},
- {n:'Telegram',i:'✈',c:'Messaging',u:'https://telegram.org/'},
- {n:'Spotify',i:'♫',c:'Music',u:'https://open.spotify.com/'}
-];
-const cats=['All','Social','Video','Messaging','Professional','Community','Visual','Music'];
-let active='All';
-const grid=document.getElementById('grid'),q=document.getElementById('q'),count=document.getElementById('count');
-const tabs=document.getElementById('tabs');
-function drawTabs(){tabs.innerHTML=cats.map(c=>'<button class="tab '+(c===active?'active':'')+'" data-c="'+c+'">'+c+'</button>').join('');tabs.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{active=b.dataset.c;drawTabs();render()})}
-function render(){
- const s=q.value.trim().toLowerCase();
- const list=apps.filter(a=>(active==='All'||a.c===active)&&(!s||a.n.toLowerCase().includes(s)||a.c.toLowerCase().includes(s)));
- count.textContent=list.length+' platform'+(list.length===1?'':'s');
- grid.innerHTML=list.map(a=>'<a class="card" href="'+a.u+'" target="_blank" rel="noopener noreferrer"><div class="icon">'+a.i+'</div><div class="name">'+a.n+'</div><div class="type">'+a.c+'</div><div class="open">Open platform ↗</div></a>').join('')||'<div class="result">No matching platform.</div>';
-}
-q.oninput=render;
-document.getElementById('run').onclick=()=>{
- const v=document.getElementById('command').value.trim().toLowerCase();
- if(!v){document.getElementById('result').textContent='Enter a command.';return}
- const hit=apps.find(a=>v.includes(a.n.toLowerCase()));
- document.getElementById('result').textContent=hit?'Opening '+hit.n+' as a separate platform.':'OneAI found the social gateway. Choose a platform from the grid.';
- if(hit) window.open(hit.u,'_blank','noopener,noreferrer');
-};
-drawTabs();render();
+(function(){
+  'use strict';
+  const $ = function(id){return document.getElementById(id)};
+  const viewNames={home:'OneAI Assistant',mixer:'Parallel Intelligence',omni:'Omni',jellybox:'Jellybox Memory',uid:'UIDaaS',xparallel:'XParallel'};
+  let apiState='unknown';
+  function showView(name){
+    if(!viewNames[name])return;
+    document.querySelectorAll('.workspace-view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+name)});
+    document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===name)});
+    $('crumbName').textContent=viewNames[name];
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){showView(b.dataset.view)})});
+  async function api(path,body){
+    const options={method:body?'POST':'GET',headers:{'Accept':'application/json'}};
+    if(body){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body)}
+    const response=await fetch(path,options);
+    const raw=await response.text();
+    let data;try{data=raw?JSON.parse(raw):{}}catch(_){data={message:raw.slice(0,600)}}
+    if(!response.ok){const err=new Error((data&& (data.message||data.error||data.detail))||('HTTP '+response.status));err.status=response.status;err.data=data;throw err}
+    return data;
+  }
+  function summarize(data){
+    if(data==null)return 'The endpoint returned an empty response.';
+    if(typeof data==='string')return data;
+    return data.message||data.answer||data.response||data.summary||data.result||JSON.stringify(data,null,2);
+  }
+  function setNotice(id,text,warning){const el=$(id);if(el){el.textContent=text;el.classList.toggle('warn',!!warning)}}
+  function setApiStatus(ok,detail){
+    apiState=ok?'available':'unavailable';
+    $('apiLabel').textContent=ok?'Public API reachable':'Public API unavailable';
+    $('apiDot').className='dot '+(ok?'good':'warn');
+    $('sideDot').className='dot '+(ok?'good':'warn');
+    $('sideStatus').textContent=ok?'Reachable':'Unavailable';
+    $('sideStatusNote').textContent=detail;
+    $('footerStatus').textContent=ok?'Public health endpoint responded':'Public health endpoint not verified';
+  }
+  async function checkHealth(){
+    try{
+      const d=await api('/public/health');
+      setApiStatus(true,'Public health endpoint responded. This does not prove every module or provider is healthy.');
+      $('chatState').textContent='API reachable';
+      return d;
+    }catch(e){
+      setApiStatus(false,'Could not verify /public/health ('+e.message+'). The frontend is loaded, but the public backend contract may not be deployed.');
+      $('chatState').textContent='Backend unavailable';
+      return null;
+    }
+  }
+  $('refreshBtn').addEventListener('click',async function(){this.disabled=true;this.textContent='Checking…';await checkHealth();this.disabled=false;this.textContent='↻ Refresh status'});
+  function addMessage(text,who,meta){
+    const row=document.createElement('div');row.className='message '+(who==='user'?'user':'');
+    const icon=document.createElement('div');icon.className='message-icon';icon.textContent=who==='user'?'You':'1';
+    const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=text;
+    if(meta){const m=document.createElement('div');m.className='meta';m.textContent=meta;bubble.appendChild(m)}
+    row.appendChild(icon);row.appendChild(bubble);$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight;return row;
+  }
+  async function askOneAI(prompt){
+    addMessage(prompt,'user');
+    const waiting=addMessage('Connecting to the configured OneAI public endpoint…','ai','Waiting for a real backend response.');
+    $('sendBtn').disabled=true;$('chatState').textContent='Request in progress';
+    try{
+      const d=await api('/public/ask',{query:prompt});
+      waiting.querySelector('.bubble').textContent=summarize(d);
+      const meta=document.createElement('div');meta.className='meta';meta.textContent='Backend response received · '+(d.provider||'provider not identified')+(d.model?' · '+d.model:'');waiting.querySelector('.bubble').appendChild(meta);
+      $('chatState').textContent='Response received';
+    }catch(e){
+      const setup=(e.data&&Array.isArray(e.data.setup))?' Setup: '+e.data.setup.join(' '):'';
+      waiting.querySelector('.bubble').textContent='OneAI could not obtain a live response: '+e.message+'. This page does not fabricate an AI answer.'+setup;
+      $('chatState').textContent='Request failed';
+    }finally{$('sendBtn').disabled=false;$('chatInput').focus()}
+  }
+  $('chatForm').addEventListener('submit',function(e){e.preventDefault();const v=$('chatInput').value.trim();if(!v)return;$('chatInput').value='';askOneAI(v)});
+  $('chatInput').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit()}});
+  document.querySelectorAll('[data-prompt]').forEach(function(b){b.addEventListener('click',function(){askOneAI(b.dataset.prompt)})});
+  $('mixerCheck').addEventListener('click',async function(){const d=await checkHealth();setNotice('mixerNotice',d?'Public API responded. Provider connectivity and mixer evidence still require a provider-specific status endpoint.':'Public API could not be verified. No provider call is claimed.',!d)});
+  $('mixerTry').addEventListener('click',function(){showView('home');askOneAI('Explain how to configure the OneAI AI Mixer for Anthropic Claude, OpenAI, Google Gemini, and Moonshot Kimi, including evidence fields and safe handling of missing providers.')});
+  $('omniAsk').addEventListener('click',function(){showView('home');askOneAI('Explain how Omni should route tasks across OneAI modules while preserving module boundaries and human approval.')});
+  $('omniRoute').addEventListener('click',async function(){try{const d=await api('/public/route',{query:'Explain the current OneAI module architecture and route this task safely.'});setNotice('omniNotice',summarize(d),false)}catch(e){setNotice('omniNotice','Route endpoint unavailable: '+e.message+'. Expected endpoint: /public/route.',true)}});
+  $('memoryCheck').addEventListener('click',async function(){const d=await checkHealth();setNotice('memoryNotice',d?'Public API reachable, but memory persistence and retrieval remain unverified without a dedicated memory status/read-write test.':'Public API unavailable. Durable memory has not been verified.',!d)});
+  $('memoryAsk').addEventListener('click',function(){showView('home');askOneAI('Propose a production-safe Jellybox memory implementation with retrieval, summarization, persistence, retention controls, and tests.')});
+  $('uidCheck').addEventListener('click',async function(){const d=await checkHealth();setNotice('uidNotice',d?'Public API reachable. This does not verify identity-provider integration, access policies, or audit logs.':'Public API unavailable; identity integration remains unverified.',!d)});
+  $('uidAsk').addEventListener('click',function(){showView('home');askOneAI('Design a secure UIDaaS identity and authorization boundary for OneAI and XParallel. Keep approval tokens server-side.')});
+  $('xpHealth').addEventListener('click',async function(){const d=await checkHealth();setNotice('xpNotice',d?'Public health endpoint responded. XParallel authenticated access and sandbox execution have not been tested.':'Public API unavailable. XParallel access is not verified.',!d)});
+  $('xpAccess').addEventListener('click',async function(){try{const d=await api('/public/xparallel/access');setNotice('xpNotice',summarize(d),false)}catch(e){setNotice('xpNotice','XParallel access endpoint unavailable: '+e.message+'. No private token was sent.',true)}});
+  $('buildBtn').addEventListener('click',async function(){const q=$('buildQuery').value.trim();if(!q){setNotice('buildResult','Enter a build request first.',true);return}this.disabled=true;setNotice('buildResult','Submitting plan request to /public/build…');try{const d=await api('/public/build',{query:q});setNotice('buildResult',summarize(d),false)}catch(e){setNotice('buildResult','Build planning request failed: '+e.message+'. This action never executes code.',true)}finally{this.disabled=false}});
+  $('routeBtn').addEventListener('click',async function(){const q=$('routeQuery').value.trim();if(!q){setNotice('routeResult','Enter a task to route first.',true);return}this.disabled=true;setNotice('routeResult','Submitting routing request…');try{const d=await api('/public/route',{query:q});setNotice('routeResult',summarize(d),false)}catch(e){setNotice('routeResult','Routing request failed: '+e.message+'. Verify /public/route is deployed.',true)}finally{this.disabled=false}});
+  checkHealth();
+})();
 </script>
 </body>
 </html>
