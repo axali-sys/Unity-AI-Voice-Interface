@@ -157,7 +157,8 @@
       const meta=document.createElement('div');meta.className='meta';meta.textContent='Backend response received · '+(d.provider||'provider not identified')+(d.model?' · '+d.model:'');waiting.querySelector('.bubble').appendChild(meta);
       $('chatState').textContent='Response received';
     }catch(e){
-      waiting.querySelector('.bubble').textContent='OneAI could not obtain a live response: '+e.message+'. This page does not fabricate an AI answer. Verify that /public/ask is deployed and connected to the AI Mixer.';
+      const setup=(e.data&&Array.isArray(e.data.setup))?' Setup: '+e.data.setup.join(' '):'';
+      waiting.querySelector('.bubble').textContent='OneAI could not obtain a live response: '+e.message+'. This page does not fabricate an AI answer.'+setup;
       $('chatState').textContent='Request failed';
     }finally{$('sendBtn').disabled=false;$('chatInput').focus()}
   }
