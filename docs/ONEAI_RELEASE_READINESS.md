@@ -5,7 +5,7 @@
 **Default branch:** main  
 **Candidate branch:** oneai-release-integration  
 **Candidate PR:** https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/42
-**Latest candidate commit:** fd2750b120e5cbf86505eb53b9f02b6366a9fe0d
+**Tested code commit:** fd2750b120e5cbf86505eb53b9f02b6366a9fe0d
 **CI evidence:** [XParallel Integration Tests #24](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/39070610811) and [Verify Axaliai V1 #115](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/39070610931) both completed successfully.  
 **Release version:** Not assigned; the repository metadata currently declares 0.1.0. Do not publish a release tag until the gates below are cleared.
 
