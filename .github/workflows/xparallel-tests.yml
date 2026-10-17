@@ -45,6 +45,10 @@ jobs:
         env:
           PYTHONPATH: .
         run: python -m unittest discover -s tests -p "test_roaming_engine.py" -v
+      - name: Test OneAI chat-to-Mixer integration
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p "test_chat_service_mixer.py" -v
       - name: Test OneAI AI Mixer
         env:
           PYTHONPATH: .
