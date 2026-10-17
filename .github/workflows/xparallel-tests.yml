@@ -41,6 +41,10 @@ jobs:
           PY
           node --check /tmp/xparallel-workbench.js
           node --check /tmp/axaliai.js
+      - name: Test OneAI roaming engine
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p "test_roaming_engine.py" -v
       - name: Test OneAI AI Mixer
         env:
           PYTHONPATH: .
