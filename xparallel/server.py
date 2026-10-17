@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from xparallel.agent import plan
 from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
+from xparallel.roaming import plan_roaming
 from xparallel.router import route
 from xparallel.store import get, load
 from xparallel.v1_runner import available
@@ -17,11 +18,11 @@ APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0-v1")
 
-
 SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": VERSION},
+    {"id": "roaming-planner", "name": "OneAI Internet-Wide Roaming Planner", "status": "internet-wide-plan-only", "domain_restriction": False},
     {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
     {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
@@ -39,7 +40,7 @@ def send_json(handler, status, payload):
 
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
-        return self.headers.get("Authorization") == f"Bearer {TOKEN}"
+        return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
     def execution_approved(self):
         return bool(APPROVAL_TOKEN) and self.headers.get("X-XParallel-Approval") == APPROVAL_TOKEN
@@ -52,6 +53,8 @@ class Handler(BaseHTTPRequestHandler):
                 "network": NETWORK, "version": VERSION, "services": SERVICES,
                 "provider_mixer": "unverified", "memory_persistence": "unverified",
                 "identity_provider": "unverified",
+                "roaming_services": "internet_wide_plan_only",
+                "roaming_domain_restriction": False,
             })
         if self.path == "/public/xparallel/access":
             return send_json(self, 200, {
@@ -72,7 +75,7 @@ class Handler(BaseHTTPRequestHandler):
         return send_json(self, 404, {"error": "not_found"})
 
     def do_POST(self):
-        public_paths = ("/public/ask", "/public/build", "/public/route")
+        public_paths = ("/public/ask", "/public/build", "/public/route", "/public/roam")
         is_public = self.path in public_paths
         if not is_public and not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
@@ -95,6 +98,14 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "query_required"})
             if len(query) > 12_000:
                 return send_json(self, 413, {"error": "query_too_large"})
+            if self.path == "/public/roam":
+                try:
+                    result = plan_roaming(query)
+                except ValueError as exc:
+                    code = str(exc)
+                    return send_json(self, 413 if code == "query_too_large" else 400, {"error": code})
+                result["network"] = NETWORK
+                return send_json(self, 200, result)
             if self.path == "/public/ask":
                 return send_json(self, 503, {
                     "error": "mixer_unavailable",
@@ -125,9 +136,7 @@ class Handler(BaseHTTPRequestHandler):
             execution = data.get("execution")
             if not isinstance(execution, dict) or not execution.get("files"):
                 return send_json(self, 400, {"error": "execution.files_required"})
-            # Both execution-capable endpoints must carry the separate human-approval
-            # credential. /experiment can invoke the same Docker runner as /execute,
-            # so API authentication alone must never authorize sandbox execution.
+            # API authentication and separate human approval are both required.
             if not self.execution_approved():
                 return send_json(self, 403, {"error": "human_approval_required"})
             result = run_experiment(query, execution)
