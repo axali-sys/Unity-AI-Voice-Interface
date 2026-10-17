@@ -4,14 +4,16 @@
 **Repository:** axali-sys/Unity-AI-Voice-Interface  
 **Default branch:** main  
 **Candidate branch:** oneai-release-integration  
-**Candidate PR:** https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/42  
+**Candidate PR:** https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/42
+**Latest candidate commit:** fd2750b120e5cbf86505eb53b9f02b6366a9fe0d
+**CI evidence:** [XParallel Integration Tests #24](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/39070610811) and [Verify Axaliai V1 #115](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/39070610931) both completed successfully.  
 **Release version:** Not assigned; the repository metadata currently declares 0.1.0. Do not publish a release tag until the gates below are cleared.
 
 ## Acceptance gates
 
 | Gate | Status | Evidence and remaining work |
 |---|---|---|
-| A — Application integrity | BLOCKED | Existing routes and previous PRs #5, #20, #22, #26, and #41 are recorded as merged. Candidate changes are on a draft PR. No CI run or local test execution was available during this assessment. |
+| A — Application integrity | BLOCKED | Existing routes and previous PRs #5, #20, #22, #26, and #41 are recorded as merged. Candidate changes are on a draft PR. Candidate CI passed Python compilation, inline JavaScript syntax checks, the new Mixer/roaming/chat integration tests, and the existing V1/memory/planner/conversation test suites. Live endpoint smoke tests are still missing. |
 | B — AI operation | BLOCKED | A configurable provider-neutral Mixer and telemetry contract are implemented on the candidate branch. No provider credentials or live provider calls have been verified. Configure XP_MIXER_MODELS_JSON and the matching server-side keys; run real provider tests and inspect returned model IDs, usage, hashes, and errors. |
 | C — Roaming operation | BLOCKED | Candidate supports Tavily retrieval and allowlisted HTTPS workers. No TAVILY_API_KEY or trusted worker has been verified. Worker entries are configuration-backed and marked unprobed; persistent discovery, health probes, circuit breakers, retries, and durable distributed task state remain incomplete. |
 | D — XParallel operation | BLOCKED | Existing bounded Docker experiment and approval flow remain in the default branch. Sandbox execution and approval tests have not been executed in this assessment. Verify Docker availability, resource limits, logs, cleanup, and explicit approval against the intended host. |
