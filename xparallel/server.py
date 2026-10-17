@@ -316,14 +316,16 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc:
-                error = str(exc)
-                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
-                return send_json(self, status, {"error": error})
-            self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
+                return send_json(self, 503, {"error": str(exc)})
+            mixer_state = (result.get("mixer") or {}).get("state")
+            self.audit("oneai_mixer_chat", workspace, workspace_context(data)["actor"], {
                 "model": result.get("model", "unknown"),
                 "message_count": len(messages) if isinstance(messages, list) else 0,
+                "mixer_state": mixer_state or "unknown",
+                "provider_call_count": len((result.get("mixer") or {}).get("calls", [])),
             })
-            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})
+            status = 503 if mixer_state == "mixer_unavailable" else 502 if mixer_state == "synthesis_failed" else 200
+            return send_json(self, status, {"network": NETWORK, "workspace_id": workspace, **result})
 
         if self.path == "/memory/summarize":
             memory_query = str(data.get("query", "")).strip()
