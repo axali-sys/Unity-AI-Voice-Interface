@@ -89,14 +89,41 @@ def _workers() -> tuple[list[dict], list[dict]]:
     return valid, skipped
 
 def roaming_status() -> dict:
-    workers, skipped = _workers()
+    # This public status endpoint reports configuration only; it does not resolve DNS
+    # or probe workers. DNS checks happen only during an authenticated roaming request.
+    raw = os.getenv("ONEAI_ROAMING_WORKERS", "").strip()
+    allowed_hosts = {h.strip().lower().rstrip(".") for h in os.getenv("ONEAI_ROAMING_ALLOWED_HOSTS", "").split(",") if h.strip()}
+    workers, skipped = [], []
+    if raw:
+        try:
+            entries = json.loads(raw)
+        except json.JSONDecodeError:
+            entries = []
+            skipped.append({"provider": "remote_workers", "reason": "invalid_worker_json"})
+        if not isinstance(entries, list):
+            entries = []
+            skipped.append({"provider": "remote_workers", "reason": "worker_config_must_be_array"})
+        for index, item in enumerate(entries[:16]):
+            if not isinstance(item, dict):
+                skipped.append({"provider": f"worker_{index}", "reason": "worker_config_must_be_object"})
+                continue
+            parsed = urllib.parse.urlparse(item.get("url", "")) if isinstance(item.get("url"), str) else None
+            host = (parsed.hostname or "").lower().rstrip(".") if parsed else ""
+            if not parsed or parsed.scheme != "https" or not host or not isinstance(item.get("token"), str) or not item["token"]:
+                skipped.append({"provider": str(item.get("name", f"worker_{index}")), "reason": "invalid_https_worker_configuration"})
+            elif host not in allowed_hosts:
+                skipped.append({"provider": str(item.get("name", f"worker_{index}")), "reason": "worker_host_not_in_allowlist"})
+            else:
+                workers.append({"name": str(item.get("name", f"worker_{index}"))[:100], "host": host, "status": "configured_unprobed"})
+        if len(entries) > 16:
+            skipped.append({"provider": "remote_workers", "reason": "worker_limit_exceeded"})
     return {
         "mode": "retrieval_only",
         "tavily_configured": bool(os.getenv("TAVILY_API_KEY", "").strip()),
         "configured_worker_count": len(workers),
-        "workers": [{"name": item["name"], "host": urllib.parse.urlparse(item["url"]).hostname, "status": "configured_unprobed"} for item in workers],
+        "workers": workers,
         "skipped_workers": skipped,
-        "worker_host_allowlist_configured": bool(os.getenv("ONEAI_ROAMING_ALLOWED_HOSTS", "").strip()),
+        "worker_host_allowlist_configured": bool(allowed_hosts),
     }
 
 def roam(query: str) -> dict:
