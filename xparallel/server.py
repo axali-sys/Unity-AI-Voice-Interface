@@ -24,6 +24,7 @@ from xparallel.memory_service import summarize_memories
 from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
+from xparallel.roaming_engine import roam, roaming_status
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -149,7 +150,15 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/public/system":
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
-            return send_json(self, 200, system_manifest(), cors=True)
+            manifest = system_manifest()
+            manifest["operational_status"] = "configuration_report_only"
+            manifest["roaming"] = roaming_status()
+            manifest["mixer"] = {
+                "configured": bool(os.getenv("XP_MIXER_MODELS_JSON", "").strip()),
+                "configuration_variable": "XP_MIXER_MODELS_JSON",
+                "provider_credentials_are_server_side": True,
+            }
+            return send_json(self, 200, manifest, cors=True)
         if self.path == "/public/health":
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -192,7 +201,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         is_public = self.path.startswith("/public/")
-        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/solution", "/public/verify", "/public/graph/search"}
+        public_paths = {"/public/ask", "/public/build", "/public/route", "/public/roam", "/public/solution", "/public/verify", "/public/graph/search"}
         if is_public:
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
@@ -200,6 +209,8 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 429, {"error": "rate_limit_exceeded"}, cors=True)
             if self.path not in public_paths:
                 return send_json(self, 404, {"error": "not_found"}, cors=True)
+            if self.path == "/public/roam" and not self.authorized():
+                return send_json(self, 401, {"error": "unauthorized", "detail": "roaming uses configured paid services and requires the API bearer token"}, cors=True)
         elif not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
 
@@ -384,6 +395,20 @@ class Handler(BaseHTTPRequestHandler):
         query = str(data.get("query", "")).strip()
         if not query:
             return send_json(self, 400, {"error": "query_required"}, cors=is_public)
+
+        if self.path == "/public/roam":
+            try:
+                result = roam(query)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)}, cors=True)
+            status = 200 if result.get("status") == "success" else 503
+            workspace = workspace_context(data)["workspace_id"]
+            self.audit("roaming_search", workspace, workspace_context(data)["actor"], {
+                "status": result.get("status"),
+                "provider_count": len(result.get("providers", [])),
+                "source_count": len(result.get("sources", [])),
+            })
+            return send_json(self, status, {"network": NETWORK, **result}, cors=True)
 
         if self.path == "/public/ask":
             decision = route(query)
