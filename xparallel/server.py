@@ -7,6 +7,7 @@ from xparallel.agent import plan
 from xparallel.connectors import connector_result
 from xparallel.experiment import run_experiment
 from xparallel.roaming import plan_roaming
+from xparallel.roaming_engine import roam
 from xparallel.router import route
 from xparallel.store import get, load
 from xparallel.v1_runner import available
@@ -22,7 +23,7 @@ SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": VERSION},
-    {"id": "roaming-planner", "name": "OneAI Internet-Wide Roaming Planner", "status": "internet-wide-plan-only", "domain_restriction": False},
+    {"id": "roaming-engine", "name": "OneAI Internet-Wide Roaming Engine", "status": "dynamic-roaming", "domain_restriction": False, "multi_worker": True},
     {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
     {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
@@ -53,7 +54,9 @@ class Handler(BaseHTTPRequestHandler):
                 "network": NETWORK, "version": VERSION, "services": SERVICES,
                 "provider_mixer": "unverified", "memory_persistence": "unverified",
                 "identity_provider": "unverified",
-                "roaming_services": "internet_wide_plan_only",
+                "roaming_services": "dynamic_provider_roaming",
+                "roaming_engine": "provider_neutral",
+                "roaming_worker_registry": "environment_configured",
                 "roaming_domain_restriction": False,
             })
         if self.path == "/public/xparallel/access":
@@ -100,12 +103,13 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 413, {"error": "query_too_large"})
             if self.path == "/public/roam":
                 try:
-                    result = plan_roaming(query)
+                    result = roam(query)
                 except ValueError as exc:
                     code = str(exc)
                     return send_json(self, 413 if code == "query_too_large" else 400, {"error": code})
                 result["network"] = NETWORK
-                return send_json(self, 200, result)
+                status = 200 if result["status"] == "success" else 503
+                return send_json(self, status, result)
             if self.path == "/public/ask":
                 return send_json(self, 503, {
                     "error": "mixer_unavailable",
