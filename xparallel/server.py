@@ -22,7 +22,7 @@ SERVICES = [
     {"id": "knowledge", "name": "Knowledge Registry", "status": NETWORK},
     {"id": "service-registry", "name": "Service Registry", "status": NETWORK},
     {"id": "intent-router", "name": "Intent Router", "status": VERSION},
-    {"id": "roaming-planner", "name": "OneAI Roaming Planner", "status": "plan-only"},
+    {"id": "roaming-planner", "name": "OneAI Internet-Wide Roaming Planner", "status": "internet-wide-plan-only", "domain_restriction": False},
     {"id": "parallel-sandbox", "name": "Controlled Docker Sandbox", "status": "v1", "available": available()},
     {"id": "execution-agent", "name": "Execution Agent", "status": "v1", "mode": "approval-gated"},
     {"id": "external-sources", "name": "External Source Connectors", "status": NETWORK},
@@ -53,7 +53,8 @@ class Handler(BaseHTTPRequestHandler):
                 "network": NETWORK, "version": VERSION, "services": SERVICES,
                 "provider_mixer": "unverified", "memory_persistence": "unverified",
                 "identity_provider": "unverified",
-                "roaming_services": "plan_only",
+                "roaming_services": "internet_wide_plan_only",
+                "roaming_domain_restriction": False,
             })
         if self.path == "/public/xparallel/access":
             return send_json(self, 200, {
