@@ -11,11 +11,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
 import urllib.request
 from typing import Any
+
 
 def _request(base_url: str, path: str, *, token: str = "", origin: str = "",
              payload: dict[str, Any] | None = None, timeout: float = 12.0) -> tuple[int | None, dict[str, Any]]:
@@ -46,19 +48,25 @@ def _request(base_url: str, path: str, *, token: str = "", origin: str = "",
     except (json.JSONDecodeError, TypeError):
         return status, {"response_type": "non_json", "body_length": len(raw)}
 
+
 def _record(results: list[dict[str, Any]], name: str, passed: bool | None,
             status: int | None, detail: str) -> None:
     state = "PASS" if passed is True else "FAIL" if passed is False else "SKIP"
     results.append({"check": name, "result": state, "http_status": status, "detail": detail})
     print(f"{state:4} {name}: HTTP {status if status is not None else 'no response'} — {detail}")
 
+
 def _short(payload: dict[str, Any], *keys: str) -> str:
+    """Summarize selected scalar fields without emitting credentials or secret material."""
     bits = []
     for key in keys:
+        if re.search(r"token|secret|password|authorization|credential|api[_-]?key", key, re.IGNORECASE):
+            continue
         value = payload.get(key)
         if isinstance(value, (str, int, float, bool)):
             bits.append(f"{key}={value}")
     return ", ".join(bits) or "JSON response received"
+
 
 def run(args: argparse.Namespace) -> int:
     base_url = (args.base_url or os.getenv("XP_BASE_URL", "")).strip().rstrip("/")
@@ -165,6 +173,7 @@ def run(args: argparse.Namespace) -> int:
     print(json.dumps({"base_url": base_url, "checks": results, "failed": failures, "skipped": skips}, indent=2))
     return 1 if failures else 0
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify XParallel API infrastructure with evidence-based HTTP smoke checks.")
     parser.add_argument("--base-url", default="", help="HTTPS API base URL; defaults to XP_BASE_URL")
@@ -173,6 +182,7 @@ def main() -> int:
     parser.add_argument("--live-ai", action="store_true", help="Make a real provider-backed /chat call (may incur cost)")
     parser.add_argument("--live-roam", action="store_true", help="Make a real roaming search call (may incur cost)")
     return run(parser.parse_args())
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
