@@ -3,7 +3,9 @@ import json
 import os
 from pathlib import Path
 
-DATA_FILE = Path(os.getenv("XP_DATA_FILE", "xparallel/data/knowledge.json"))
+IS_SERVERLESS = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+DEFAULT_DATA_FILE = "/tmp/xparallel/knowledge.json" if IS_SERVERLESS else "xparallel/data/knowledge.json"
+DATA_FILE = Path(os.getenv("XP_DATA_FILE", DEFAULT_DATA_FILE))
 
 DEFAULT = {
     "xparallel": {
