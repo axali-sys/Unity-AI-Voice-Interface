@@ -23,7 +23,7 @@ services:
       - key: XP_VERSION
         value: 1.0.0
       - key: XP_BILLING_EMAIL
-        sync: false
+        value: azalibol74@gmail.com
       # Provider-neutral AI Mixer. Use only model IDs enabled in your provider accounts.
       - key: XP_MIXER_MODELS_JSON
         sync: false
