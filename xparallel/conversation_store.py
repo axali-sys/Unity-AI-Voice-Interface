@@ -16,7 +16,9 @@ from pathlib import Path
 from typing import Any
 
 def _db_path() -> str:
-    return os.getenv("XP_MEMORY_DB", "xparallel_memory.sqlite3")
+    is_serverless = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    default = "/tmp/xparallel_memory.sqlite3" if is_serverless else "xparallel_memory.sqlite3"
+    return os.getenv("XP_MEMORY_DB", default)
 
 def _connect() -> sqlite3.Connection:
     path = _db_path()
