@@ -37,10 +37,22 @@ jobs:
               scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
               if not scripts:
                   raise SystemExit(f"No inline script found in {source}")
-              Path(target).write_text(scripts[-1], encoding="utf-8")
+              Path(target).write_text("\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/xparallel-workbench.js
           node --check /tmp/axaliai.js
+      - name: Test OneAI roaming engine
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p "test_roaming_engine.py" -v
+      - name: Test OneAI chat-to-Mixer integration
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p "test_chat_service_mixer.py" -v
+      - name: Test OneAI AI Mixer
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p "test_mixer.py" -v
       - name: Test memory retrieval and summarization
         run: python -m unittest discover -s tests -p "test_memory_service.py" -v
       - name: Test Parallel World planner

@@ -8,8 +8,10 @@ services:
     envVars:
       - key: XP_TOKEN
         sync: false
+      - key: XP_EXECUTION_APPROVAL_TOKEN
+        sync: false
       - key: XP_PUBLIC_ORIGINS
-        value: "https://axaliai.com,https://www.axaliai.com"
+        value: "https://axaliai.com,https://www.axaliai.com,https://xparallel-ai-infrast-q4lg.bolt.host"
       - key: XP_PUBLIC_RATE_LIMIT
         value: "30"
       - key: XP_PUBLIC_RATE_WINDOW
@@ -22,5 +24,31 @@ services:
         value: 1.0.0
       - key: XP_BILLING_EMAIL
         value: azalibol74@gmail.com
-      - key: XP_EXECUTION_APPROVAL_TOKEN
+      # Provider-neutral AI Mixer. Use only model IDs enabled in your provider accounts.
+      - key: XP_MIXER_MODELS_JSON
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: MOONSHOT_API_KEY
+        sync: false
+      # Roaming search and optional independently hosted workers.
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: ONEAI_ROAMING_WORKERS
+        sync: false
+      - key: ONEAI_ROAMING_ALLOWED_HOSTS
+        sync: false
+      # Set these to database file paths on a persistent mounted disk before production.
+      - key: XP_MEMORY_DB
+        sync: false
+      - key: XP_DB_PATH
+        sync: false
+      # Optional provider used by memory summarization.
+      - key: XP_AI_API_KEY
+        sync: false
+      - key: XP_AI_MODEL
         sync: false
