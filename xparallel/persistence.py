@@ -10,7 +10,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-DEFAULT_PATH = os.getenv("XP_DB_PATH", ".xparallel/xparallel.db")
+IS_SERVERLESS = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+DEFAULT_PATH = os.getenv("XP_DB_PATH", "/tmp/.xparallel/xparallel.db" if IS_SERVERLESS else ".xparallel/xparallel.db")
 
 class SolutionRepository:
     def __init__(self, path: str | None = None):
