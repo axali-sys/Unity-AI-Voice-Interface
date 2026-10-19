@@ -255,23 +255,38 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "unsupported_job_type"})
             workspace_data = workspace_context(data)
             try:
-                context = retrieve_memory_context(query, data)
-                plan_result = plan(query, context)
-                result = {
-                    "diagnosis": {
-                        "status": "preliminary",
-                        "message": "Generated a plan from the current router and authorized workspace memory. This is not a verified root-cause finding.",
-                        "observed_resources": plan_result.get("resources", []),
-                    },
-                    "plan": plan_result,
-                    "verification": {"status": "not_run", "reason": "No target repository, service probe, or test suite was executed by this plan-only endpoint."},
-                }
+                try:
+                    context = retrieve_memory_context(query, data)
+                    plan_result = plan(query, context)
+                    result = {
+                        "diagnosis": {
+                            "status": "preliminary",
+                            "message": "Generated a plan from the current router and authorized workspace memory. This is not a verified root-cause finding.",
+                            "observed_resources": plan_result.get("resources", []),
+                        },
+                        "plan": plan_result,
+                        "verification": {"status": "not_run", "reason": "No target repository, service probe, or test suite was executed by this plan-only endpoint."},
+                    }
+                    job_status, job_error = "completed", None
+                except Exception:
+                    result = {
+                        "diagnosis": {
+                            "status": "failed",
+                            "message": "Planning could not complete. Internal exception details are not exposed by this endpoint.",
+                            "observed_resources": [],
+                        },
+                        "plan": None,
+                        "verification": {"status": "not_run", "reason": "Planning failed before verification could start."},
+                    }
+                    job_status, job_error = "failed", "planning_failed"
                 job = create_job(
                     workspace_id=workspace_data["workspace_id"],
                     actor=workspace_data["actor"],
                     query=query,
                     result=result,
                     job_type=job_type,
+                    status=job_status,
+                    error=job_error,
                 )
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
