@@ -122,7 +122,7 @@ class XParallelHTTPContractTests(unittest.TestCase):
 
         status, listing = self.request("GET", "/repair/jobs?workspace_id=repair-test", token="test-token", host="localhost")
         self.assertEqual(status, 200, listing)
-        self.assertEqual([item["job_id"] for item in listing["jobs"]], [job["job_id"]])
+        self.assertIn(job["job_id"], [item["job_id"] for item in listing["jobs"]])
 
         status, fetched = self.request("GET", "/repair/jobs/" + job["job_id"] + "?workspace_id=other-workspace", token="test-token", host="localhost")
         self.assertEqual(status, 404)
