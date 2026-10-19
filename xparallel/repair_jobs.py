@@ -7,7 +7,6 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 IS_SERVERLESS = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
 DEFAULT_FILE = "/tmp/xparallel/repair_jobs.json" if IS_SERVERLESS else "xparallel/data/repair_jobs.json"
