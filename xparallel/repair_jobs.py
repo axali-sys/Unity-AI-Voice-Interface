@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from contextlib import closing
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -41,6 +42,7 @@ def _connect() -> sqlite3.Connection:
         )
     """)
     connection.execute("CREATE INDEX IF NOT EXISTS idx_repair_jobs_workspace_created ON repair_jobs(workspace_id, created_at DESC)")
+    connection.commit()
     return connection
 
 
@@ -68,7 +70,7 @@ def create_job(*, workspace_id: str, actor: str, query: str, result: dict[str, A
         "created_at": now,
         "updated_at": now,
     }
-    with _LOCK, _connect() as connection:
+    with _LOCK, closing(_connect()) as connection:
         connection.execute(
             "INSERT INTO repair_jobs(job_id, workspace_id, status, created_at, updated_at, job_json) VALUES (?, ?, ?, ?, ?, ?)",
             (job["job_id"], job["workspace_id"], job["status"], now, now, json.dumps(job, sort_keys=True)),
@@ -78,6 +80,7 @@ def create_job(*, workspace_id: str, actor: str, query: str, result: dict[str, A
                 SELECT job_id FROM repair_jobs ORDER BY created_at DESC LIMIT -1 OFFSET ?
             )
         """, (_MAX_JOBS,))
+        connection.commit()
     return job
 
 
