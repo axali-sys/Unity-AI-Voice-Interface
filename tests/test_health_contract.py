@@ -21,7 +21,7 @@ class XParallelHTTPContractTests(unittest.TestCase):
         cls.data_dir = tempfile.TemporaryDirectory(prefix="xparallel-repair-tests-")
         env = os.environ.copy()
         env.update({
-            "XP_REPAIR_JOBS_FILE": os.path.join(cls.data_dir.name, "repair_jobs.json"),
+            "XP_DB_PATH": os.path.join(cls.data_dir.name, "xparallel-test.db"),
             "XP_TOKEN": "test-token",
             "XP_EXECUTION_APPROVAL_TOKEN": "test-approval-token",
             "PORT": str(cls.port),
