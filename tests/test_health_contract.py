@@ -5,6 +5,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 import urllib.error
@@ -17,8 +18,10 @@ class XParallelHTTPContractTests(unittest.TestCase):
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             cls.port = sock.getsockname()[1]
+        cls.data_dir = tempfile.TemporaryDirectory(prefix="xparallel-repair-tests-")
         env = os.environ.copy()
         env.update({
+            "XP_REPAIR_JOBS_FILE": os.path.join(cls.data_dir.name, "repair_jobs.json"),
             "XP_TOKEN": "test-token",
             "XP_EXECUTION_APPROVAL_TOKEN": "test-approval-token",
             "PORT": str(cls.port),
@@ -54,6 +57,7 @@ class XParallelHTTPContractTests(unittest.TestCase):
             cls.proc.wait(timeout=3)
         if cls.proc.stderr:
             cls.proc.stderr.close()
+        cls.data_dir.cleanup()
 
     @classmethod
     def request(cls, method, path, payload=None, token=None, host="preview.vercel.app", approval=None):
@@ -98,6 +102,35 @@ class XParallelHTTPContractTests(unittest.TestCase):
         status, payload = self.request("GET", "/registry", host="localhost")
         self.assertEqual(status, 401)
         self.assertEqual(payload.get("error"), "unauthorized")
+
+
+    def test_repair_jobs_are_authenticated_workspace_scoped_and_plan_only(self):
+        payload = {"workspace_id": "repair-test", "actor": "test-operator",
+                   "job_type": "diagnostic", "query": "Diagnose a chat API returning HTTP 502"}
+        status, denied = self.request("POST", "/repair/jobs", payload, host="localhost")
+        self.assertEqual(status, 401)
+        self.assertEqual(denied.get("error"), "unauthorized")
+
+        status, created = self.request("POST", "/repair/jobs", payload, token="test-token", host="localhost")
+        self.assertEqual(status, 201, created)
+        job = created["job"]
+        self.assertTrue(job["job_id"].startswith("xpr_"))
+        self.assertEqual(job["status"], "completed")
+        self.assertFalse(job["execution_performed"])
+        self.assertTrue(job["approval_required_for_execution"])
+        self.assertEqual(job["result"]["verification"]["status"], "not_run")
+
+        status, listing = self.request("GET", "/repair/jobs?workspace_id=repair-test", token="test-token", host="localhost")
+        self.assertEqual(status, 200, listing)
+        self.assertEqual([item["job_id"] for item in listing["jobs"]], [job["job_id"]])
+
+        status, fetched = self.request("GET", "/repair/jobs/" + job["job_id"] + "?workspace_id=other-workspace", token="test-token", host="localhost")
+        self.assertEqual(status, 404)
+        self.assertEqual(fetched.get("error"), "not_found")
+
+        status, fetched = self.request("GET", "/repair/jobs/" + job["job_id"] + "?workspace_id=repair-test", token="test-token", host="localhost")
+        self.assertEqual(status, 200)
+        self.assertEqual(fetched["job_id"], job["job_id"])
 
     def test_execution_requires_explicit_approval_even_for_owner(self):
         body = {"query": "run a controlled test", "execution": {"files": [{"path": "note.txt", "content": "safe test"}]}}
