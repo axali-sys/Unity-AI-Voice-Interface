@@ -361,10 +361,10 @@ class Handler(BaseHTTPRequestHandler):
                 error = str(exc)
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
-            plan = result.get("plan", {})
+            plan_data = result.get("plan", {})
             self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
-                "provider": plan.get("provider", "unknown"),
-                "memory_source_count": len(plan.get("memory_sources", [])),
+                "provider": plan_data.get("provider", "unknown"),
+                "memory_source_count": len(plan_data.get("memory_sources", [])),
             })
             return send_json(self, 200, result)
 
