@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+from test_health_contract import XParallelHTTPContractTests
 
 
 ROOT = Path(__file__).resolve().parents[1]
