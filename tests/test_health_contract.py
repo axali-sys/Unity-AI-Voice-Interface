@@ -1,4 +1,6 @@
+import http.client
 import json
+import select
 import os
 import socket
 import subprocess
@@ -70,6 +72,13 @@ class XParallelHTTPContractTests(unittest.TestCase):
                 return response.status, json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read().decode("utf-8"))
+        except http.client.RemoteDisconnected as exc:
+            details = ""
+            if cls.proc.stderr:
+                ready, _, _ = select.select([cls.proc.stderr], [], [], 0.2)
+                if ready:
+                    details = cls.proc.stderr.read1(4000).decode("utf-8", errors="replace")
+            raise AssertionError(f"XParallel closed the connection without an HTTP response for {method} {path}. Server diagnostics: {details}") from exc
 
     def test_health_and_public_manifests_are_readable(self):
         for path in ("/public/health", "/public/xparallel/access", "/public/system"):
