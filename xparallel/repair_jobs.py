@@ -46,7 +46,7 @@ def _connect() -> sqlite3.Connection:
     return connection
 
 
-def create_job(*, workspace_id: str, actor: str, query: str, result: dict[str, Any], job_type: str = "diagnostic") -> dict[str, Any]:
+def create_job(*, workspace_id: str, actor: str, query: str, result: dict[str, Any], job_type: str = "diagnostic", status: str = "completed", error: str | None = None) -> dict[str, Any]:
     query = str(query).strip()
     if not query:
         raise ValueError("query_required")
@@ -54,16 +54,18 @@ def create_job(*, workspace_id: str, actor: str, query: str, result: dict[str, A
         raise ValueError("query_too_large")
     if job_type not in {"diagnostic", "repair_plan"}:
         raise ValueError("unsupported_job_type")
+    if status not in {"completed", "failed"}:
+        raise ValueError("unsupported_job_status")
     now = _now()
     job = {
         "job_id": "xpr_" + uuid.uuid4().hex,
         "workspace_id": str(workspace_id)[:128],
         "job_type": job_type,
-        "status": "completed",
+        "status": status,
         "stage": "plan",
         "query": query,
         "result": result,
-        "error": None,
+        "error": error,
         "execution_performed": False,
         "approval_required_for_execution": True,
         "actor": str(actor)[:128],
