@@ -26,6 +26,16 @@ class OneAIInterfaceSafetyTests(unittest.TestCase):
             with self.subTest(provider=label):
                 self.assertIn(label, self.html)
 
+    def test_xparallel_has_a_dedicated_workspace_and_live_read_only_diagnostics(self):
+        self.assertIn('id="xparallelWorkspace"', self.html)
+        self.assertIn('XPARALLEL — DNA OF AI', self.html)
+        self.assertIn("loadXParallelDiagnostics", self.html)
+        for endpoint in ("/public/health", "/public/xparallel/access", "/public/system"):
+            with self.subTest(endpoint=endpoint):
+                self.assertIn(endpoint, self.html)
+        self.assertIn("Planning is separate from execution", self.html)
+        self.assertIn("It does not dispatch jobs", self.html)
+
     def test_workspace_keeps_existing_public_endpoint_contracts(self):
         self.assertIn("'/public/health'", self.html)
         self.assertIn("'/public/build'", self.html)
