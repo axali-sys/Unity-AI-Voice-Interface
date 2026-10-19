@@ -1,1 +1,1 @@
-web: python xparallel/server.py
+web: python -m xparallel.server
