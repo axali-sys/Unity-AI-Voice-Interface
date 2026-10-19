@@ -24,6 +24,7 @@ from xparallel.memory_service import summarize_memories
 from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
+from xparallel.repair_jobs import create_job, get_job, list_jobs
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -157,6 +158,20 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/repair/jobs":
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            try:
+                jobs = list_jobs(workspace, params.get("limit", ["50"])[0], params.get("status", [""])[0])
+            except ValueError:
+                return send_json(self, 400, {"error": "invalid_limit"})
+            return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, "jobs": jobs})
+        if parsed.path.startswith("/repair/jobs/"):
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            job_id = parsed.path.rsplit("/", 1)[-1]
+            job = get_job(job_id, workspace)
+            return send_json(self, 200 if job else 404, job or {"error": "not_found"})
         if parsed.path == "/conversations":
             params = parse_qs(parsed.query)
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
@@ -226,6 +241,59 @@ class Handler(BaseHTTPRequestHandler):
             deleted = delete_conversation(conversation_id, workspace)
             self.audit("conversation_deleted", workspace, workspace_context(data)["actor"], {"conversation_id": conversation_id, "deleted": deleted})
             return send_json(self, 200 if deleted else 404, {"deleted": deleted})
+
+        if self.path == "/repair/jobs":
+            if not self.require_role("create_solution"):
+                return send_json(self, 403, {"error": "forbidden"})
+            query = str(data.get("query", "")).strip()
+            job_type = str(data.get("job_type", "diagnostic")).strip()
+            if not query:
+                return send_json(self, 400, {"error": "query_required"})
+            if len(query) > 4000:
+                return send_json(self, 400, {"error": "query_too_large"})
+            if job_type not in {"diagnostic", "repair_plan"}:
+                return send_json(self, 400, {"error": "unsupported_job_type"})
+            workspace_data = workspace_context(data)
+            try:
+                try:
+                    context = retrieve_memory_context(query, data)
+                    plan_result = plan(query, context)
+                    result = {
+                        "diagnosis": {
+                            "status": "preliminary",
+                            "message": "Generated a plan from the current router and authorized workspace memory. This is not a verified root-cause finding.",
+                            "observed_resources": plan_result.get("resources", []),
+                        },
+                        "plan": plan_result,
+                        "verification": {"status": "not_run", "reason": "No target repository, service probe, or test suite was executed by this plan-only endpoint."},
+                    }
+                    job_status, job_error = "completed", None
+                except Exception:
+                    result = {
+                        "diagnosis": {
+                            "status": "failed",
+                            "message": "Planning could not complete. Internal exception details are not exposed by this endpoint.",
+                            "observed_resources": [],
+                        },
+                        "plan": None,
+                        "verification": {"status": "not_run", "reason": "Planning failed before verification could start."},
+                    }
+                    job_status, job_error = "failed", "planning_failed"
+                job = create_job(
+                    workspace_id=workspace_data["workspace_id"],
+                    actor=workspace_data["actor"],
+                    query=query,
+                    result=result,
+                    job_type=job_type,
+                    status=job_status,
+                    error=job_error,
+                )
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            self.audit("repair_job_planned", workspace_data["workspace_id"], workspace_data["actor"], {
+                "job_id": job["job_id"], "job_type": job_type, "execution_performed": False,
+            })
+            return send_json(self, 201, {"network": NETWORK, "job": job})
 
         if self.path == "/fetch":
             url = str(data.get("url", "")).strip()
@@ -361,10 +429,10 @@ class Handler(BaseHTTPRequestHandler):
                 error = str(exc)
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
-            plan = result.get("plan", {})
+            plan_data = result.get("plan", {})
             self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
-                "provider": plan.get("provider", "unknown"),
-                "memory_source_count": len(plan.get("memory_sources", [])),
+                "provider": plan_data.get("provider", "unknown"),
+                "memory_source_count": len(plan_data.get("memory_sources", [])),
             })
             return send_json(self, 200, result)
 

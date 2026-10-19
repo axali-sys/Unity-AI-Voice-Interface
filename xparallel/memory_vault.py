@@ -15,7 +15,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-DEFAULT_DB = os.getenv("XP_MEMORY_DB", "xparallel_memory.sqlite3")
+IS_SERVERLESS = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+DEFAULT_DB = os.getenv("XP_MEMORY_DB", "/tmp/xparallel_memory.sqlite3" if IS_SERVERLESS else "xparallel_memory.sqlite3")
 
 
 def _connect(db_path: str | None = None) -> sqlite3.Connection:

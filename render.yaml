@@ -3,7 +3,7 @@ services:
     name: axaliai-mainnet
     runtime: python
     buildCommand: ""
-    startCommand: "python xparallel/server.py"
+    startCommand: "python -m xparallel.server"
     healthCheckPath: /health
     envVars:
       - key: XP_TOKEN

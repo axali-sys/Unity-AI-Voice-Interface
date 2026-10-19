@@ -1,172 +1,126 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090b12">
-<title>XParallel V3.5 PRO — Dual Space</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050d1b">
+<meta name="description" content="OneAI — one unified workspace for chat, planning, building and roaming services, powered by XParallel.">
+<title>OneAI — One Platform. Infinite Possibilities.</title>
 <style>
-:root{color-scheme:dark;--bg:#07080c;--panel:#0d111b;--panel2:#111827;--line:#273247;--text:#f4f7ff;--muted:#9aa8bd;--blue:#8ab4ff;--green:#71e0a0;--amber:#f1c66d;--red:#ff8585}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#121b2d 0,#07080c 48%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
-.wrap{max-width:1050px;margin:auto;padding:20px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.logo{display:grid;place-items:center;width:44px;height:44px;border:1px solid #38547c;border-radius:14px;background:#111d31;color:var(--blue);font-weight:900;font-size:22px}.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}h1{font-size:clamp(29px,7vw,48px);line-height:1.06;letter-spacing:-.035em;margin:20px 0 8px}h2{font-size:18px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}.muted{color:var(--muted)}.tiny{font-size:12px}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted);white-space:nowrap}.hero{margin:22px 0 18px}.hero p{max-width:700px;margin:0;color:var(--muted)}.statusbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.status-chip{border:1px solid var(--line);border-radius:10px;background:#0b101a;padding:8px 11px;font-size:12px}.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{min-width:0;border:1px solid var(--line);border-radius:18px;background:linear-gradient(155deg,rgba(17,24,39,.96),rgba(9,12,19,.98));padding:16px;box-shadow:0 8px 28px #0002}.wide{grid-column:1/-1}.space-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.space-icon{font-size:23px}.metric{font-size:25px;font-weight:750;letter-spacing:-.04em}.metric-label{font-size:12px;color:var(--muted)}.feature-list{display:grid;gap:9px}.feature{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #202a3b;padding:8px 0}.feature:last-child{border-bottom:0}.feature label{min-width:0}.feature small{display:block;color:var(--muted);font-size:12px}.action{border:1px solid #354966;border-radius:11px;background:#17243a;color:var(--text);padding:10px 13px;font:inherit;cursor:pointer}.action.primary{background:#1c3a63;border-color:#426da8}.action:disabled{opacity:.5;cursor:wait}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.field{display:block;width:100%;margin:9px 0;padding:12px;border:1px solid var(--line);border-radius:11px;background:#080c14;color:var(--text);font:inherit}.result{white-space:pre-wrap;overflow-wrap:anywhere;color:#d4e1f4;font-size:12px;max-height:300px;overflow:auto;margin:10px 0 0}.app-card{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #29364b;border-radius:14px;background:#090e17}.app-icon{width:48px;height:48px;border-radius:13px;background:#163326;display:grid;place-items:center;font-size:24px;flex-shrink:0}.app-meta{flex:1;min-width:0}.app-meta strong{display:block}.toggle{appearance:none;width:42px;height:24px;border-radius:99px;background:#30394a;position:relative;cursor:pointer;flex-shrink:0}.toggle:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:#fff;transition:transform .15s}.toggle:checked{background:#426fae}.toggle:checked:before{transform:translateX(18px)}.toggle:disabled{opacity:.45;cursor:not-allowed}.notice{border-left:3px solid var(--amber);padding:9px 12px;background:#17140d;color:#d7c8a2;border-radius:0 9px 9px 0;font-size:12px}.footer{margin-top:18px;color:#6f7e94;font-size:12px}
-@media(max-width:560px){.wrap{padding:15px 11px 30px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:14px}.top{align-items:flex-start}.pill{white-space:normal;text-align:center}.hero{margin-top:18px}}
+:root{color-scheme:dark;--bg:#040b16;--surface:#081629;--surface2:#0b1b31;--line:#16314f;--line2:#20476d;--text:#edf5ff;--muted:#8ba6c7;--blue:#2585ff;--cyan:#00d9ff;--violet:#9b70ff;--teal:#20e0bd;--green:#25e5a0;--amber:#ffb34f;--pink:#e36bff;--shadow:0 18px 55px #0005}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -30%,#10356b 0,transparent 45%),radial-gradient(ellipse at 90% 45%,#081e39 0,transparent 36%),var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}button:disabled{opacity:.55;cursor:wait}.app{min-height:100vh;display:grid;grid-template-rows:70px 1fr 48px}.topbar{display:flex;align-items:center;gap:24px;padding:0 22px;border-bottom:1px solid #14304d;background:#040b16ed;position:sticky;top:0;z-index:20;backdrop-filter:blur(18px)}.brand{display:flex;align-items:center;gap:11px;min-width:290px}.brandmark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:25px;color:#fff;background:linear-gradient(135deg,#0878ff,#7446ed 55%,#00d8dc);box-shadow:0 0 28px #007dff44}.brandname{font-size:27px;line-height:1;font-weight:800;letter-spacing:-1.5px}.brandname span{background:linear-gradient(100deg,#00d9ff,#a96aff);color:transparent;background-clip:text}.tagline{font-size:10px;color:#8ba8c9;margin-top:5px;white-space:nowrap}.searchbar{display:flex;align-items:center;gap:11px;flex:1;max-width:580px;min-width:80px;padding:10px 13px;border:1px solid #1b3a5f;background:linear-gradient(120deg,#0b1d34,#0a1527);border-radius:13px;color:var(--muted)}.searchbar input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font-size:12px}.kbd{font-size:10px;border:1px solid #254567;border-radius:6px;padding:3px 6px;white-space:nowrap}.topright{margin-left:auto;display:flex;align-items:center;gap:17px}.roaming{display:flex;gap:10px;align-items:center;white-space:nowrap}.pulse{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 7px #20e0bd12,0 0 16px #20e0bd}.roaming b{display:block;font-size:12px;font-weight:650}.roaming small{display:block;color:var(--muted);font-size:10px}.iconbtn{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:#b6cce6;font-size:18px}.iconbtn:hover{background:#102743}.profile{display:flex;align-items:center;gap:10px;white-space:nowrap}.avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(140deg,#267dff,#5542d8);box-shadow:0 0 22px #267dff33}.profile b{display:block;font-size:11px;font-weight:600}.profile small{display:block;color:var(--muted);font-size:10px}.mobile-menu{display:none}.layout{display:grid;grid-template-columns:250px minmax(400px,1fr) 300px;gap:12px;padding:0 13px 12px;min-height:0}.sidebar{border:1px solid #102a45;border-top:0;border-radius:0 0 17px 17px;background:linear-gradient(180deg,#061426,#051020);padding:14px 12px;display:flex;flex-direction:column;gap:19px;min-width:0}.navgroup{display:grid;gap:4px}.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#83a7cf;padding:0 9px 7px}.navitem{width:100%;display:flex;align-items:center;gap:12px;text-align:left;color:#b3c8e1;background:transparent;border:1px solid transparent;border-radius:11px;padding:9px 10px;font-size:12px;min-height:44px}.navitem:hover{background:#0b2039}.navitem.active{background:linear-gradient(100deg,#0b4fc3,#073f9d);border-color:#126ce3;color:white;box-shadow:0 8px 22px #005dff21}.navicon{flex-shrink:0;width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#102a49;color:#81c8ff;font-size:17px}.navitem.active .navicon{background:#1971ee;color:white}.navtext{min-width:0}.navtext b{display:block;font-weight:600;font-size:12px}.navtext small{display:block;color:#83a7cf;font-size:10px;margin-top:2px}.navitem.active small{color:#d2e4ff}.navdivider{height:1px;background:#15304c;margin:0 4px}.providers-mini{display:grid;gap:3px}.provider-mini{display:flex;align-items:center;gap:9px;padding:6px 9px;font-size:11px}.provider-mini .picon{width:29px;height:29px;border-radius:9px;background:#f1f6ff;color:#18243b;display:grid;place-items:center;font-size:13px;font-weight:800}.provider-mini small{display:block;color:#85a4c8;font-size:9px}.provider-mini .statusdot{margin-left:auto;width:7px;height:7px;background:var(--green);border-radius:50%;opacity:.85}.parallel-card{margin-top:auto;border:1px solid #183a61;background:radial-gradient(circle at 20% 15%,#182c65,#08182b 75%);border-radius:13px;padding:13px;display:flex;gap:11px;align-items:center}.parallel-glyph{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:#11285d;color:#75dcff;font-size:25px}.parallel-card b{font-size:11px}.parallel-card p{margin:3px 0 0;color:var(--muted);font-size:9px}.center{min-width:0;padding:0 0 2px;display:grid;grid-template-rows:auto auto auto auto;gap:10px;align-content:start}.hero{position:relative;overflow:hidden;min-height:258px;border:1px solid #12375d;border-radius:0 0 17px 17px;padding:36px 28px 20px;background:radial-gradient(ellipse at 86% 35%,#07529c77 0,transparent 39%),radial-gradient(ellipse at 63% 100%,#133d7c66 0,transparent 48%),linear-gradient(115deg,#07172a,#041127 66%,#061a33);box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;width:270px;height:270px;right:7%;top:-52px;border-radius:50%;border:1px solid #00bfff44;box-shadow:inset 0 0 32px #167aff22,0 0 35px #007cff22;background:radial-gradient(circle at 35% 35%,#1f8dff66,#092753 55%,#030d21 70%)}.hero:after{content:"";position:absolute;width:340px;height:120px;right:-1%;top:35px;border:1px solid #00c9ff99;border-radius:50%;transform:rotate(-28deg);box-shadow:0 0 15px #00baff22}.hero-orbit{position:absolute;width:320px;height:115px;right:0;top:60px;border:1px solid #a66affaa;border-radius:50%;transform:rotate(22deg);z-index:1;pointer-events:none}.hero-orbit:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:#ffbb62;top:10px;left:48px;box-shadow:0 0 18px #ff9f44}.hero-content{position:relative;z-index:2;max-width:680px}.hero h1{font-size:clamp(30px,3.3vw,43px);line-height:1.05;letter-spacing:-1.8px;margin:5px 0 11px}.gradient-text{background:linear-gradient(95deg,#51dfff,#9e7cff 67%,#d5a3ff);color:transparent;background-clip:text}.hero p{max-width:570px;margin:0;color:#d1e0f3;font-size:13px;line-height:1.7}.hero .eyebrow{color:#7fcbff;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}.modegrid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:20px}.mode{min-width:0;display:flex;align-items:center;gap:9px;text-align:left;border:1px solid #1558a4;border-radius:12px;padding:10px 11px;background:#07264aeb;color:white;transition:transform .18s,border-color .18s}.mode:hover{transform:translateY(-2px);border-color:var(--cyan)}.mode:nth-child(2){border-color:#009d9b;background:#06353dec}.mode:nth-child(3){border-color:#285ec1;background:#092d59ed}.mode:nth-child(4){border-color:#8c3e9c;background:#2c173bed}.modeicon{width:33px;height:33px;flex-shrink:0;border-radius:10px;display:grid;place-items:center;background:#0d4b90;font-size:17px}.mode:nth-child(2) .modeicon{background:#0c665f}.mode:nth-child(4) .modeicon{background:#6a4723}.mode b{display:block;font-size:12px}.mode small{display:block;color:#a9c4e6;font-size:9px;white-space:nowrap}.panel{min-width:0;border:1px solid #123455;border-radius:16px;background:linear-gradient(145deg,#08192c,#061326);box-shadow:0 10px 28px #0002;overflow:hidden}.composer-panel{padding:14px 16px}.tabs{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap}.tab{border:1px solid transparent;background:#0a2038;color:#9eb9d9;border-radius:10px;padding:8px 11px;font-size:11px}.tab.active{border-color:#1677ff;background:#073e91;color:white}.composerbox{border:1px solid #1d466e;border-radius:14px;background:linear-gradient(110deg,#0d2239,#10243b);padding:10px;display:flex;flex-direction:column;gap:9px}.composerbox textarea{width:100%;min-height:44px;max-height:140px;resize:vertical;background:transparent;border:0;outline:0;color:var(--text);padding:2px;font-size:12px}.composerbox textarea::placeholder{color:#a5bfdc}.composerfoot{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.toolchip{border:1px solid #1d4165;border-radius:20px;background:#0a2039;color:#b8d3f2;font-size:9px;padding:6px 9px}.toolchip:hover{border-color:#00cfff;color:white}.grow{flex:1}.send,.mic{width:38px;height:38px;display:grid;place-items:center;border:1px solid #1a70ff;border-radius:50%;background:linear-gradient(140deg,#177dff,#1453d6);color:white;font-size:17px;box-shadow:0 0 18px #1468ff33}.mic{background:#102a49;border-color:#24517b;box-shadow:none}.fineprint{font-size:9px;color:#6788ac;margin-top:8px}.toast{font-size:10px;color:#9dbbe0;min-height:0;margin-top:4px}.quickhead{display:flex;justify-content:space-between;align-items:end;padding:2px 2px 0}.quickhead h2{font-size:14px;margin:0}.quickhead p{font-size:10px;color:var(--muted);margin:3px 0 0}.quickgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.quickcard{min-height:112px;text-align:left;padding:12px;border:1px solid #0d9f86;border-radius:13px;background:linear-gradient(145deg,#004b45,#06332f);color:white;position:relative}.quickcard:nth-child(2){border-color:#743cce;background:linear-gradient(145deg,#25145c,#19153d)}.quickcard:nth-child(3){border-color:#126be5;background:linear-gradient(145deg,#063e88,#08254d)}.quickcard:nth-child(4){border-color:#a65b19;background:linear-gradient(145deg,#4a2b14,#2c1d15)}.quickcard:hover{filter:brightness(1.15);transform:translateY(-1px)}.quickcard .qicon{display:grid;place-items:center;width:33px;height:33px;border-radius:10px;background:#0d6e60;margin-bottom:8px;font-size:17px}.quickcard:nth-child(2) .qicon{background:#4b2ba3}.quickcard:nth-child(3) .qicon{background:#095dcc}.quickcard:nth-child(4) .qicon{background:#99520d}.quickcard b{display:block;font-size:11px}.quickcard small{display:block;color:#c0d5eb;font-size:9px;line-height:1.5;margin-top:3px;max-width:150px}.recent{padding:12px 13px}.recenthead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.recenthead h2{font-size:13px;margin:0}.recenthead p{font-size:10px;color:var(--muted);margin:2px 0 0}.recenthead button{border:0;background:transparent;color:#55b8ff;font-size:10px}.recentrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #122d49}.recentico{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;background:#0d2a4b;color:#a4d6ff;flex-shrink:0}.recentrow b{display:block;font-size:10px;font-weight:550}.recentrow small{display:block;color:#7897ba;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px}.recentrow .time{margin-left:auto;font-size:9px;color:#7797bc;white-space:nowrap}.rightcol{min-width:0;padding-top:4px;display:grid;gap:10px;align-content:start}.rightpanel{border:1px solid #143655;border-radius:15px;background:linear-gradient(155deg,#081a2d,#061326);padding:14px}.righthead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.righthead h2{font-size:13px;margin:0}.righthead a,.righthead button{border:0;background:transparent;color:#66bdff;font-size:10px;text-decoration:none}.overall{display:flex;align-items:center;gap:6px;border-radius:20px;background:#07372f;border:1px solid #0b695b;color:#83f3d4;padding:6px 8px;font-size:9px;white-space:nowrap}.sysrow{display:flex;align-items:center;gap:10px;padding:8px 0}.sysicon{width:26px;height:26px;display:grid;place-items:center;border-radius:9px;color:#6ef4d5;background:#0a342e;flex-shrink:0}.sysrow b{display:block;font-size:10px;font-weight:550}.sysrow small{display:block;color:#7f9fbe;font-size:9px;margin-top:2px}.sysrow .sysdot{width:6px;height:6px;border-radius:50%;background:#536d87;display:inline-block;margin-right:4px}.providerrows{display:grid;gap:2px}.providerrow{display:flex;align-items:center;gap:9px;padding:7px 3px}.providerrow .picon{width:29px;height:29px;border-radius:10px;display:grid;place-items:center;background:#edf5ff;color:#172840;font-size:13px;font-weight:800;flex-shrink:0}.providerrow b{font-size:10px;display:block;font-weight:550}.providerrow small{font-size:9px;color:#7f9cbd}.providerrow .state{margin-left:auto;color:#8ca4be;background:#0e2740;border-radius:20px;padding:5px 7px;font-size:9px;white-space:nowrap}.memoryrow{display:flex;align-items:center;gap:9px;padding:7px 0;color:#a8c6e6;font-size:10px}.memoryrow span:nth-child(2){flex:1}.memoryrow b{font-weight:500;color:#d2e7ff}.memoryrow .miniico{width:18px;color:#70c8ff}.voicepanel{text-align:center;padding:14px}.voicepanel .righthead{text-align:left}.voicecircle{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:13px auto 8px;border:2px solid #058fff;background:radial-gradient(circle,#123a65,#06142a);color:#6fe8ff;font-size:24px;box-shadow:0 0 0 6px #007aff13,0 0 26px #007aff33}.voicepanel p{font-size:9px;color:#80a0c3;margin:0}.bottomnav{border-top:1px solid #15314e;background:#040b16eb;display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 15px;position:sticky;bottom:0;z-index:15}.bottomnav button{display:flex;align-items:center;gap:8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#9db7d6;padding:7px 12px;font-size:10px}.bottomnav button.active{border-color:#145eb1;background:#071f3a;color:#dff3ff}.bottomnav .mini-brand{color:#5ee7ff;font-size:15px}.bottomtag{position:absolute;right:20px;color:#6685a8;font-size:9px}.health-ok{color:#4de3b5}.health-bad{color:#ffbd70}
+@media(min-width:1600px){.layout{grid-template-columns:270px minmax(480px,1fr) 320px;max-width:1900px;margin:auto;width:100%}.hero{min-height:275px}.hero:before{right:9%}}
+@media(max-width:1250px){.layout{grid-template-columns:215px minmax(0,1fr) 265px;gap:9px;padding:0 9px 10px}.brand{min-width:235px}.tagline{display:none}.topbar{gap:15px;padding:0 14px}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:27px 22px 18px}.modegrid{gap:6px}.mode{padding:8px}.mode small{white-space:normal}}
+@media(max-width:980px){.app{grid-template-rows:64px 1fr 47px}.layout{grid-template-columns:76px minmax(0,1fr);padding:0 9px 10px}.sidebar{padding:13px 7px;align-items:center}.navlabel,.navtext,.parallel-card,.navdivider,.providers-mini{display:none}.navgroup{width:100%}.navitem{justify-content:center;padding:7px 0}.navicon{width:35px;height:35px}.rightcol{grid-column:2;grid-template-columns:repeat(2,minmax(0,1fr));padding-top:0}.voicepanel{display:none}.brand{min-width:0}.topright{gap:7px}.profile .person{display:none}.searchbar{max-width:none}.hero:before{right:-4%}.modegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.mode small{white-space:normal}.bottomtag{display:none}}
+@media(max-width:620px){.app{display:block}.topbar{height:62px;padding:0 11px;gap:9px;position:sticky}.mobile-menu{display:grid;place-items:center;width:32px;height:34px;border:1px solid #204364;background:#0a1c31;color:white;border-radius:9px}.brand{gap:7px}.brandmark{width:34px;height:34px;border-radius:11px;font-size:20px}.brandname{font-size:22px}.brandcopy .tagline{display:none}.searchbar{flex:1;padding:8px 9px}.searchbar input{font-size:10px}.kbd,.roaming,.topright .iconbtn,.profile .person{display:none}.topright{margin-left:0}.profile{gap:0}.avatar{width:32px;height:32px}.layout{display:block;padding:0 8px 72px}.sidebar{display:none;position:fixed;z-index:30;left:0;top:62px;bottom:0;width:260px;border-radius:0;align-items:stretch;padding:14px 12px;box-shadow:var(--shadow)}.sidebar.open{display:flex}.sidebar .navlabel,.sidebar .navtext,.sidebar .parallel-card,.sidebar .navdivider,.sidebar .providers-mini{display:block}.sidebar .navitem{justify-content:flex-start;padding:9px 10px}.sidebar .navtext{display:block}.sidebar .navgroup{width:auto}.hero{min-height:265px;padding:24px 17px 16px;border-radius:0 0 15px 15px}.hero h1{font-size:34px;letter-spacing:-1.3px;max-width:340px}.hero p{font-size:11px;max-width:330px}.hero:before{width:165px;height:165px;right:-35px;top:-4px;opacity:.8}.hero:after{width:190px;height:68px;right:-30px;top:38px}.hero-orbit{width:190px;height:70px;right:-26px;top:60px}.modegrid{gap:7px;margin-top:16px}.mode{padding:8px;gap:7px}.modeicon{width:28px;height:28px;font-size:14px}.mode b{font-size:10px}.mode small{font-size:8px}.center{gap:10px}.composer-panel{padding:11px}.composerbox{padding:9px}.composerbox textarea{font-size:12px;min-height:50px}.toolchip{font-size:9px;padding:6px 8px}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.quickcard{min-height:116px;padding:10px}.quickcard b{font-size:10px}.quickcard small{font-size:9px}.rightcol{display:grid;grid-template-columns:1fr;margin-top:10px;gap:9px}.rightpanel{padding:12px}.voicepanel{display:block}.bottomnav{position:fixed;left:0;right:0;bottom:0;height:54px;justify-content:space-around;gap:0;padding:5px 3px}.bottomnav button{flex-direction:column;gap:2px;padding:5px 7px;font-size:8px}.bottomnav .mini-brand{font-size:16px}.recentrow .time{display:none}.recentrow small{max-width:220px}.footer{display:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
-<main class="wrap">
-<header class="top">
- <div class="brand"><div class="logo">X</div><div><div class="eyebrow">XParallel</div><strong>V3.5 PRO</strong></div></div>
- <span class="pill">DUAL SPACE CONSOLE</span>
+<div class="app">
+<header class="topbar">
+ <button class="mobile-menu" id="menuBtn" aria-label="Open navigation">☰</button>
+ <div class="brand"><div class="brandmark" aria-hidden="true">✳</div><div class="brandcopy"><div class="brandname">One<span>AI</span></div><div class="tagline">One Platform. Infinite Possibilities.</div></div></div>
+ <label class="searchbar"><span aria-hidden="true">◎</span><input id="globalSearch" type="search" placeholder="Search the web, ask anything, or plan your next move…" aria-label="Search OneAI"><span class="kbd">⌘ K</span></label>
+ <div class="topright"><div class="roaming"><span class="pulse" id="topPulse"></span><div><b>Roaming Engine</b><small id="roamingText">Serving the Internet · status unverified</small></div></div><button class="iconbtn" id="voiceToggle" aria-label="Voice controls" title="Voice controls">♬</button><button class="iconbtn" id="noticeBtn" aria-label="Notifications" title="Notifications">♧</button><div class="profile"><div class="avatar">AR</div><div class="person"><b>Azali Rare</b><small>OneAI workspace</small></div></div></div>
 </header>
-<section class="hero">
- <div class="eyebrow">Parallel environment control</div>
- <h1>Your spaces.<br>Clearly separated.</h1>
- <p>Inspect the public XParallel service, prepare a build plan, and review which Dual Space functions are available. Controls never claim to clone or isolate an app unless a verified backend capability exists.</p>
- <div class="statusbar">
-  <div class="status-chip">API <strong id="xp-connection" class="warn">Not checked</strong></div>
-  <div class="status-chip">Sandbox <strong id="xp-sandbox" class="warn">Not verified</strong></div>
-  <div class="status-chip">Version <strong id="xp-version">—</strong></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+ <div class="navgroup"><div class="navlabel">Workspace</div>
+  <button class="navitem" data-view="home"><span class="navicon">⌂</span><span class="navtext"><b>Home</b><small>Your AI workspace</small></span></button>
+  <button class="navitem active" data-view="workspace"><span class="navicon">✳</span><span class="navtext"><b>OneAI</b><small>Chat · Plan · Build · Execute</small></span></button>
+  <button class="navitem" data-view="xparallel"><span class="navicon">⟷</span><span class="navtext"><b>XParallel</b><small>DNA of AI · Infrastructure</small></span></button>
+  <button class="navitem" data-view="omnibox"><span class="navicon">⌕</span><span class="navtext"><b>Omnibox</b><small>Search · Browse · Discover</small></span></button>
+  <button class="navitem" data-view="unitai"><span class="navicon">◈</span><span class="navtext"><b>UnitAI</b><small>Agents · Automation · Tools</small></span></button>
  </div>
-</section>
-<section class="grid">
- <article class="card">
-  <div class="space-head"><h2><span class="space-icon">◉</span> Original Space</h2><span class="pill">DEVICE SPACE</span></div>
-  <div class="metric">Original</div><div class="metric-label">Your normal device environment</div>
-  <div class="feature-list" style="margin-top:12px">
-   <div class="feature"><label>Apps and data<small>Managed by your Android device</small></label><span class="muted tiny">Device</span></div>
-   <div class="feature"><label>Isolation status<small>This web console cannot inspect device isolation</small></label><span class="warn tiny">Unverified</span></div>
+ <div class="navdivider"></div>
+ <div class="navgroup"><div class="navlabel">Workspaces</div>
+  <button class="navitem" data-view="projects"><span class="navicon">▱</span><span class="navtext"><b>Projects</b><small>Manage your projects</small></span></button>
+  <button class="navitem" data-view="memory"><span class="navicon">▤</span><span class="navtext"><b>Knowledge</b><small>Your AI memory</small></span></button>
+  <button class="navitem" data-view="files"><span class="navicon">▣</span><span class="navtext"><b>Files</b><small>Documents · Media · Code</small></span></button>
+  <button class="navitem" data-view="tools"><span class="navicon">⚒</span><span class="navtext"><b>Tools</b><small>Apps · APIs · Integrations</small></span></button>
+ </div>
+ <div class="navdivider"></div>
+ <div class="navgroup"><div class="navlabel">AI Providers</div>
+  <div class="providers-mini"><div class="provider-mini"><span class="picon">◎</span><div>OpenAI<small>Server adapter</small></div><span class="statusdot"></span></div><div class="provider-mini"><span class="picon">A</span><div>Anthropic<small>Claude adapter</small></div><span class="statusdot"></span></div><div class="provider-mini"><span class="picon">✦</span><div>Google<small>Gemini adapter</small></div><span class="statusdot"></span></div><div class="provider-mini"><span class="picon">◉</span><div>Moonshot<small>Kimi adapter</small></div><span class="statusdot"></span></div></div>
+ </div>
+ <div class="parallel-card"><div class="parallel-glyph">⚛</div><div><b>Parallel Intelligence</b><p>Multiple minds. One result.</p></div></div>
+</aside>
+<main class="center">
+ <section class="hero"><div class="hero-orbit"></div><div class="hero-content"><div class="eyebrow">✦ Parallel Intelligence · powered by XParallel</div><h1>Welcome to <span class="gradient-text">OneAI</span></h1><p>Your unified AI workspace for planning, building, and exploring — with multimodal tools and roaming internet services where connected and authorized.</p></div>
+  <div class="modegrid">
+   <button class="mode" data-mode="chat"><span class="modeicon">▢</span><span><b>Chat</b><small>Ask anything</small></span></button>
+   <button class="mode" data-mode="plan"><span class="modeicon">▤</span><span><b>Plan</b><small>Turn ideas into action</small></span></button>
+   <button class="mode" data-mode="build"><span class="modeicon">‹/›</span><span><b>Build</b><small>Create &amp; develop</small></span></button>
+   <button class="mode" data-mode="execute"><span class="modeicon">ϟ</span><span><b>Execute</b><small>Approval-gated actions</small></span></button>
   </div>
- </article>
- <article class="card">
-  <div class="space-head"><h2><span class="space-icon">⧉</span> Parallel Space</h2><span class="pill">XPARALLEL</span></div>
-  <div class="metric" id="parallel-state">Standby</div><div class="metric-label">Backend-connected planning space</div>
-  <div class="feature-list" style="margin-top:12px">
-   <div class="feature"><label>Public API<small>Health and system manifest</small></label><span id="manifest-state" class="warn tiny">Not checked</span></div>
-   <div class="feature"><label>Sandbox engine<small>Availability flag only; not a live test</small></label><span id="engine-state" class="warn tiny">Unknown</span></div>
-  </div>
- </article>
- <article class="card wide">
-  <div class="space-head"><h2>Parallel Dual View</h2><span class="pill">SIDE-BY-SIDE</span></div>
-  <div class="grid">
-   <div class="app-card"><div class="app-icon">◉</div><div class="app-meta"><strong>Original Space</strong><span class="muted tiny">Device-managed environment</span></div><span class="pill">ORIGINAL</span></div>
-   <div class="app-card"><div class="app-icon">⧉</div><div class="app-meta"><strong>Parallel Space</strong><span class="muted tiny">XParallel planning environment</span></div><span class="pill">PLANNING</span></div>
-  </div>
-  <p class="muted tiny">This is a web dashboard comparison, not Android multi-window control or proof of a running clone.</p>
- </article>
- <article class="card">
-  <h2>Sandbox Storage</h2>
-  <div class="metric" id="storage-state">Not connected</div><div class="metric-label">Storage metrics are not exposed by the current public status endpoint.</div>
-  <div class="feature-list" style="margin-top:10px"><div class="feature"><label>Sandbox persistence<small>Requires a verified sandbox/storage API</small></label><span class="warn tiny">Unverified</span></div><div class="feature"><label>AI memory offload<small>Not enabled by this UI</small></label><span class="warn tiny">Planned</span></div></div>
- </article>
- <article class="card">
-  <h2>Privacy Controls</h2>
-  <div class="feature-list">
-   <div class="feature"><label>Disguise Icon<small>Android launcher integration required</small></label><span class="pill">Unavailable</span></div>
-   <div class="feature"><label>Incognito Launch<small>Private launch API not verified</small></label><input class="toggle" type="checkbox" disabled aria-label="Incognito launch unavailable"></div>
-   <div class="feature"><label>Clone App<small>Requires Android app-cloning capability</small></label><span class="pill">Unavailable</span></div>
-  </div>
- </article>
- <article class="card wide">
-  <h2>Connect & Plan</h2>
-  <p class="muted">The dashboard uses the current origin by default. If the API is hosted elsewhere, set the <code>data-xp-api-base</code> attribute on the HTML element to the backend's HTTPS base URL and allow this dashboard origin in <code>XP_PUBLIC_ORIGINS</code>.</p>
-  <div class="actions"><button id="xp-check" class="action primary" type="button">Check API connection</button><button id="xp-refresh" class="action" type="button">Refresh system status</button></div>
-  <label for="xp-query">Describe the task to plan</label>
-  <textarea id="xp-query" class="field" rows="3" maxlength="4000" placeholder="Example: prepare a safe test plan for a small web app"></textarea>
-  <div class="actions"><button id="xp-ask" class="action" type="button">Ask XParallel</button><button id="xp-plan" class="action primary" type="button">Generate build plan</button><button id="xp-route" class="action" type="button">Suggest route</button></div>
-  <p id="xp-message" class="muted" role="status" aria-live="polite">Ready. Check the API connection to begin.</p>
-  <pre id="xp-result" class="result"></pre>
- </article>
- <article class="card wide">
-  <h2>System & security status</h2><div id="system-status" class="muted">Not loaded.</div><pre id="system-result" class="result"></pre>
-  <div class="notice" style="margin-top:12px">Human approval remains required for protected execution. This console does not call private execution endpoints, store secret tokens, launch app clones, disguise icons, or claim incognito isolation.</div>
- </article>
-</section>
-<footer class="footer">XParallel Dual Space · Responsive web control panel · UI controls are labelled by verified capability.</footer>
+ </section>
+ <section class="panel composer-panel">
+  <div class="tabs"><button class="tab active" data-tab="assistant">✳ AI Assistant</button><button class="tab" data-tab="web">◎ Web Search</button><button class="tab" data-tab="voice">♩ Voice</button></div>
+  <div class="composerbox"><textarea id="prompt" aria-label="Message OneAI" placeholder="Ask me anything, plan a project, search the web, or tell me what to build…" maxlength="4000"></textarea><div class="composerfoot"><button class="toolchip" data-tool="web">◎ Web Search</button><button class="toolchip" data-tool="read">▣ Read Web</button><button class="toolchip" data-tool="tools">⌘ Use Tools</button><button class="toolchip" data-tool="code">‹/› Code</button><button class="toolchip" data-tool="image">▧ Image</button><button class="toolchip" data-tool="file">▤ File</button><button class="toolchip" data-tool="more">··· More</button><span class="grow"></span><button class="mic" id="micBtn" type="button" aria-label="Voice input" title="Voice input (not connected)">♩</button><button class="send" id="sendBtn" type="submit" form="chatForm" aria-label="Send message">➤</button></div></div>
+  <form id="chatForm"><div class="fineprint">Requests use the connected XParallel public endpoints. Provider and tool access depends on server configuration.</div><div class="toast" id="toast" role="status" aria-live="polite"></div></form>
+ </section>
+ <div class="quickhead"><div><h2>Quick Actions</h2><p>Start with a common task</p></div></div>
+ <section class="quickgrid">
+  <button class="quickcard" data-prompt="Help me create a practical plan for my next goal, including milestones, dependencies and risks."><span class="qicon">▤</span><b>Create a Plan ›</b><small>Break down your goals into actionable steps.</small></button>
+  <button class="quickcard" data-prompt="Help me design and build an application. Start with architecture, implementation steps and tests."><span class="qicon">‹/›</span><b>Build Something ›</b><small>Generate a development plan for an app or automation.</small></button>
+  <button class="quickcard" data-prompt="Research this topic and identify what needs live web access or external tools to verify: "><span class="qicon">⌕</span><b>Research ›</b><small>Prepare a research request and surface verification needs.</small></button>
+  <button class="quickcard" data-prompt="Create a safe execution plan. Do not execute external or destructive actions without explicit approval."><span class="qicon">♢</span><b>Execute Safely ›</b><small>Plan actions with explicit approval and safeguards.</small></button>
+ </section>
+ <section class="panel recent"><div class="recenthead"><div><h2>Recent Activity</h2><p>Your activity feed will populate when history is connected.</p></div><button id="activityInfo">About activity</button></div>
+  <div class="recentrow"><span class="recentico">▤</span><div><b>OneAI workspace</b><small>Interface preview · conversation history not yet connected</small></div><span class="time">Preview</span></div>
+  <div class="recentrow"><span class="recentico">⟷</span><div><b>XParallel infrastructure</b><small>Public API health and planning routes awaiting verification</small></div><span class="time">Unverified</span></div>
+ </section>
 </main>
+<aside class="rightcol">
+ <section class="rightpanel"><div class="righthead"><h2>System Status</h2><span class="overall" id="systemBadge">● Checking</span></div>
+  <div class="sysrow"><span class="sysicon">⟷</span><div><b>XParallel API</b><small><span class="sysdot" id="apiDot"></span><span id="apiStatus">Checking health endpoint…</span></small></div></div>
+  <div class="sysrow"><span class="sysicon">▤</span><div><b>Database</b><small><span class="sysdot"></span>Connection status not exposed</small></div></div>
+  <div class="sysrow"><span class="sysicon">▧</span><div><b>Memory Service</b><small><span class="sysdot"></span>Persistence not verified</small></div></div>
+  <div class="sysrow"><span class="sysicon">◎</span><div><b>Roaming Tools</b><small><span class="sysdot"></span>Provider and tool access unverified</small></div></div>
+ </section>
+ <section class="rightpanel"><div class="righthead"><h2>AI Providers</h2><button id="providerInfo">Provider status</button></div><div class="providerrows">
+  <div class="providerrow"><span class="picon">◎</span><div><b>OpenAI</b><small>Adapter not verified</small></div><span class="state">Unverified</span></div>
+  <div class="providerrow"><span class="picon">A</span><div><b>Anthropic</b><small>Claude adapter</small></div><span class="state">Unverified</span></div>
+  <div class="providerrow"><span class="picon">✦</span><div><b>Google Gemini</b><small>Gemini adapter</small></div><span class="state">Unverified</span></div>
+  <div class="providerrow"><span class="picon">◉</span><div><b>Moonshot Kimi</b><small>Kimi adapter</small></div><span class="state">Unverified</span></div>
+ </div></section>
+ <section class="rightpanel"><div class="righthead"><h2>Memory &amp; Context</h2><span style="color:#79bdff">⌁</span></div>
+  <div class="memoryrow"><span class="miniico">▧</span><span>Saved memories</span><b>Not checked</b></div>
+  <div class="memoryrow"><span class="miniico">▣</span><span>Context window</span><b>Provider-defined</b></div>
+  <div class="memoryrow"><span class="miniico">◷</span><span>Last updated</span><b>Not available</b></div>
+ </section>
+ <section class="rightpanel voicepanel"><div class="righthead"><h2>Voice Control</h2><span style="color:#7ebeff">›</span></div><p id="voiceStatus">Voice controls are a visual preview until a voice service is connected.</p><button class="voicecircle" id="voiceCircle" aria-label="Voice control information">♩</button><p>Voice service not connected</p></section>
+</aside>
+</div>
+<footer class="bottomnav"><button class="active" data-bottom="workspace"><span class="mini-brand">✳</span>OneAI</button><button data-bottom="xparallel"><span class="mini-brand">⟷</span>XParallel</button><button data-bottom="omnibox"><span class="mini-brand">⌕</span>Omnibox</button><button data-bottom="unitai"><span class="mini-brand">◈</span>UnitAI</button><span class="bottomtag">Build · Connect · Execute · Everywhere　◎</span></footer>
+</div>
 <script>
-(() => {
- 'use strict';
- const configuredBase = document.documentElement.dataset.xpApiBase || window.location.origin;
- const base = configuredBase.replace(/\/+$/, '');
- const $ = (id) => document.getElementById(id);
- const status = {connected:false, system:null};
- const setStatus = (id,text,kind='warn') => { const el=$(id); el.textContent=text; el.className=kind; };
- async function request(path, body) {
-  const response = await fetch(base + path, {
-   method: body ? 'POST' : 'GET',
-   headers: body ? {'Content-Type':'application/json'} : {},
-   body: body ? JSON.stringify(body) : undefined,
-   credentials:'omit',
-   redirect:'error'
-  });
-  const raw = await response.text();
-  let data;
-  try { data = raw ? JSON.parse(raw) : {}; }
-  catch { throw new Error('API returned unreadable data (HTTP '+response.status+').'); }
-  if (!response.ok) throw new Error((data.error || 'request_failed')+' (HTTP '+response.status+').');
-  return data;
- }
- async function checkHealth() {
-  $('xp-check').disabled=true;
-  setStatus('xp-connection','Checking…');
-  $('xp-message').textContent='Checking public API health…';
-  try {
-   const d=await request('/public/health');
-   status.connected=d.status==='ok';
-   setStatus('xp-connection',status.connected?'Connected':'Unexpected response',status.connected?'ok':'warn');
-   setStatus('xp-sandbox',d.sandbox_available===true?'Reported available':'Not reported available',d.sandbox_available===true?'ok':'warn');
-   $('xp-version').textContent=d.version || 'not reported';
-   $('parallel-state').textContent=status.connected?'API reachable':'Standby';
-   $('storage-state').textContent='Metrics unavailable';
-   $('xp-message').textContent=status.connected?'API health response received. This does not prove an end-to-end sandbox execution.':'API replied but did not report status=ok.';
-   $('xp-result').textContent=JSON.stringify(d,null,2);
-  } catch(e) {
-   status.connected=false; setStatus('xp-connection','Connection failed','bad');
-   setStatus('xp-sandbox','Not verified','warn'); $('parallel-state').textContent='Standby';
-   $('xp-message').textContent=e.message+' Check the backend URL, deployment and allowed origin.';
-  } finally { $('xp-check').disabled=false; }
- }
- async function refreshSystem() {
-  $('xp-refresh').disabled=true; $('system-status').textContent='Loading public manifests…';
-  try {
-   const [manifest,system]=await Promise.all([
-    request('/public/xparallel/access'),request('/public/system')
-   ]);
-   status.system={manifest,system};
-   setStatus('manifest-state','Loaded','ok');
-   const engine = system.services?.find(x=>x.id==='parallel-sandbox');
-   setStatus('engine-state',engine?.available===true?'Reported available':'Not verified',engine?.available===true?'ok':'warn');
-   $('system-status').textContent='Public access and system manifests received. Reported values are not a live execution test.';
-   $('system-result').textContent=JSON.stringify({access:manifest,system},null,2);
-  } catch(e) {
-   setStatus('manifest-state','Unavailable','bad');setStatus('engine-state','Unknown','warn');
-   $('system-status').textContent='Could not load manifests: '+e.message;
-  } finally { $('xp-refresh').disabled=false; }
- }
- async function sendTask(path,label) {
-  const query=$('xp-query').value.trim();
-  if(!query){$('xp-message').textContent='Enter a task description first.';return;}
-  if(!status.connected){$('xp-message').textContent='Check API connection first.';return;}
-  const buttons=[$('xp-ask'),$('xp-plan'),$('xp-route')]; buttons.forEach(b=>b.disabled=true);
-  $('xp-message').textContent=label+'…'; $('xp-result').textContent='';
-  try {
-   const d=await request(path,{query});
-   $('xp-message').textContent=label+' returned. No sandbox execution was started.';
-   $('xp-result').textContent=JSON.stringify(d,null,2);
-  } catch(e) { $('xp-message').textContent=label+' failed: '+e.message; }
-  finally {buttons.forEach(b=>b.disabled=false);}
- }
- $('xp-check').addEventListener('click',checkHealth);
- $('xp-refresh').addEventListener('click',refreshSystem);
- $('xp-ask').addEventListener('click',()=>sendTask('/public/ask','Ask XParallel'));
- $('xp-plan').addEventListener('click',()=>sendTask('/public/build','Build plan'));
- $('xp-route').addEventListener('click',()=>sendTask('/public/route','Route suggestion'));
- refreshSystem();
-})();
+const $=s=>document.querySelector(s), body=$('.recent'), form=$('#chatForm'), promptBox=$('#prompt'), sendBtn=$('#sendBtn'), toast=$('#toast');
+const API_BASE=''; // Same-origin only. Never put provider secrets in browser code.
+const workspaceId='oneai-default';
+const pages={home:['Home','Your AI workspace'],workspace:['OneAI','Chat, plan, build and explore'],xparallel:['XParallel Core','The infrastructure layer · The DNA of AI'],omnibox:['Omnibox','Search, browse and discover through configured services'],unitai:['UnitAI','Agents, automation and tools'],projects:['Projects','Your project workspace is a preview until project storage is connected'],memory:['Knowledge','Memory requires an authorized persistent backend'],files:['Files','File management is not connected in this preview'],tools:['Tools','External tools require configured providers and permissions']};
+let currentView='workspace',currentMode='chat',currentTab='assistant';
+function setView(view){currentView=pages[view]?view:'workspace';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===currentView));document.querySelectorAll('[data-bottom]').forEach(b=>b.classList.toggle('active',b.dataset.bottom===currentView));$('#sidebar').classList.remove('open');if(currentView!=='workspace'){toast.textContent=pages[currentView][1]+'.';}else toast.textContent='';promptBox.placeholder=currentView==='memory'?'Memory is not connected here. Ask about memory setup…':'Ask me anything, plan a project, search the web, or tell me what to build…';}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.querySelectorAll('[data-bottom]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.bottom)));
+$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+function setMode(mode){currentMode=mode;document.querySelectorAll('[data-mode]').forEach(b=>b.style.filter=b.dataset.mode===mode?'brightness(1.25)':'');if(mode==='plan')promptBox.placeholder='Describe the goal you want to turn into a plan…';else if(mode==='build')promptBox.placeholder='Describe what you want to build…';else if(mode==='execute')promptBox.placeholder='Describe the action you want planned safely…';else promptBox.placeholder='Ask me anything, plan a project, search the web, or tell me what to build…';promptBox.focus();}
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{promptBox.value=b.dataset.prompt;promptBox.focus();if(b.dataset.prompt.toLowerCase().includes('plan'))setMode('plan');else if(b.dataset.prompt.toLowerCase().includes('build'))setMode('build');}));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{currentTab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t===b));if(currentTab==='voice'){toast.textContent='Voice is a visual preview; no microphone service is connected.';}else if(currentTab==='web'){toast.textContent='Web search requires a configured search tool. The prompt will be sent to the available XParallel endpoint.';}else toast.textContent='AI Assistant selected.';}));
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.tool;toast.textContent=t==='web'?'Web search requires a configured search provider.':t==='read'?'Web reading requires a connected browsing tool.':t==='tools'?'External tools are not enabled by this button yet.':t==='code'?'Describe the code task in your prompt.':t==='image'?'Image generation is not wired to this backend action yet.':t==='file'?'File upload is not connected in this preview.':'Additional tools will appear as integrations are enabled.';promptBox.focus();}));
+async function checkHealth(){const badge=$('#systemBadge'),api=$('#apiStatus'),dot=$('#apiDot');try{const r=await fetch(API_BASE+'/public/health',{headers:{Accept:'application/json'}});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();badge.textContent='● API reachable';badge.classList.add('health-ok');api.textContent='Health endpoint responded · '+(d.network||'network')+' · v'+(d.version||'?');dot.style.background='var(--green)';$('#roamingText').textContent='Serving the Internet · API reachable';$('#topPulse').style.background='var(--green)';}catch(e){badge.textContent='● Not verified';badge.classList.remove('health-ok');badge.classList.add('health-bad');api.textContent='Unreachable · '+e.message;dot.style.background='var(--amber)';$('#roamingText').textContent='Serving the Internet · connection unverified';$('#topPulse').style.background='var(--amber)';}}
+function renderResponse(data){if(typeof data==='string')return data;if(data&&typeof data.message==='string')return data.message;if(data&&data.plan)return JSON.stringify(data.plan,null,2);if(data&&Array.isArray(data.results))return data.results.length?JSON.stringify(data.results,null,2):(data.message||'No matching results returned.');return JSON.stringify(data,null,2);}
+function addActivity(title,summary){const row=document.createElement('div');row.className='recentrow';const ico=document.createElement('span');ico.className='recentico';ico.textContent='✳';const info=document.createElement('div');const b=document.createElement('b');b.textContent=title;const sm=document.createElement('small');sm.textContent=summary;info.append(b,sm);const time=document.createElement('span');time.className='time';time.textContent='Just now';row.append(ico,info,time);$('.recent').append(row);}
+form.addEventListener('submit',async ev=>{ev.preventDefault();const query=promptBox.value.trim();if(!query)return;const user= document.createElement('div');user.className='recentrow';const ico=document.createElement('span');ico.className='recentico';ico.textContent='↗';const info=document.createElement('div');const b=document.createElement('b');b.textContent='You · '+query.slice(0,70);const sm=document.createElement('small');sm.textContent='Request submitted to XParallel';info.append(b,sm);user.append(ico,info);$('.recent').append(user);promptBox.value='';sendBtn.disabled=true;toast.textContent='Sending request to XParallel…';const path=(currentMode==='plan'||currentMode==='build')?'/public/build':'/public/ask';try{const r=await fetch(API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,workspace_id:workspaceId,mode:currentMode})});const d=await r.json().catch(()=>({error:'invalid_server_response'}));if(!r.ok)throw new Error((d.error||'request_failed')+' (HTTP '+r.status+')');toast.textContent='Response received from '+path+'.';addActivity('XParallel response',renderResponse(d).slice(0,180));}catch(e){toast.textContent='Request failed: '+e.message+'. Backend connectivity is not verified.';addActivity('Request failed',e.message+' · check backend health and deployment configuration');}finally{sendBtn.disabled=false;promptBox.focus();}});
+$('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();promptBox.value=$('#globalSearch').value.trim();setMode('chat');promptBox.focus();}});
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus();}});
+$('#voiceToggle').addEventListener('click',()=>toast.textContent='Voice input is not connected to a voice service yet.');
+$('#micBtn').addEventListener('click',()=>toast.textContent='Microphone input is not connected yet. Type your request above.');
+$('#voiceCircle').addEventListener('click',()=>toast.textContent='Voice control is a visual preview until a voice service is connected.');
+$('#noticeBtn').addEventListener('click',()=>toast.textContent='No notification service is connected in this preview.');
+$('#providerInfo').addEventListener('click',()=>toast.textContent='Provider labels remain unverified until live provider calls succeed.');
+$('#activityInfo').addEventListener('click',()=>toast.textContent='Only requests made in this open page are added here; persistent activity history is not connected.');
+setMode('chat');checkHealth();
 </script>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
-</body>
-</html>
+</body></html>

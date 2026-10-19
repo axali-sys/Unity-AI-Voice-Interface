@@ -32,6 +32,7 @@ jobs:
           for source, target in [
               ("public/xparallel.html", "/tmp/xparallel-workbench.js"),
               ("public/axaliai.html", "/tmp/axaliai.js"),
+              ("index.html", "/tmp/oneai.js"),
           ]:
               html = Path(source).read_text(encoding="utf-8")
               scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
@@ -41,6 +42,9 @@ jobs:
           PY
           node --check /tmp/xparallel-workbench.js
           node --check /tmp/axaliai.js
+          node --check /tmp/oneai.js
+      - name: Test OneAI interface safety contract
+        run: python -m unittest discover -s tests -p "test_oneai_interface.py" -v
       - name: Test memory retrieval and summarization
         run: python -m unittest discover -s tests -p "test_memory_service.py" -v
       - name: Test Parallel World planner
