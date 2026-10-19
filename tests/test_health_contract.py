@@ -26,7 +26,7 @@ class XParallelHTTPContractTests(unittest.TestCase):
             "XP_PUBLIC_ORIGINS": "https://preview.vercel.app",
         })
         cls.proc = subprocess.Popen(
-            [sys.executable, "xparallel/server.py"],
+            [sys.executable, "-m", "xparallel.server"],
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
