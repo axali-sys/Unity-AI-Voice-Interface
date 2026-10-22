@@ -1,12 +1,42 @@
-# Genesys Code of the Conceptual Era
+# Axaliai Assistant starter
 
-This marks the first official development entry for Unity AI, created and owned by Azali under the developer entity AXALI AI.
+This repo now includes a polished AI assistant UI that is designed to sit on top of the XParallel backend.
 
-**Title:** Genesys Code of Conceptual Era  
-**Author:** Azali  
-**Date:** [Use today’s date or your Ethereum timestamp]  
-**Device:** Twin Soul 22AI (Samsung S22 Ultra)  
-**Voice Interface Concept:** Unity AI  
-**Anchored Wallet:** 0xbfD361Cc4525df4364D74b05f8436FBdD9cxxxxx
+## Run locally
 
-This is the origin log of an AI built not just with code — but with intention, memory, and voice.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open the app:
+   ```bash
+   http://localhost:3000
+   ```
+
+## Connect to the live backend
+
+Set these environment variables before running the app:
+
+```bash
+export XP_API_URL=http://localhost:8787
+export XP_TOKEN=your-xparallel-token
+```
+
+The UI calls `/api/chat`, which proxies to the backend. If no backend is configured, the app falls back to a local demo response.
+
+## Frontend stack
+
+- Next.js
+- React
+- Tailwind-style custom CSS
+- XParallel-compatible API proxy
+
+## Notes
+
+This is a starter Lovable-style assistant interface. It is intentionally clean and launch-ready visually, while keeping the underlying XParallel logic in the existing repo.
