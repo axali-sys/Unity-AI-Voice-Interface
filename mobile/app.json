@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Axaliai",
+    "slug": "axaliai-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "backgroundColor": "#071827"
+    }
+  }
+}
