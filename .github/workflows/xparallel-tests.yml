@@ -72,6 +72,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+      - name: Test chat response and workspace-scoped conversation persistence
+        run: python -m unittest discover -s tests -p "test_chat_conversation_flow.py" -v
       - name: Test persistent memory vault
         run: python -m unittest discover -s tests -p "test_memory_vault.py" -v
       - name: Test Parallel Verse SQLite world store
