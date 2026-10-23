@@ -47,6 +47,84 @@
 .xp-safety{border:1px solid #4c3c20;background:#211b10;color:#f0d5a3;border-radius:10px;padding:11px 13px;font-size:11px;line-height:1.55}
 @media(max-width:1050px){.xp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.xp-grid,.xp-endpoints{grid-template-columns:1fr}.xp-body{padding:10px}.xp-head{padding:16px}.xp-stat{padding:11px}}
+
+/* XParallel portal feature set */
+.portal-suite{margin-top:22px;border-top:1px solid var(--line);padding-top:22px}
+.portal-suite h3{margin:0 0 7px}.portal-intro{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 16px}
+.portal-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.portal-tabs button,.portal-action{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:9px 12px;cursor:pointer}
+.portal-tabs button.active,.portal-action.primary{background:var(--blue);color:white;border-color:var(--blue)}
+.portal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.portal-card{min-width:0;border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--panel)}
+.portal-card h4{margin:0 0 7px;font-size:14px}.portal-card p{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 12px}
+.portal-card label{display:block;font-size:12px;color:var(--muted);margin:8px 0 5px}
+.portal-card input,.portal-card textarea,.portal-card select{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:10px;border-radius:9px;font:inherit}
+.portal-card textarea{min-height:76px;resize:vertical}
+.portal-output{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px;max-height:260px;overflow:auto;font-size:11px;line-height:1.55;margin-top:10px}
+.portal-status{font-size:11px;color:var(--muted);margin-top:8px}.portal-status.good{color:var(--green)}.portal-status.bad{color:var(--amber)}
+.portal-resource{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.portal-resource:last-child{border-bottom:0}
+.portal-pill{border-radius:20px;padding:3px 8px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.portal-warning{border-left:3px solid var(--amber);padding:10px 12px;background:var(--bg);font-size:12px;line-height:1.6;margin:12px 0}
+@media(max-width:650px){.portal-grid{grid-template-columns:1fr}.portal-card{padding:12px}.portal-tabs{gap:6px}.portal-tabs button{font-size:12px;padding:8px}}
+
+
+/* OneAI visual refinement — responsive portal command center */
+:root{--radius-card:16px;--glow-blue:0 0 32px #147cff1c}
+body{background:radial-gradient(ellipse at 52% -24%,#16478a55 0,transparent 43%),radial-gradient(ellipse at 100% 38%,#0c3c5a33 0,transparent 33%),#030914}
+.topbar{border-bottom-color:#15375a;box-shadow:0 8px 28px #0002}
+.brandmark{border-radius:50%;border:1px solid #49d8ff88;background:radial-gradient(circle at 30% 20%,#52dcff,#2168ff 45%,#6e37d9 82%);box-shadow:0 0 24px #137eff44}
+.layout{grid-template-columns:230px minmax(0,1fr) 285px;gap:13px;padding:0 14px 14px}
+.sidebar{background:linear-gradient(180deg,#061629f7,#030d1af7);border-right-color:#17385b}
+.navitem{transition:background .18s,border-color .18s,transform .18s}
+.navitem:hover{border-color:#174d80;transform:translateX(2px)}
+.navitem.active{background:linear-gradient(100deg,#063a83,#07295a);border-color:#1461ba}
+.center{gap:13px}
+.hero{min-height:240px;border-radius:16px;background:radial-gradient(ellipse at 80% 25%,#1b68c955 0,transparent 34%),radial-gradient(ellipse at 75% 100%,#6c3ec944 0,transparent 42%),linear-gradient(115deg,#07192e,#041025 67%,#071b34);border-color:#1a4776;box-shadow:var(--shadow),inset 0 1px #ffffff08}
+.hero:before{width:235px;height:235px;right:5%;top:-43px;border-color:#38d5ff55;background:radial-gradient(circle at 34% 28%,#55baff88,#15366d 49%,#030b1c 74%);box-shadow:inset 0 0 38px #39baff26,0 0 42px #007cff25}
+.hero:after{right:1%;top:52px;width:300px;height:95px;border-color:#a06eff99}
+.hero h1{max-width:600px;font-size:clamp(29px,3vw,40px)}
+.modegrid{max-width:680px}
+.mode{border-radius:12px;box-shadow:inset 0 1px #ffffff08;min-height:54px}
+.panel,.quickcard,.xp-stat,.xp-result,.xp-endpoint,.portal-card{border-radius:var(--radius-card);box-shadow:inset 0 1px #ffffff08}
+.panel{border-color:#183858;background:linear-gradient(155deg,#07182b,#051120)}
+.composer-panel{box-shadow:0 12px 36px #0003,inset 0 1px #ffffff09}
+.composerbox{border-color:#1a4774;background:linear-gradient(120deg,#071a30,#061329)}
+.composerbox:focus-within{border-color:#1a8dff;box-shadow:0 0 0 3px #137fff18}
+.send{box-shadow:0 4px 18px #126aff44}
+.quickcard{transition:transform .18s,border-color .18s,box-shadow .18s}
+.quickcard:hover{transform:translateY(-3px);border-color:#2875ba;box-shadow:0 12px 28px #0004}
+.rightcol{gap:13px}
+.rightpanel,.sidepanel{border-color:#183858;background:linear-gradient(155deg,#07182b,#04101e)}
+.xp-head{align-items:flex-start;gap:16px}
+.xp-head h2{letter-spacing:-.5px}
+.xp-stat{background:linear-gradient(145deg,#0a2038,#061323);border-color:#1a3c60}
+.xp-button{border-radius:11px;white-space:nowrap}
+.portal-suite{margin-top:0;padding:22px 0 0;border-top:1px solid #1a3b5d}
+.portal-suite h3{font-size:20px;letter-spacing:-.5px}
+.portal-intro{max-width:780px;font-size:13px}
+.portal-tabs{padding:5px;background:#04101f;border:1px solid #183452;border-radius:13px;gap:5px}
+.portal-tabs button{border-radius:9px;border-color:transparent;background:transparent;color:#9cb6d4;font-size:12px;font-weight:600;transition:all .15s}
+.portal-tabs button:hover{background:#0b2744;color:white}
+.portal-tabs button.active{background:linear-gradient(110deg,#1262dd,#374de2);box-shadow:0 5px 15px #145eff28;color:white}
+.portal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.portal-card{border-color:#1a3c60;background:linear-gradient(155deg,#081d32,#04101e);padding:17px;transition:border-color .18s,transform .18s}
+.portal-card:hover{border-color:#2866a0}
+.portal-card h4{font-size:15px;letter-spacing:-.2px}
+.portal-card p{font-size:12px}
+.portal-card input,.portal-card textarea,.portal-card select{border-color:#20456a;background:#030d1a;border-radius:10px}
+.portal-card input:focus,.portal-card textarea:focus,.portal-card select:focus{border-color:#2585ff;outline:2px solid #2585ff2a}
+.portal-action{border-radius:10px;border-color:#24527b;background:#0a2038;font-weight:650;transition:filter .15s,transform .15s}
+.portal-action:hover{filter:brightness(1.2);transform:translateY(-1px)}
+.portal-action.primary{background:linear-gradient(110deg,#1463e8,#4a44dc);border-color:#3987ff}
+.portal-output{border-color:#193a5c;background:#030b17;color:#c7def7}
+.portal-resource{border-color:#15324f}
+.portal-warning{border-left-color:#ffb34f;border-radius:0 10px 10px 0}
+[hidden]{display:none!important}
+@media(min-width:1500px){.layout{grid-template-columns:250px minmax(0,1fr) 310px;gap:16px;padding-inline:18px}.center{gap:15px}.hero{min-height:260px}.portal-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1180px){.layout{grid-template-columns:205px minmax(0,1fr)}.rightcol{display:none}.brand{min-width:220px}.hero{min-height:230px}}
+@media(max-width:760px){.layout{display:block;padding:0 10px 12px}.sidebar{position:fixed;top:70px;bottom:0;left:0;width:265px;z-index:30;transform:translateX(-110%);transition:transform .2s;border:1px solid #193b5c;border-radius:0 14px 14px 0;overflow:auto;box-shadow:20px 0 45px #0008}.sidebar.open{transform:translateX(0)}.center{display:grid;grid-template-rows:auto auto auto auto;gap:10px}.topbar{padding:0 12px;gap:10px}.brand{min-width:0;gap:8px}.brandname{font-size:22px}.tagline{display:none}.searchbar{max-width:none;padding:9px 10px}.kbd,.topright .profile,.roaming small{display:none}.topright{gap:5px}.hero{padding:27px 17px 17px;min-height:0;border-radius:15px}.hero:before{width:150px;height:150px;right:-14px;top:-16px;opacity:.7}.hero:after,.hero-orbit{width:190px;right:-30px;opacity:.55}.hero h1{font-size:30px;max-width:88%;letter-spacing:-1px}.hero p{max-width:88%;font-size:12px}.modegrid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px}.mode{padding:8px;gap:7px}.modeicon{width:28px;height:28px}.mode b{font-size:11px}.mode small{font-size:10px}.portal-grid{grid-template-columns:1fr}.portal-suite{padding-top:17px}.portal-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.portal-tabs button{min-height:38px}.xp-head{display:block}.xp-button{margin-top:12px}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.composerfoot{flex-wrap:wrap}.composerfoot .grow{display:none}.toolchip{font-size:10px;padding:6px 8px}.portal-card{padding:13px}}
+@media(max-width:390px){.brandmark{width:34px;height:34px;font-size:20px}.brandname{font-size:19px}.searchbar{min-width:40px}.searchbar input{font-size:11px}.hero h1{font-size:26px}.modegrid,.quickgrid{grid-template-columns:1fr}.portal-tabs{grid-template-columns:1fr 1fr}.iconbtn{width:30px}}
+
 </style>
 </head>
 <body>
@@ -127,6 +205,24 @@
     <div class="xp-endpoint"><span class="xp-method">GET</span><div><code>/repair/jobs/{job_id}?workspace_id=...</code><br><span>Retrieve a job's status, result, timestamps, and verification evidence.</span></div></div>
    </div><p>These repair endpoints create and retrieve plans only. They do not inspect a remote repository, run tests against a target, change files, or execute repairs. Those capabilities require separate adapters and approval-gated workflows. Private endpoints, including execution, are not exposed as browser controls.</p></div>
    <div class="xp-section"><h3>Infrastructure boundaries</h3><div class="xp-body"><div class="xp-safety">Planning is separate from execution. This workspace only probes public read-only endpoints. It does not dispatch jobs, change infrastructure settings, expose tokens, or deploy production.</div><div class="xp-grid"><div class="xp-stat"><small>Provider connectivity</small><b>Unverified until tested</b><div class="xp-note">Configured credentials and successful provider calls must be verified separately.</div></div><div class="xp-stat"><small>Workers and sandbox</small><b>Readiness not inferred</b><div class="xp-note">Worker availability must come from actual service evidence.</div></div><div class="xp-stat"><small>Execution policy</small><b>Approval required where configured</b><div class="xp-note">No privileged execution is initiated from this dashboard.</div></div></div></div></div>
+
+   <section class="portal-suite" id="parallelPortal" aria-labelledby="portalTitle">
+    <h3 id="portalTitle">Parallel AI Verse · Portal Operations</h3>
+    <p class="portal-intro">Discover resources, inspect verified connectivity, route requests, compare available results, create repair plans, and isolate experiments. Each status reflects actual responses; discovery does not grant permission.</p>
+    <div class="portal-tabs" role="tablist" aria-label="Portal features">
+     <button type="button" class="active" data-portal-tab="explorer">Verse Explorer</button><button type="button" data-portal-tab="map">Resource Map</button><button type="button" data-portal-tab="mixer">Parallel Mixer</button><button type="button" data-portal-tab="route">Route Console</button><button type="button" data-portal-tab="repair">Build &amp; Repair</button><button type="button" data-portal-tab="dual">Dual Space</button><button type="button" data-portal-tab="control">Security &amp; Memory</button>
+    </div>
+    <div class="portal-grid">
+     <article class="portal-card" data-portal-panel="explorer"><h4>Verse Explorer</h4><p>Browse the known portal areas and load the public XParallel manifests. Only resources explicitly returned by the service are listed as observed.</p><button class="portal-action primary" id="portalExplore" type="button">Discover public resources</button><div class="portal-output" id="portalExplorerOutput" aria-live="polite">No discovery request has been made.</div></article>
+     <article class="portal-card" data-portal-panel="map" hidden><h4>Live Resource Map</h4><p>Probe public health and manifest endpoints. This is a live status map of endpoints, not a claim that all models or external services are connected.</p><button class="portal-action primary" id="portalProbe" type="button">Probe resources</button><div id="portalMapOutput"><div class="portal-resource"><span>Public health</span><span class="portal-pill">Not checked</span></div></div></article>
+     <article class="portal-card" data-portal-panel="mixer" hidden><h4>Parallel Mixer</h4><p>Submit a request to the available XParallel router. Provider fan-out and synthesis are reported only if the backend response demonstrates them.</p><label for="portalMixerQuery">Task to coordinate</label><textarea id="portalMixerQuery" placeholder="Describe the question or task…"></textarea><button class="portal-action primary" id="portalMix" type="button">Route task</button><div class="portal-status" id="portalMixerStatus">Waiting for a request.</div><div class="portal-output" id="portalMixerOutput" hidden></div></article>
+     <article class="portal-card" data-portal-panel="route" hidden><h4>Route Console</h4><p>See the router's actual decision, resources, and any reported reasons. No provider or worker is assumed available.</p><label for="portalRouteQuery">Routing request</label><textarea id="portalRouteQuery" placeholder="What capability do you need?"></textarea><button class="portal-action primary" id="portalRoute" type="button">Inspect route</button><div class="portal-output" id="portalRouteOutput" hidden></div></article>
+     <article class="portal-card" data-portal-panel="repair" hidden><h4>Build &amp; Repair Hub</h4><p>Create a bounded planning request. This public endpoint returns a plan; it does not modify repositories, change infrastructure, or execute repairs.</p><label for="portalRepairQuery">Describe the problem or build goal</label><textarea id="portalRepairQuery" placeholder="Describe symptoms, expected behavior, and constraints…"></textarea><label for="portalRepairMode">Request type</label><select id="portalRepairMode"><option value="diagnostic">Diagnose and propose checks</option><option value="build">Plan a build</option></select><button class="portal-action primary" id="portalRepair" type="button">Generate plan</button><div class="portal-output" id="portalRepairOutput" hidden></div></article>
+     <article class="portal-card" data-portal-panel="dual" hidden><h4>Dual Space · Isolated Scratchpad</h4><p>Draft and compare ideas in a separate, temporary browser-side space. This does not clone production data or create a server sandbox. Refreshing this page clears the scratchpad.</p><label for="portalOriginal">Original-space note (read-only example)</label><textarea id="portalOriginal" readonly>Production and connected resources are not modified by this scratchpad.</textarea><label for="portalScratch">Parallel-space experiment</label><textarea id="portalScratch" placeholder="Try an alternative prompt, route policy, or repair plan…"></textarea><button class="portal-action" id="portalCopyScratch" type="button">Copy scratchpad text</button><button class="portal-action" id="portalClearScratch" type="button">Clear experiment</button><div class="portal-status" id="portalDualStatus">Temporary local experiment only.</div></article>
+     <article class="portal-card" data-portal-panel="control" hidden><h4>Control Verse · Security &amp; Memory</h4><p>Private registry, memory, task, and repair-job APIs require an authorized bearer token. Browser code deliberately stores no API secret and will not call private endpoints.</p><div class="portal-warning">Execution and consequential repair must remain approval-gated. Public planning is not execution approval.</div><div class="portal-resource"><span>Secrets in browser</span><span class="portal-pill">Not stored</span></div><div class="portal-resource"><span>Private memory access</span><span class="portal-pill">Authorization required</span></div><div class="portal-resource"><span>Execution</span><span class="portal-pill">Not available here</span></div><div class="portal-resource"><span>Workspace isolation</span><span class="portal-pill">Backend must enforce</span></div><div class="portal-status">Use server-side authenticated clients for private APIs. Only store or share memory with explicit authorization.</div></article>
+    </div>
+   </section>
+
   </div>
  </section>
 </main>
@@ -191,5 +287,22 @@ $('#noticeBtn').addEventListener('click',()=>toast.textContent='No notification 
 $('#providerInfo').addEventListener('click',()=>toast.textContent='Provider labels remain unverified until live provider calls succeed.');
 $('#activityInfo').addEventListener('click',()=>toast.textContent='Only requests made in this open page are added here; persistent activity history is not connected.');
 setMode('chat');checkHealth();
+
+/* XParallel portal interactions: public, read-only discovery plus public plan/route APIs. */
+(()=>{
+ const q=s=>document.querySelector(s), out=(id,value)=>{const el=q('#'+id);el.hidden=false;el.textContent=typeof value==='string'?value:JSON.stringify(value,null,2);};
+ const portalTabs=[...document.querySelectorAll('[data-portal-tab]')];
+ portalTabs.forEach(btn=>btn.addEventListener('click',()=>{portalTabs.forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('[data-portal-panel]').forEach(p=>p.hidden=p.dataset.portalPanel!==btn.dataset.portalTab);}));
+ async function publicGet(path){const r=await fetch(API_BASE+path,{headers:{Accept:'application/json'}});const d=await r.json().catch(()=>({error:'invalid_json_response'}));if(!r.ok)throw new Error((d.error||'request_failed')+' (HTTP '+r.status+')');return {http_status:r.status,data:d};}
+ async function publicPost(path,query,mode){const r=await fetch(API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,workspace_id:workspaceId,mode})});const d=await r.json().catch(()=>({error:'invalid_json_response'}));if(!r.ok)throw new Error((d.error||'request_failed')+' (HTTP '+r.status+')');return {http_status:r.status,data:d};}
+ q('#portalExplore').addEventListener('click',async()=>{const el=q('#portalExplorerOutput');el.textContent='Discovering public manifests…';try{const names=[['Public health','/public/health'],['XParallel access','/public/xparallel/access'],['System manifest','/public/system']];const results=[];for(const [name,path] of names){try{const x=await publicGet(path);results.push({name,path,status:'responded',http_status:x.http_status,data:x.data});}catch(e){results.push({name,path,status:'unavailable',error:e.message});}}el.textContent=JSON.stringify({note:'Only these public endpoints were checked. This does not discover every Internet resource.',resources:results},null,2);}catch(e){el.textContent=e.message;}});
+ q('#portalProbe').addEventListener('click',async()=>{const el=q('#portalMapOutput');el.replaceChildren();for(const [name,path] of [['Public health','/public/health'],['Access manifest','/public/xparallel/access'],['System manifest','/public/system']]){const row=document.createElement('div');row.className='portal-resource';const label=document.createElement('span');label.textContent=name;const status=document.createElement('span');status.className='portal-pill';status.textContent='Checking…';row.append(label,status);el.append(row);try{const x=await publicGet(path);status.textContent='Responded · '+x.http_status;status.title=JSON.stringify(x.data);}catch(e){status.textContent='Unavailable';status.title=e.message;}}});
+ q('#portalMix').addEventListener('click',async()=>{const query=q('#portalMixerQuery').value.trim();if(!query){q('#portalMixerStatus').textContent='Enter a task first.';return;}const status=q('#portalMixerStatus'),btn=q('#portalMix');btn.disabled=true;status.textContent='Submitting to the public router…';try{const x=await publicPost('/public/route',query,'mixer');out('portalMixerOutput',{http_status:x.http_status,...x.data});status.textContent='Router responded. Multi-provider fan-out is not inferred unless the response shows it.';}catch(e){status.textContent='Route failed: '+e.message;}finally{btn.disabled=false;}});
+ q('#portalRoute').addEventListener('click',async()=>{const query=q('#portalRouteQuery').value.trim();if(!query){out('portalRouteOutput','Enter a routing request first.');return;}const btn=q('#portalRoute');btn.disabled=true;try{const x=await publicPost('/public/route',query,'route-inspection');out('portalRouteOutput',{http_status:x.http_status,...x.data});}catch(e){out('portalRouteOutput',{error:e.message});}finally{btn.disabled=false;}});
+ q('#portalRepair').addEventListener('click',async()=>{const query=q('#portalRepairQuery').value.trim();if(!query){out('portalRepairOutput','Describe the problem or goal first.');return;}const btn=q('#portalRepair');btn.disabled=true;try{const x=await publicPost('/public/build',query,q('#portalRepairMode').value);out('portalRepairOutput',{http_status:x.http_status,...x.data,execution_performed:false,verification_note:'A plan response is not proof of a repair or build being executed.'});}catch(e){out('portalRepairOutput',{error:e.message});}finally{btn.disabled=false;}});
+ q('#portalCopyScratch').addEventListener('click',async()=>{const text=q('#portalScratch').value;try{await navigator.clipboard.writeText(text);q('#portalDualStatus').textContent='Scratchpad text copied.';}catch(e){q('#portalDualStatus').textContent='Clipboard permission unavailable; select and copy the text manually.';}});
+ q('#portalClearScratch').addEventListener('click',()=>{q('#portalScratch').value='';q('#portalDualStatus').textContent='Scratchpad cleared.';});
+})();
+
 </script>
 </body></html>
