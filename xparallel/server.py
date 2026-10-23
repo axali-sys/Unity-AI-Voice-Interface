@@ -25,7 +25,17 @@ from xparallel.conversation_store import save_conversation, get_conversation, li
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
-from xparallel.parallel_verse import (register_agent, list_agents, create_space, list_spaces, record_event, list_events, create_task, list_tasks)
+# SQLite remains the default. PostgreSQL is opt-in and fails closed if misconfigured.
+if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
+    from xparallel.parallel_verse_postgres import (
+        register_agent, list_agents, create_space, list_spaces,
+        record_event, list_events, create_task, list_tasks,
+    )
+else:
+    from xparallel.parallel_verse import (
+        register_agent, list_agents, create_space, list_spaces,
+        record_event, list_events, create_task, list_tasks,
+    )
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
