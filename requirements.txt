@@ -1,3 +1,6 @@
 # Axaliai / XParallel V1 runtime dependencies
 # Core HTTP API uses Python standard library only.
 # Add provider SDKs here when provider-backed inference is enabled.
+
+# Optional managed PostgreSQL backend for XParallel Parallel Verse
+psycopg[binary]>=3.2,<4

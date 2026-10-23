@@ -21,10 +21,25 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
-from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
+# SQLite conversation history remains default; PostgreSQL is explicitly opt-in.
+if os.getenv("XP_CONVERSATION_BACKEND", "sqlite").strip().lower() == "postgres":
+    from xparallel.conversation_store_postgres import save_conversation, get_conversation, list_conversations, delete_conversation
+else:
+    from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
+# SQLite remains the default. PostgreSQL is opt-in and fails closed if misconfigured.
+if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
+    from xparallel.parallel_verse_postgres import (
+        register_agent, list_agents, create_space, list_spaces,
+        record_event, list_events, create_task, list_tasks,
+    )
+else:
+    from xparallel.parallel_verse import (
+        register_agent, list_agents, create_space, list_spaces,
+        record_event, list_events, create_task, list_tasks,
+    )
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -158,6 +173,26 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path in {"/verse/agents", "/verse/spaces", "/verse/events", "/verse/tasks"}:
+            if not self.require_role("read"):
+                return send_json(self, 403, {"error": "forbidden"})
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            try:
+                limit = params.get("limit", ["50"])[0]
+                if parsed.path == "/verse/agents":
+                    items = list_agents(workspace, limit)
+                    return send_json(self, 200, {"workspace_id": workspace, "agents": items})
+                if parsed.path == "/verse/spaces":
+                    items = list_spaces(workspace, limit)
+                    return send_json(self, 200, {"workspace_id": workspace, "spaces": items})
+                if parsed.path == "/verse/events":
+                    items = list_events(workspace, limit)
+                    return send_json(self, 200, {"workspace_id": workspace, "events": items})
+                items = list_tasks(workspace, limit)
+                return send_json(self, 200, {"workspace_id": workspace, "tasks": items})
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
         if parsed.path == "/repair/jobs":
             params = parse_qs(parsed.query)
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
@@ -223,6 +258,33 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path in {"/verse/agents", "/verse/spaces", "/verse/events", "/verse/tasks"}:
+            if not self.require_role("create_solution"):
+                return send_json(self, 403, {"error": "forbidden"})
+            workspace_data = workspace_context(data)
+            workspace = workspace_data["workspace_id"]
+            try:
+                if self.path == "/verse/agents":
+                    result = register_agent(workspace, data.get("name", ""), data.get("kind", "general"),
+                                            data.get("metadata") if isinstance(data.get("metadata"), dict) else {})
+                    self.audit("verse_agent_registered", workspace, workspace_data["actor"], {"agent_id": result["agent_id"]})
+                    return send_json(self, 201, result)
+                if self.path == "/verse/spaces":
+                    result = create_space(workspace, data.get("name", ""), data.get("description", ""))
+                    self.audit("verse_space_created", workspace, workspace_data["actor"], {"space_id": result["space_id"]})
+                    return send_json(self, 201, result)
+                if self.path == "/verse/events":
+                    result = record_event(workspace, data.get("event_type", ""), data.get("payload", {}),
+                                          data.get("space_id"), data.get("agent_id"))
+                    self.audit("verse_event_recorded", workspace, workspace_data["actor"], {"event_id": result["event_id"]})
+                    return send_json(self, 201, result)
+                result = create_task(workspace, data.get("title", ""), data.get("description", ""),
+                                     data.get("space_id"), data.get("created_by"), data.get("assigned_to"))
+                self.audit("verse_task_created", workspace, workspace_data["actor"], {"task_id": result["task_id"]})
+                return send_json(self, 201, result)
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
 
         if self.path == "/conversations":
             workspace = workspace_context(data)["workspace_id"]
