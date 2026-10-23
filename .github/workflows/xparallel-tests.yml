@@ -82,5 +82,8 @@ jobs:
         run: |
           psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0001_initial.sql
           psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0002_workspace_integrity.sql
+          psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0003_conversations.sql
       - name: Test Parallel Verse PostgreSQL adapter against disposable PostgreSQL
         run: python -m unittest discover -s tests -p "test_parallel_verse_postgres.py" -v
+      - name: Test PostgreSQL conversation store against disposable PostgreSQL
+        run: python -m unittest discover -s tests -p "test_conversation_store_postgres.py" -v
