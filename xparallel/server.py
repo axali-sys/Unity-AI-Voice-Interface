@@ -21,7 +21,11 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
-from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
+# SQLite conversation history remains default; PostgreSQL is explicitly opt-in.
+if os.getenv("XP_CONVERSATION_BACKEND", "sqlite").strip().lower() == "postgres":
+    from xparallel.conversation_store_postgres import save_conversation, get_conversation, list_conversations, delete_conversation
+else:
+    from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
