@@ -1,25 +1,41 @@
-# Parallel Verse managed PostgreSQL preparation
+# XParallel Parallel Verse PostgreSQL readiness
 
-## Status
-This is development-branch preparation only. No database/project is created by this code.
-The adapter is opt-in and the existing SQLite backend remains the default.
+## Current state and hard limits
+- Development-only preparation on branch `xparallel-parallel-verse-verify`; existing PR #44 remains unmerged.
+- SQLite remains the default. PostgreSQL is opt-in with `XP_VERSE_BACKEND=postgres`.
+- No Supabase project/database is currently connected to this workspace. No paid resource has been created.
+- Authorized database budget is **$0/month**. Supabase Pro is the preferred future target but must not be provisioned until a budget is explicitly approved.
+- A green CI run without a database URL proves import/static and non-database tests only; PostgreSQL integration tests are skipped unless a disposable test URL is supplied.
+
+## Migration order
+1. Apply `migrations/parallel_verse/0001_initial.sql`.
+2. Apply `migrations/parallel_verse/0002_workspace_integrity.sql`.
+3. Verify all five named foreign-key constraints exist and are validated; confirm the unique indexes `uq_verse_agents_workspace_agent` and `uq_verse_spaces_workspace_space` exist.
+4. Run `python -m unittest tests.test_parallel_verse_postgres -v` against a disposable database. Do not run against production.
+
+Migration 0002 adds composite workspace-aware foreign keys so events/tasks cannot reference a space or agent from another workspace even if application-level checks are bypassed. It does not grant application roles access or configure RLS.
 
 ## Configuration
-- Install dependencies from requirements.txt (includes psycopg 3 binary package).
-- Set `XP_VERSE_BACKEND=postgres`.
-- Set `XP_VERSE_DATABASE_URL` as a server-side secret using a Supabase PostgreSQL connection string.
-- Apply `migrations/parallel_verse/0001_initial.sql` to a dedicated development/test database before enabling the backend.
-- For serverless workloads use Supabase's pooled transaction connection string when appropriate; consult https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits.
-- Never expose the connection string in browser code, logs, or API responses.
+- Install dependencies from `requirements.txt` (includes psycopg 3 binary package).
+- Set `XP_VERSE_BACKEND=postgres` and `XP_VERSE_DATABASE_URL` as **server-side secrets** only.
+- Use a dedicated least-privilege application database role, not a Supabase service-role secret or a superuser for normal runtime.
+- Require TLS/SSL for remote connections. Prefer Supavisor transaction pooling for serverless request workloads when compatible with the driver/workload; use a direct or session connection for migrations.
+- Keep the database URL out of browser code, logs, error payloads, screenshots, and committed environment files.
+- Apply migrations as a separate controlled step; application startup must not auto-migrate.
 
-## Test
-Set `XP_VERSE_DATABASE_URL` to a disposable database with migration 0001 applied, then run:
-`python -m unittest tests.test_parallel_verse_postgres -v`
-Without the variable, PostgreSQL integration tests are skipped. SQLite tests remain independent.
+## Readiness checklist (all required before production)
+- [ ] Provision a database within an explicitly approved budget; current budget prevents this.
+- [ ] Apply migrations 0001 and 0002 to a disposable PostgreSQL instance and record migration versions.
+- [ ] Run PostgreSQL integration tests; confirm persistence across separate connections and process restart.
+- [ ] Test empty/malformed configuration, SSL connection, connection timeout, unavailable DB, and recovery behavior.
+- [ ] Run the complete repository test suite and CI against the exact candidate commit.
+- [ ] Run Supabase security and performance advisors after schema deployment; resolve critical findings.
+- [ ] Define and test backup/restore procedure, RPO/RTO, retention, and data-export procedure.
+- [ ] Add monitoring for connection saturation, latency, database size, failed queries, and storage/compute usage alerts.
+- [ ] Verify request identity maps to an authorized workspace on the server. Caller-supplied workspace IDs plus a shared bearer token are not sufficient tenant isolation for public multi-tenant access.
+- [ ] Review database grants/RLS before exposing tables through Supabase Data API. This app currently uses a server-side PostgreSQL adapter; do not grant anon/authenticated table access unless an independently reviewed RLS policy design is implemented.
+- [ ] Test migration rollback/forward-repair on a disposable database and document recovery steps.
+- [ ] Keep production on the existing backend until migration, security, operational, and deployment gates pass with explicit authorization.
 
-## Rollout guardrails
-1. Keep production on SQLite/current configuration until an approved managed database exists.
-2. Verify schema migration, CRUD, workspace filtering, restart persistence and connection behavior in a disposable database.
-3. Do not switch production merely by setting an environment variable.
-4. Workspace IDs are still caller-supplied under the current shared bearer-token model. Add verified identity-to-workspace authorization before exposing to untrusted multi-tenant clients.
-5. Free-tier use can be paused due to inactivity and has a 500 MB database limit. Supabase Pro has a fixed subscription charge plus compute/usage charges; the user's current authorized database budget is $0, so Pro provisioning is blocked pending explicit budget approval.
+## Tests
+Without `XP_VERSE_DATABASE_URL`, PostgreSQL integration tests are intentionally skipped. CI should still import the adapter and run the test module so syntax/import regressions are caught. A skipped database test is **not** evidence of database readiness.
