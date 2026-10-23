@@ -17,6 +17,10 @@ All routes require the existing bearer-token authentication. Writes additionally
 
 The SQLite adapter uses `XP_VERSE_DB`. By default, local runs use `.xparallel/parallel_verse.db`; serverless runs use `/tmp/.xparallel/parallel_verse.db` only as a fallback. **Vercel /tmp is ephemeral and is not durable production storage.** Before relying on persistence across deployments or cold starts, configure `XP_VERSE_DB` to a durable mounted volume or replace the SQLite adapter with managed PostgreSQL and migrations. The API does not currently prove that the configured path is durable, so deployment readiness must remain unverified until that infrastructure is configured and tested.
 
+## Security and tenancy boundary
+
+The current server uses the existing shared bearer-token authorization model. The caller supplies `workspace_id`; the API does not yet derive workspace membership from a verified per-user identity. Therefore, workspace filters prevent accidental mixing in storage operations, but **they are not sufficient isolation for untrusted multi-tenant clients sharing the same token**. Keep these routes behind trusted server-side access until identity-to-workspace authorization is implemented and tested. Never ship `XP_TOKEN` to the browser.
+
 ## Current boundaries
 
 - The API supports registration, spaces, append-only event history, and task records.
