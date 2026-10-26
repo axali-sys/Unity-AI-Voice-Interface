@@ -5,6 +5,7 @@ from pathlib import Path
 from xparallel.parallel_verse import (
     create_space,
     create_task,
+    discover_agents,
     list_agents,
     list_events,
     list_spaces,
@@ -48,6 +49,29 @@ class ParallelVerseTests(unittest.TestCase):
         self.assertEqual(list_tasks("alpha", db_path=self.db)[0]["task_id"], task["task_id"])
         types = {event["event_type"] for event in list_events("alpha", db_path=self.db)}
         self.assertTrue({"agent.registered", "space.created", "task.created", "agent.message"} <= types)
+
+    
+    def test_discovers_agents_by_declared_capability(self):
+        planner = register_agent(
+            "alpha", "Research Planner", kind="planning",
+            metadata={"capabilities": ["research", "summarization"]},
+            db_path=self.db,
+        )
+        register_agent(
+            "alpha", "Code Worker", kind="coding",
+            metadata={"capabilities": ["testing", "repair"]},
+            db_path=self.db,
+        )
+        register_agent(
+            "beta", "Private Researcher", kind="research",
+            metadata={"capabilities": ["research"]},
+            db_path=self.db,
+        )
+        matches = discover_agents("alpha", capability="RESEARCH", db_path=self.db)
+        self.assertEqual([item["agent_id"] for item in matches], [planner["agent_id"]])
+        self.assertEqual(discover_agents("alpha", capability="repair", db_path=self.db)[0]["name"],
+                         "Code Worker")
+        self.assertEqual(discover_agents("alpha", capability="unknown", db_path=self.db), [])
 
     def test_rejects_cross_workspace_references(self):
         agent = register_agent("alpha", "Private agent", db_path=self.db)
