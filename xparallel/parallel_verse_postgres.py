@@ -81,3 +81,24 @@ def create_task(workspace_id,title,description="",space_id=None,created_by=None,
 def list_tasks(workspace_id,limit=50,db_path=None):
     with _connect() as c, c.cursor() as q: rows=q.execute("SELECT * FROM verse_tasks WHERE workspace_id=%s ORDER BY created_at DESC LIMIT %s",(_workspace(workspace_id),_limit(limit))).fetchall()
     return [{**_row(r),"result":r["result_json"]} for r in rows]
+
+def discover_agents(workspace_id, capability=None, limit=50, db_path=None):
+    """Find registered agents by declared capability; this does not imply runtime health."""
+    query = str(capability or "").strip().casefold()
+    agents = list_agents(workspace_id, limit=limit, db_path=db_path)
+    if not query:
+        return agents
+    matches = []
+    for agent in agents:
+        metadata = agent.get("metadata") or {}
+        declared = metadata.get("capabilities", []) if isinstance(metadata, dict) else []
+        if isinstance(declared, str):
+            declared = [declared]
+        if not isinstance(declared, list):
+            declared = []
+        searchable = [agent.get("kind", "")] + [
+            str(value) for value in declared if isinstance(value, (str, int, float))
+        ]
+        if any(query in value.casefold() for value in searchable):
+            matches.append(agent)
+    return matches
