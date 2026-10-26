@@ -33,7 +33,7 @@ from xparallel.repair_jobs import create_job, get_job, list_jobs
 if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
     from xparallel.parallel_verse_postgres import (
         register_agent, list_agents, create_space, list_spaces,
-        record_event, list_events, create_task, list_tasks,
+        record_event, list_events, create_task, list_tasks, discover_agents,
     )
 else:
     from xparallel.parallel_verse import (
@@ -173,6 +173,25 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/verse/discovery":
+            if not self.require_role("read"):
+                return send_json(self, 403, {"error": "forbidden"})
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            try:
+                limit = params.get("limit", ["50"])[0]
+                capability = params.get("capability", [""])[0]
+                agents = discover_agents(workspace, capability=capability, limit=limit)
+                return send_json(self, 200, {
+                    "workspace_id": workspace,
+                    "capability_query": capability,
+                    "match_basis": "declared agent kind/capabilities metadata",
+                    "runtime_verified": False,
+                    "count": len(agents),
+                    "agents": agents,
+                })
+            except ValueError as exc:
+                return send_json(self, 400, {"error": str(exc)})
         if parsed.path in {"/verse/agents", "/verse/spaces", "/verse/events", "/verse/tasks"}:
             if not self.require_role("read"):
                 return send_json(self, 403, {"error": "forbidden"})
