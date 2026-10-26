@@ -38,7 +38,7 @@ if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
 else:
     from xparallel.parallel_verse import (
         register_agent, list_agents, create_space, list_spaces,
-        record_event, list_events, create_task, list_tasks,
+        record_event, list_events, create_task, list_tasks, discover_agents,
     )
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
