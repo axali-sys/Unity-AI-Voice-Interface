@@ -4,9 +4,12 @@ on:
   pull_request:
     paths:
       - "xparallel/**"
+      - "migrations/parallel_verse/**"
       - "tests/**"
+      - "docs/XPARALLEL_PARALLEL_VERSE_POSTGRES.md"
       - "public/xparallel.html"
       - ".github/workflows/xparallel-tests.yml"
+      - "requirements.txt"
   workflow_dispatch:
 
 permissions:
@@ -15,6 +18,22 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xparallel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xparallel_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      XP_VERSE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xparallel_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,6 +41,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install runtime dependencies
+        run: python -m pip install -r requirements.txt
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
       - name: Check Axaliai and XParallel JavaScript syntax
@@ -51,3 +72,18 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+      - name: Test chat response and workspace-scoped conversation persistence
+        run: python -m unittest discover -s tests -p "test_chat_conversation_flow.py" -v
+      - name: Test persistent memory vault
+        run: python -m unittest discover -s tests -p "test_memory_vault.py" -v
+      - name: Test Parallel Verse SQLite world store
+        run: python -m unittest discover -s tests -p "test_parallel_verse.py" -v
+      - name: Apply PostgreSQL test migrations
+        run: |
+          psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0001_initial.sql
+          psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0002_workspace_integrity.sql
+          psql "$XP_VERSE_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/parallel_verse/0003_conversations.sql
+      - name: Test Parallel Verse PostgreSQL adapter against disposable PostgreSQL
+        run: python -m unittest discover -s tests -p "test_parallel_verse_postgres.py" -v
+      - name: Test PostgreSQL conversation store against disposable PostgreSQL
+        run: python -m unittest discover -s tests -p "test_conversation_store_postgres.py" -v
