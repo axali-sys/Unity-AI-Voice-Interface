@@ -297,3 +297,28 @@ def list_tasks(workspace_id: str, limit: int = 50,
             (workspace, limit),
         ).fetchall()
     return [_task(row) for row in rows]
+
+
+
+def discover_agents(workspace_id: str, capability: str | None = None,
+                    limit: int = 50, db_path: str | None = None) -> list[dict[str, Any]]:
+    """Find registered agents by declared capability; this does not imply runtime health."""
+    query = str(capability or "").strip().casefold()
+    agents = list_agents(workspace_id, limit=limit, db_path=db_path)
+    if not query:
+        return agents
+
+    matches = []
+    for agent in agents:
+        metadata = agent.get("metadata") or {}
+        declared = metadata.get("capabilities", [])
+        if isinstance(declared, str):
+            declared = [declared]
+        if not isinstance(declared, list):
+            declared = []
+        searchable = [agent.get("kind", "")] + [
+            str(value) for value in declared if isinstance(value, (str, int, float))
+        ]
+        if any(query in value.casefold() for value in searchable):
+            matches.append(agent)
+    return matches
