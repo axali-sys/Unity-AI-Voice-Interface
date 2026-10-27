@@ -29,6 +29,7 @@ else:
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
+from xparallel.identity_directory import list_founding_identities, get_founding_identity
 # SQLite remains the default. PostgreSQL is opt-in and fails closed if misconfigured.
 if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
     from xparallel.parallel_verse_postgres import (
@@ -173,6 +174,26 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/verse/identities":
+            if not self.require_role("read"):
+                return send_json(self, 403, {"error": "forbidden"})
+            params = parse_qs(parsed.query)
+            identity_key = params.get("identity_key", [""])[0]
+            if identity_key:
+                identity = get_founding_identity(identity_key)
+                if identity is None:
+                    return send_json(self, 404, {"error": "identity_not_found"})
+                return send_json(self, 200, {
+                    "identity": identity,
+                    "domain_registration_claim": False,
+                })
+            identities = list_founding_identities()
+            return send_json(self, 200, {
+                "count": len(identities),
+                "identities": identities,
+                "record_status": "proposed_founding_identities",
+                "domain_registration_claim": False,
+            })
         if parsed.path == "/verse/discovery":
             if not self.require_role("read"):
                 return send_json(self, 403, {"error": "forbidden"})
