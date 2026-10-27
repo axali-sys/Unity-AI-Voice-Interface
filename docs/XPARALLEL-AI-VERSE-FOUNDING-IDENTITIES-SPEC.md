@@ -247,3 +247,55 @@ Every implementation milestone should report:
 ## 14. Sources to maintain
 
 Use the latest official ICANN New gTLD Program page, Applicant Guidebook, application-round announcements, applicant-support guidance, and Registry Service Provider information. Record the retrieval date and link for each material rule or fee. The guidebook and future round rules govern over this planning document.
+
+
+## 15. Roaming identity and future .ecs continuity
+
+The project decision is to use `oneai.core` and `xparallel.verse` as stable internal identity keys while preserving `.ecs` as a future roaming ecosystem namespace. This section clarifies the design; it does not assert that `.ecs` is currently delegated or that the names are registered.
+
+### Identity is not a location
+
+- `oneai.core` is OneAI's stable logical identity.
+- `xparallel.verse` is XParallel AI Verse's stable logical identity.
+- `oneai.ecs` and `xparallel.ecs` are proposed future human-readable ecosystem names/aliases, subject to the namespace legally existing and the names being allocated under its rules.
+- HTTPS URLs, IP addresses, local device addresses, cloud deployment URLs, and provider-specific IDs are changeable endpoints, not canonical identity keys.
+
+### Roaming resolution model
+
+Store a signed or otherwise integrity-protected identity document that maps the stable identity key to one or more authorized endpoint bindings. Each binding should include its endpoint, environment, status, verification evidence, issuer/owner, issued-at and expiry/last-checked timestamps, and revocation state. Use an established signature format and key-management approach rather than inventing cryptography.
+
+A resolver should return explicit states such as `local_only`, `endpoint_unverified`, `endpoint_verified`, `stale`, and `revoked`. It must never silently trust a new endpoint just because DNS or a redirect changed. Endpoint changes require authenticated owner authorization, proof appropriate to the endpoint type, audit logging, and cache invalidation/revalidation. Private endpoints must not be exposed in public records.
+
+### Portability requirements
+
+1. The product must operate using stable internal keys even when no `.ecs` domain or external resolver is available.
+2. Identity records and event history must be exportable in a documented, versioned format, with secrets and private fields excluded.
+3. Moving from local hosting to a cloud host, or between providers, updates endpoint bindings without changing the stable identity key.
+4. A future `.ecs` binding can be added as an alias or resolution method without changing database primary keys, API resource IDs, conversation ownership, or agent relationships.
+5. If a resolver, DNS provider, or network is unavailable, return a clear degraded/offline state; do not fabricate a successful lookup.
+6. Support multiple endpoints only with explicit priority/failover policy, health checks, and an audit trail. Failover must not bypass authentication, tenant boundaries, approval gates, or capability restrictions.
+7. Never make domain ownership the only recovery path. Define owner-controlled key rotation and account recovery with revocation of old bindings.
+
+### Suggested extension to the model
+
+Add a separate `EndpointBinding` or equivalent existing-schema extension rather than treating `domain_label` as the endpoint itself:
+- `id`, `identity_id`, `endpoint_uri`, `endpoint_kind`, `environment`, `priority`
+- `status`: pending | unverified | verified | stale | revoked
+- `verification_method`, `verified_at`, `expires_at`, `last_checked_at`
+- `owner_principal_id`, `key_fingerprint` (public fingerprint only), `created_at`, `updated_at`
+- optional `alias_namespace` and `alias_label` for future `.ecs` mapping
+
+Inspect current schemas first and reuse equivalent tables if present. Do not store private signing keys in this table or in source control.
+
+### Roaming acceptance tests
+
+- Same stable identity resolves consistently before and after a test deployment endpoint changes.
+- An unauthorized user cannot change endpoint bindings.
+- A revoked or expired binding is not returned as trusted.
+- DNS changes, redirects, and provider outages do not automatically transfer trust.
+- Export/import preserves identity keys and relationships while excluding credentials.
+- No-`.ecs` mode still supports identity listing, authentication, and local development.
+- A future `.ecs` alias is shown as proposed/unavailable until a real registry/provider confirms the applicable state.
+- Logs and public API responses redact private endpoint data and all credentials.
+
+**Product rule:** roaming means the identity can move while its trust is re-established and verified. It does not mean every endpoint is automatically trusted or that `.ecs` connectivity is already live.
