@@ -30,6 +30,7 @@ from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.identity_directory import list_founding_identities, get_founding_identity
+from xparallel.tokenomics import get_tokenomics_proposal
 # SQLite remains the default. PostgreSQL is opt-in and fails closed if misconfigured.
 if os.getenv("XP_VERSE_BACKEND", "sqlite").strip().lower() == "postgres":
     from xparallel.parallel_verse_postgres import (
@@ -174,6 +175,10 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/verse/tokenomics":
+            if not self.require_role("read"):
+                return send_json(self, 403, {"error": "forbidden"})
+            return send_json(self, 200, get_tokenomics_proposal())
         if parsed.path == "/verse/identities":
             if not self.require_role("read"):
                 return send_json(self, 403, {"error": "forbidden"})
