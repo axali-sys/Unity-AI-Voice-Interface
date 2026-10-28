@@ -363,3 +363,10 @@ input {
     white-space: nowrap;
   }
 }
+
+.message-meta {
+  margin: 6px 8px 0;
+  color: #8fa8c9;
+  font-size: 0.74rem;
+  overflow-wrap: anywhere;
+}
