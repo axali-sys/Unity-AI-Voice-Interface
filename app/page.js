@@ -92,6 +92,8 @@ export default function Home() {
             data.response ||
             data.summary ||
             "I’m ready to help. Try another prompt or connect the project backend for the live model.",
+          provider: data.provider,
+          model: data.model,
         },
       ]);
       setStatus("Connected");
@@ -191,8 +193,15 @@ export default function Home() {
               key={`${message.role}-${index}`}
               className={`message-row ${message.role === "user" ? "user" : "assistant"}`}
             >
-              <div className="message-bubble">
-                {message.content}
+              <div>
+                <div className="message-bubble">
+                  {message.content}
+                </div>
+                {message.role === "assistant" && (message.provider || message.model) && (
+                  <div className="message-meta">
+                    {message.provider || "AI provider"}{message.model ? ` · ${message.model}` : ""}
+                  </div>
+                )}
               </div>
             </div>
           ))}
