@@ -33,8 +33,12 @@ jobs:
           test -f xparallel/server.py
 
       - name: Trigger Render deployment
-        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
-        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::error::Missing required GitHub Actions secret RENDER_DEPLOY_HOOK; refusing to report a deployment as successful."
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
 
       - name: Deployment metadata
         run: |

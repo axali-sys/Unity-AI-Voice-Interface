@@ -7,6 +7,7 @@ on:
       - "tests/**"
       - "public/xparallel.html"
       - ".github/workflows/xparallel-tests.yml"
+      - ".github/workflows/mainnet-deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -51,3 +52,5 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+      - name: Test Render deploy hook guard
+        run: python -m unittest discover -s tests -p "test_deploy_workflow.py" -v
