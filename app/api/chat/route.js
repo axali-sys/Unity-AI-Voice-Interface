@@ -36,6 +36,15 @@ export async function POST(request) {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        // Do not disguise an authenticated live-chat failure as a successful
+        // public/demo answer. Keep fallback for auth/routing compatibility,
+        // but surface provider outages and missing configuration honestly.
+        if (candidate.path === "/chat" && response.status >= 500) {
+          return Response.json(
+            { error: data?.error || "live_ai_unavailable", fallback: false },
+            { status: response.status }
+          );
+        }
         continue;
       }
 

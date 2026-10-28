@@ -25,6 +25,8 @@ from xparallel.conversation_store import save_conversation, get_conversation, li
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
+from xparallel.free_access_hub import select_provider, provider_directory
+from xparallel.provider_catalog import configured_providers
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -158,6 +160,13 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if parsed.path == "/providers":
+            providers = configured_providers()
+            return send_json(self, 200, {
+                "network": NETWORK,
+                "providers": provider_directory(providers),
+                "status_note": "Configuration is not proof of live availability or free quota; unknown providers are not selected.",
+            })
         if parsed.path == "/repair/jobs":
             params = parse_qs(parsed.query)
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
@@ -223,6 +232,35 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path == "/provider/route":
+            task = str(data.get("task", "")).strip()
+            providers = configured_providers()
+            paid_enabled = os.getenv("XP_ALLOW_PAID_PROVIDERS", "").strip().lower() == "true"
+            approval_secret = os.getenv("XP_PAID_ROUTING_APPROVAL_TOKEN", "").strip()
+            paid_approved = bool(approval_secret) and self.headers.get("X-OneAI-Paid-Approval") == approval_secret
+            decision = select_provider(
+                task, providers,
+                allow_paid=bool(data.get("allow_paid")) and paid_enabled,
+                paid_approval_granted=paid_approved,
+            )
+            workspace = workspace_context(data)["workspace_id"]
+            self.audit("provider_route_decision", workspace, workspace_context(data)["actor"], {
+                "task": task[:80], "status": decision.status,
+                "provider_id": decision.provider_id, "paid_approved": paid_approved,
+            })
+            return send_json(self, 200, {
+                "network": NETWORK,
+                "decision": {
+                    "status": decision.status, "provider_id": decision.provider_id,
+                    "reason": decision.reason,
+                    "estimated_cost_usd": decision.estimated_cost_usd,
+                    "requires_approval": decision.requires_approval,
+                    "alternatives": list(decision.alternatives),
+                },
+                "providers": provider_directory(providers),
+                "execution_performed": False,
+            })
 
         if self.path == "/conversations":
             workspace = workspace_context(data)["workspace_id"]
@@ -380,15 +418,24 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context(data)["workspace_id"]
             use_memory = data.get("use_memory", True) is not False
             try:
-                result = chat_with_ai(messages, workspace, use_memory)
+                if os.getenv("XP_HUB_ENABLED", "").strip().lower() == "true":
+                    from xparallel.hybrid_chat import chat as chat_with_hybrid
+                    result = chat_with_hybrid(messages, workspace, use_memory)
+                else:
+                    result = chat_with_ai(messages, workspace, use_memory)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc:
                 error = str(exc)
-                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                status = 503 if error in {
+                    "ai_provider_not_configured", "ai_provider_url_must_use_https",
+                    "hybrid_provider_not_configured", "hybrid_provider_unavailable",
+                    "hybrid_provider_url_must_use_https_or_localhost",
+                } else 502
                 return send_json(self, status, {"error": error})
             self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
                 "model": result.get("model", "unknown"),
+                "provider": result.get("provider", "legacy-configured-provider"),
                 "message_count": len(messages) if isinstance(messages, list) else 0,
             })
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})

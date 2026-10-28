@@ -43,6 +43,12 @@ jobs:
           node --check /tmp/xparallel-workbench.js
           node --check /tmp/axaliai.js
           node --check /tmp/oneai.js
+      - name: Test Free Access Hub routing policy
+        run: python -m unittest discover -s tests -p "test_free_access_hub.py" -v
+      - name: Test provider catalog configuration and secret safety
+        run: python -m unittest discover -s tests -p "test_provider_catalog.py" -v
+      - name: Test opt-in hybrid chat adapter
+        run: python -m unittest discover -s tests -p "test_hybrid_chat.py" -v
       - name: Test OneAI interface safety contract
         run: python -m unittest discover -s tests -p "test_oneai_interface.py" -v
       - name: Test memory retrieval and summarization

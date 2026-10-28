@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const starterPrompts = [
   "Give me a short project status update",
@@ -22,6 +22,28 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Ready");
+  const [hubProviders, setHubProviders] = useState([]);
+  const [hubNote, setHubNote] = useState("Checking configured providers…");
+  const [hubLoading, setHubLoading] = useState(false);
+
+  const refreshProviders = useCallback(async () => {
+    setHubLoading(true);
+    try {
+      const response = await fetch("/api/providers", { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      setHubProviders(Array.isArray(data.providers) ? data.providers : []);
+      setHubNote(data.status_note || (response.ok ? "Provider configuration loaded." : "Backend connection needs configuration."));
+    } catch {
+      setHubProviders([]);
+      setHubNote("Provider directory unavailable. Check the backend connection.");
+    } finally {
+      setHubLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshProviders();
+  }, [refreshProviders]);
 
   const quickStats = useMemo(
     () => [
@@ -70,6 +92,8 @@ export default function Home() {
             data.response ||
             data.summary ||
             "I’m ready to help. Try another prompt or connect the project backend for the live model.",
+          provider: data.provider,
+          model: data.model,
         },
       ]);
       setStatus("Connected");
@@ -125,6 +149,36 @@ export default function Home() {
           <div className="status-pill">{status}</div>
         </header>
 
+        <section className="hub-panel" aria-labelledby="hub-title">
+          <div className="hub-heading">
+            <div>
+              <p className="eyebrow">HYBRID INTELLIGENCE</p>
+              <h3 id="hub-title">Free Access Hub</h3>
+            </div>
+            <button className="hub-refresh" type="button" onClick={refreshProviders} disabled={hubLoading}>
+              {hubLoading ? "Checking…" : "Refresh"}
+            </button>
+          </div>
+          <p className="hub-note">{hubNote}</p>
+          {hubProviders.length > 0 ? (
+            <div className="hub-provider-list">
+              {hubProviders.map((provider) => (
+                <div className="hub-provider" key={provider.id}>
+                  <div>
+                    <strong>{provider.id}</strong>
+                    <span>{provider.kind === "local" ? "Local model" : provider.kind === "free_cloud" ? "Free-tier cloud (quota must be verified)" : "Paid provider"}</span>
+                  </div>
+                  <span className={`hub-status ${provider.status === "available" ? "verified" : "unknown"}`}>
+                    {provider.status === "available" ? "Available" : provider.status === "unavailable" ? "Unavailable" : "Unverified"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="hub-empty">No providers are configured yet. The hub will not assume a free quota or make a paid request.</p>
+          )}
+        </section>
+
         <div className="prompt-grid">
           {starterPrompts.map((prompt) => (
             <button key={prompt} className="prompt-chip" onClick={() => sendPrompt(prompt)}>
@@ -139,8 +193,15 @@ export default function Home() {
               key={`${message.role}-${index}`}
               className={`message-row ${message.role === "user" ? "user" : "assistant"}`}
             >
-              <div className="message-bubble">
-                {message.content}
+              <div>
+                <div className="message-bubble">
+                  {message.content}
+                </div>
+                {message.role === "assistant" && (message.provider || message.model) && (
+                  <div className="message-meta">
+                    {message.provider || "AI provider"}{message.model ? ` · ${message.model}` : ""}
+                  </div>
+                )}
               </div>
             </div>
           ))}
