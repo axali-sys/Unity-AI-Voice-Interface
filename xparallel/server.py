@@ -418,15 +418,24 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context(data)["workspace_id"]
             use_memory = data.get("use_memory", True) is not False
             try:
-                result = chat_with_ai(messages, workspace, use_memory)
+                if os.getenv("XP_HUB_ENABLED", "").strip().lower() == "true":
+                    from xparallel.hybrid_chat import chat as chat_with_hybrid
+                    result = chat_with_hybrid(messages, workspace, use_memory)
+                else:
+                    result = chat_with_ai(messages, workspace, use_memory)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc:
                 error = str(exc)
-                status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
+                status = 503 if error in {
+                    "ai_provider_not_configured", "ai_provider_url_must_use_https",
+                    "hybrid_provider_not_configured", "hybrid_provider_unavailable",
+                    "hybrid_provider_url_must_use_https_or_localhost",
+                } else 502
                 return send_json(self, status, {"error": error})
             self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
                 "model": result.get("model", "unknown"),
+                "provider": result.get("provider", "legacy-configured-provider"),
                 "message_count": len(messages) if isinstance(messages, list) else 0,
             })
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, **result})
