@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const starterPrompts = [
   "Give me a short project status update",
@@ -26,7 +26,7 @@ export default function Home() {
   const [hubNote, setHubNote] = useState("Checking configured providers…");
   const [hubLoading, setHubLoading] = useState(false);
 
-  async function refreshProviders() {
+  const refreshProviders = useCallback(async () => {
     setHubLoading(true);
     try {
       const response = await fetch("/api/providers", { cache: "no-store" });
@@ -39,11 +39,11 @@ export default function Home() {
     } finally {
       setHubLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     refreshProviders();
-  }, []);
+  }, [refreshProviders]);
 
   const quickStats = useMemo(
     () => [
