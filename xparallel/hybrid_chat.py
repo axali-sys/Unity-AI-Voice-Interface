@@ -77,7 +77,8 @@ def chat(messages, workspace_id="default", use_memory=True, environ=None):
     if local_url and local_model:
         base = _safe_base_url(local_url)
         try:
-            payload = _post_json(base + "/api/chat", {
+            ollama_endpoint = base + "/chat" if base.endswith("/api") else base + "/api/chat"
+            payload = _post_json(ollama_endpoint, {
                 "model": local_model,
                 "stream": False,
                 "messages": [{"role": "system", "content": system}] + bounded,
