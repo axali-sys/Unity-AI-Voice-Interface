@@ -27,6 +27,7 @@ from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.free_access_hub import select_provider, provider_directory
 from xparallel.provider_catalog import configured_providers
+from xparallel.roaming_registry import register_runtime, heartbeat as roaming_heartbeat, discover as discover_runtimes, registry_status
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -159,6 +160,8 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()}, cors=True)
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
+        if self.path in {"/roaming/services", "/roaming/status"}:
+            return send_json(self, 200, registry_status())
         parsed = urlparse(self.path)
         if parsed.path == "/providers":
             providers = configured_providers()
@@ -224,7 +227,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 429, {"error": "rate_limit_exceeded"}, cors=True)
             if self.path not in public_paths:
                 return send_json(self, 404, {"error": "not_found"}, cors=True)
-        elif not self.authorized():
+        elif self.path != "/roaming/heartbeat" and not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
 
         try:
@@ -232,6 +235,39 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if self.path == "/roaming/register":
+            try:
+                result = register_runtime(
+                    data.get("runtime_id"), data.get("name"), data.get("base_url"),
+                    data.get("capabilities", []), data.get("ttl_seconds", 180),
+                )
+            except (ValueError, TypeError) as exc:
+                return send_json(self, 400, {"error": str(exc) or "invalid_runtime_registration"})
+            self.audit("roaming_runtime_registered", "default", "owner", {"runtime_id": result["runtime_id"]})
+            return send_json(self, 201, result)
+
+        if self.path == "/roaming/heartbeat":
+            auth = self.headers.get("Authorization", "")
+            runtime_token = auth[7:].strip() if auth.startswith("Bearer ") else ""
+            try:
+                result = roaming_heartbeat(
+                    data.get("runtime_id"), runtime_token, data.get("ttl_seconds", 180),
+                )
+            except PermissionError as exc:
+                return send_json(self, 401, {"error": str(exc)})
+            except (ValueError, TypeError) as exc:
+                return send_json(self, 400, {"error": str(exc) or "invalid_heartbeat"})
+            return send_json(self, 200, result)
+
+        if self.path == "/roaming/discover":
+            capability = data.get("capability")
+            try:
+                limit = data.get("limit", 20)
+                result = discover_runtimes(capability, limit)
+            except (ValueError, TypeError):
+                return send_json(self, 400, {"error": "invalid_discovery_request"})
+            return send_json(self, 200, {"runtimes": result, "count": len(result)})
 
         if self.path == "/provider/route":
             task = str(data.get("task", "")).strip()
