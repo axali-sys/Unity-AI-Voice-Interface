@@ -13,6 +13,7 @@ import re
 import secrets
 import sqlite3
 import time
+from contextlib import contextmanager
 from urllib.parse import urlparse
 
 DEFAULT_TTL_SECONDS = 180
@@ -42,6 +43,16 @@ def _connect():
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_roaming_status_expiry ON roaming_runtimes(status, expires_at)")
     return conn
+
+
+@contextmanager
+def _db():
+    conn = _connect()
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def _validate_base_url(value: str) -> str:
@@ -95,7 +106,7 @@ def register_runtime(runtime_id: str, name: str, base_url: str, capabilities, tt
     now = time.time()
     token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(token.encode()).hexdigest()
-    with _connect() as conn:
+    with _db() as conn:
         conn.execute("""
             INSERT INTO roaming_runtimes
                 (runtime_id, name, base_url, capabilities, token_hash, status, created_at, last_seen, expires_at)
