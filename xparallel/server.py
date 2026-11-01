@@ -27,7 +27,7 @@ from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.free_access_hub import select_provider, provider_directory
 from xparallel.provider_catalog import configured_providers
-from xparallel.roaming_registry import register_runtime, heartbeat as roaming_heartbeat, discover as discover_runtimes, registry_status
+from xparallel.roaming_registry import (register_runtime, heartbeat as roaming_heartbeat, discover as discover_runtimes, registry_status, enqueue_task as enqueue_roaming_task, claim_task as claim_roaming_task, complete_task as complete_roaming_task)
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -227,7 +227,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 429, {"error": "rate_limit_exceeded"}, cors=True)
             if self.path not in public_paths:
                 return send_json(self, 404, {"error": "not_found"}, cors=True)
-        elif self.path != "/roaming/heartbeat" and not self.authorized():
+        elif self.path not in {"/roaming/heartbeat", "/roaming/tasks/claim", "/roaming/tasks/complete"} and not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
 
         try:
@@ -259,6 +259,51 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, TypeError) as exc:
                 return send_json(self, 400, {"error": str(exc) or "invalid_heartbeat"})
             return send_json(self, 200, result)
+
+        if self.path == "/roaming/tasks/dispatch":
+            runtime_id = str(data.get("runtime_id", "")).strip()
+            task_type = str(data.get("task_type", "")).strip()
+            payload = data.get("payload", {})
+            workspace = workspace_context(data)["workspace_id"]
+            try:
+                task = enqueue_roaming_task(runtime_id, task_type, payload, workspace)
+            except LookupError as exc:
+                return send_json(self, 409, {"error": str(exc)})
+            except (ValueError, TypeError) as exc:
+                return send_json(self, 400, {"error": str(exc) or "invalid_task"})
+            self.audit("roaming_task_queued", workspace, workspace_context(data)["actor"], {
+                "task_id": task["task_id"], "runtime_id": runtime_id, "task_type": task_type[:64],
+            })
+            return send_json(self, 202, task)
+
+        if self.path == "/roaming/tasks/claim":
+            auth = self.headers.get("Authorization", "")
+            runtime_token = auth[7:].strip() if auth.startswith("Bearer ") else ""
+            try:
+                task = claim_roaming_task(
+                    data.get("runtime_id"), runtime_token, data.get("lease_seconds", 120),
+                )
+            except PermissionError as exc:
+                return send_json(self, 401, {"error": str(exc)})
+            except (ValueError, TypeError):
+                return send_json(self, 400, {"error": "invalid_task_claim"})
+            return send_json(self, 200, {"task": task, "available": task is not None})
+
+        if self.path == "/roaming/tasks/complete":
+            auth = self.headers.get("Authorization", "")
+            runtime_token = auth[7:].strip() if auth.startswith("Bearer ") else ""
+            try:
+                task = complete_roaming_task(
+                    data.get("runtime_id"), runtime_token, data.get("task_id"),
+                    data.get("result", {}), bool(data.get("failed", False)),
+                )
+            except PermissionError as exc:
+                return send_json(self, 401, {"error": str(exc)})
+            except LookupError as exc:
+                return send_json(self, 404, {"error": str(exc)})
+            except (ValueError, TypeError) as exc:
+                return send_json(self, 400, {"error": str(exc) or "invalid_task_result"})
+            return send_json(self, 200, task)
 
         if self.path == "/roaming/discover":
             capability = data.get("capability")
