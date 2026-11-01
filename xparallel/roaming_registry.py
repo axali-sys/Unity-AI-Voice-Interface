@@ -42,6 +42,14 @@ def _connect():
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_roaming_status_expiry ON roaming_runtimes(status, expires_at)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS roaming_tasks (
+        task_id TEXT PRIMARY KEY, runtime_id TEXT NOT NULL, task_type TEXT NOT NULL,
+        payload TEXT NOT NULL, workspace_id TEXT NOT NULL, status TEXT NOT NULL,
+        result TEXT, attempts INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL,
+        updated_at REAL NOT NULL, claimed_at REAL, lease_until REAL, completed_at REAL,
+        FOREIGN KEY(runtime_id) REFERENCES roaming_runtimes(runtime_id)
+    )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_roaming_tasks_queue ON roaming_tasks(runtime_id, status, created_at)")
     return conn
 
 
@@ -167,4 +175,102 @@ def registry_status() -> dict:
         "online_runtimes": len(services),
         "runtimes": services,
         "execution_performed": False,
+    }
+
+
+def enqueue_task(runtime_id: str, task_type: str, payload: dict, workspace_id: str = "default") -> dict:
+    """Queue a bounded JSON task for one registered runtime; never executes it here."""
+    runtime_id = str(runtime_id or "").strip()
+    task_type = str(task_type or "").strip().lower()
+    workspace_id = str(workspace_id or "default").strip()[:120]
+    if not _ID_RE.fullmatch(runtime_id):
+        raise ValueError("runtime_id_invalid")
+    if not task_type or len(task_type) > 64:
+        raise ValueError("task_type_invalid")
+    if not isinstance(payload, dict):
+        raise ValueError("task_payload_must_be_object")
+    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    if len(encoded.encode("utf-8")) > 64000:
+        raise ValueError("task_payload_too_large")
+    now = time.time()
+    task_id = secrets.token_urlsafe(18)
+    with _db() as conn:
+        runtime = conn.execute(
+            "SELECT runtime_id FROM roaming_runtimes WHERE runtime_id=? AND status='online' AND expires_at>?",
+            (runtime_id, now),
+        ).fetchone()
+        if not runtime:
+            raise LookupError("runtime_not_online")
+        conn.execute("""
+            INSERT INTO roaming_tasks
+                (task_id, runtime_id, task_type, payload, workspace_id, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'queued', ?, ?)
+        """, (task_id, runtime_id, task_type, encoded, workspace_id, now, now))
+    return {"task_id": task_id, "runtime_id": runtime_id, "status": "queued", "created_at": now}
+
+
+def claim_task(runtime_id: str, runtime_token: str, lease_seconds: int = 120) -> dict | None:
+    runtime_id = str(runtime_id or "").strip()
+    token_hash = hashlib.sha256(str(runtime_token or "").encode()).hexdigest()
+    now = time.time()
+    lease = max(15, min(int(lease_seconds), 600))
+    with _db() as conn:
+        runtime = conn.execute(
+            "SELECT token_hash, status, expires_at FROM roaming_runtimes WHERE runtime_id=?",
+            (runtime_id,),
+        ).fetchone()
+        if not runtime or not secrets.compare_digest(runtime["token_hash"], token_hash):
+            raise PermissionError("runtime_authentication_failed")
+        if runtime["status"] != "online" or runtime["expires_at"] <= now:
+            raise PermissionError("runtime_offline")
+        # Expired leases are returned to the queue so a restarted worker can recover.
+        conn.execute("""
+            UPDATE roaming_tasks SET status='queued', claimed_at=NULL, lease_until=NULL,
+                updated_at=? WHERE runtime_id=? AND status='claimed' AND lease_until<=?
+        """, (now, runtime_id, now))
+        row = conn.execute(
+            "SELECT * FROM roaming_tasks WHERE runtime_id=? AND status='queued' ORDER BY created_at LIMIT 1",
+            (runtime_id,),
+        ).fetchone()
+        if not row:
+            return None
+        conn.execute("""
+            UPDATE roaming_tasks SET status='claimed', claimed_at=?, lease_until=?,
+                attempts=attempts+1, updated_at=? WHERE task_id=? AND status='queued'
+        """, (now, now + lease, now, row["task_id"]))
+        claimed = conn.execute("SELECT * FROM roaming_tasks WHERE task_id=?", (row["task_id"],)).fetchone()
+    return _task_public(claimed)
+
+
+def complete_task(runtime_id: str, runtime_token: str, task_id: str, result: dict, failed: bool = False) -> dict:
+    runtime_id = str(runtime_id or "").strip()
+    token_hash = hashlib.sha256(str(runtime_token or "").encode()).hexdigest()
+    if not isinstance(result, dict):
+        raise ValueError("task_result_must_be_object")
+    encoded = json.dumps(result, separators=(",", ":"), ensure_ascii=False)
+    if len(encoded.encode("utf-8")) > 64000:
+        raise ValueError("task_result_too_large")
+    now = time.time()
+    with _db() as conn:
+        runtime = conn.execute("SELECT token_hash FROM roaming_runtimes WHERE runtime_id=?", (runtime_id,)).fetchone()
+        if not runtime or not secrets.compare_digest(runtime["token_hash"], token_hash):
+            raise PermissionError("runtime_authentication_failed")
+        updated = conn.execute("""
+            UPDATE roaming_tasks SET status=?, result=?, completed_at=?, updated_at=?,
+                lease_until=NULL WHERE task_id=? AND runtime_id=? AND status='claimed'
+        """, ("failed" if failed else "completed", encoded, now, now, str(task_id), runtime_id))
+        if updated.rowcount != 1:
+            raise LookupError("claimed_task_not_found")
+        row = conn.execute("SELECT * FROM roaming_tasks WHERE task_id=?", (str(task_id),)).fetchone()
+    return _task_public(row)
+
+
+def _task_public(row) -> dict:
+    return {
+        "task_id": row["task_id"], "runtime_id": row["runtime_id"],
+        "task_type": row["task_type"], "payload": json.loads(row["payload"]),
+        "workspace_id": row["workspace_id"], "status": row["status"],
+        "result": json.loads(row["result"]) if row["result"] else None,
+        "attempts": row["attempts"], "created_at": row["created_at"],
+        "updated_at": row["updated_at"], "completed_at": row["completed_at"],
     }
