@@ -127,7 +127,7 @@ def heartbeat(runtime_id: str, runtime_token: str, ttl_seconds=DEFAULT_TTL_SECON
     token_hash = hashlib.sha256(str(runtime_token or "").encode()).hexdigest()
     ttl = max(30, min(int(ttl_seconds), MAX_TTL_SECONDS))
     now = time.time()
-    with _connect() as conn:
+    with _db() as conn:
         row = conn.execute("SELECT token_hash FROM roaming_runtimes WHERE runtime_id=?", (runtime_id,)).fetchone()
         if not row or not secrets.compare_digest(row["token_hash"], token_hash):
             raise PermissionError("runtime_authentication_failed")
