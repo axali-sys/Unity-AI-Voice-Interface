@@ -102,8 +102,7 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content:
-            "I’m in local demo mode right now. Connect the backend by setting XP_API_URL and XP_TOKEN to use the live XParallel service.",
+          content: `The authenticated XParallel chat request failed: ${error.message || "connection_error"}. No demo or fallback answer was generated.`,
         },
       ]);
       setStatus(error.message || "Demo fallback");
