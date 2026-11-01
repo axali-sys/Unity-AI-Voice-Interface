@@ -45,6 +45,8 @@ jobs:
           node --check /tmp/oneai.js
       - name: Test authenticated roaming task queue
         run: python -m unittest discover -s tests -p "test_roaming_tasks.py" -v
+      - name: Test XParallel roaming worker agent
+        run: python -m unittest discover -s tests -p "test_roaming_worker.py" -v
       - name: Test Free Access Hub routing policy
         run: python -m unittest discover -s tests -p "test_free_access_hub.py" -v
       - name: Test provider catalog configuration and secret safety
