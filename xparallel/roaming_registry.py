@@ -142,7 +142,7 @@ def heartbeat(runtime_id: str, runtime_token: str, ttl_seconds=DEFAULT_TTL_SECON
 def discover(capability: str | None = None, limit=20) -> list[dict]:
     now = time.time()
     limit = max(1, min(int(limit), 100))
-    with _connect() as conn:
+    with _db() as conn:
         conn.execute("UPDATE roaming_runtimes SET status='offline' WHERE expires_at <= ? AND status='online'", (now,))
         if capability:
             rows = conn.execute(
