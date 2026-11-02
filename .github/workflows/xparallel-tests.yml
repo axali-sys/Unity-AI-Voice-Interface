@@ -61,3 +61,10 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+
+      - name: Test Omni Knowledge Genome
+        run: python -m unittest discover -s tests -p "test_omni_genome.py" -v
+      - name: Test ƎllE task lifecycle
+        run: python -m unittest discover -s tests -p "test_elle_lifecycle.py" -v
+      - name: Test OneAI protocol contracts
+        run: python -m unittest discover -s tests -p "test_oneai_protocols.py" -v
