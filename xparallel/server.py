@@ -172,6 +172,12 @@ class Handler(BaseHTTPRequestHandler):
             task_id = parsed.path.rsplit("/", 1)[-1]
             task = elle_lifecycle.get_task(task_id, workspace)
             return send_json(self, 200 if task else 404, task or {"error": "not_found"})
+        if parsed.path.startswith("/api/omni/records/") and parsed.path.endswith("/history"):
+            parts = parsed.path.strip("/").split("/")
+            if len(parts) == 5:
+                workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+                versions = omni_genome.list_versions(parts[3], workspace)
+                return send_json(self, 200, {"versions": versions})
         if parsed.path.startswith("/api/omni/records/"):
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             record_id = parsed.path.rsplit("/", 1)[-1]
@@ -181,12 +187,6 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             query = params.get("q", [""])[0]
             return send_json(self, 200, {"records": omni_genome.search_records(workspace, query)})
-        if parsed.path.startswith("/api/omni/records/") and parsed.path.endswith("/history"):
-            parts = parsed.path.strip("/").split("/")
-            if len(parts) == 5:
-                workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
-                versions = omni_genome.list_versions(parts[3], workspace)
-                return send_json(self, 200, {"versions": versions})
         if parsed.path == "/api/xparallel/agents":
             capability = params.get("capability", [""])[0] or None
             return send_json(self, 200, {"agents": discover_agents(capability)})
