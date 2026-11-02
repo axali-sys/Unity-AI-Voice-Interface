@@ -28,7 +28,7 @@ def create_record(workspace_id,record_type,subject,content,*,context=None,origin
  if origin not in {'user','file','url','conversation','model','system','external'}: raise ValueError('origin_invalid')
  rid,t=uid('OMNI-K'),now(); cj=json.dumps(context or {},sort_keys=True)
  with db() as c:
-  c.execute('INSERT INTO omni_records VALUES(?,?,?,?,?,?,?,?,?,?,1,?,?)',(rid,w,record_type,subject,content,cj,origin,actor_id,'received','unverified',t,t))
+  c.execute('INSERT INTO omni_records VALUES(?,?,?,?,?,?,?,?,?,1,?,?)',(rid,w,record_type,subject,content,cj,origin,actor_id,'received',t,t))
   c.execute('INSERT INTO omni_versions VALUES(?,?,?,?,?,?,?,?)',(rid,1,w,subject,content,cj,actor_id,t))
   if source:
    if not source.get('source_type'): raise ValueError('source_type_required')
