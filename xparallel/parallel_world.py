@@ -15,6 +15,34 @@ def create_parallel_plan(query: str, workspace_id: str = "default") -> dict:
         raise ValueError("query_required")
     if len(query) > 4000:
         raise ValueError("query_too_large")
+    if os.getenv("XP_ROAMING_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        from .roaming_ai import run_roaming_task
+        roaming = run_roaming_task(query, workspace_id)
+        # Keep the established {"plan": {...}} response contract used by /world/plan.
+        plan = {
+            "summary": "AxaliAI Roaming AI proposal for: " + query[:240],
+            "job_type": "roaming_multi_agent_analysis",
+            "assumptions": ["Provider-backed planner, researcher, and arbiter share the configured XP_AI provider."],
+            "inputs_needed": [],
+            "steps": [
+                {"step": 1, "action": "Review the bounded multi-agent recommendation", "status": "proposed"},
+                {"step": 2, "action": "Validate evidence and acceptance criteria", "status": "proposed"},
+                {"step": 3, "action": "Obtain human approval before any real-world execution", "status": "approval_required"},
+            ],
+            "test_strategy": ["Review provider response hashes, agent outputs, and retrieval evidence."],
+            "acceptance_criteria": ["Human-reviewed proposal with evidence and explicit limitations."],
+            "risks": ["Provider outputs may be inaccurate; retrieved data is untrusted."],
+            "required_permissions": ["Human approval for any execution outside this planning endpoint."],
+            "rollback_plan": ["No changes are made by this planning workflow."],
+            "transfer_gate": "human_approval_required",
+            "memory_sources": [item.get("id") for item in roaming.get("evidence", {}).get("memories", [])],
+            "workspace_id": workspace_id,
+            "provider": "configured XP_AI provider (see agent evidence)",
+            "execution_status": "planned_not_executed",
+            "roaming": roaming,
+        }
+        return {"plan": plan}
+
     api_key = os.getenv("XP_AI_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError("ai_provider_not_configured")
