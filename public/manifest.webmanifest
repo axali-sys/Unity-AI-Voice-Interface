@@ -1,0 +1,14 @@
+{
+  "id": "/axaliai.html",
+  "name": "AXALIAI — The First Roaming AI",
+  "short_name": "AXALIAI",
+  "description": "The First Roaming AI. Your AI workspace, wherever you go, with separate AXALIAI and XParallel interfaces.",
+  "start_url": "/axaliai.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#101010",
+  "theme_color": "#101010",
+  "categories": ["productivity", "utilities"],
+  "icons": [{"src": "/axaliai-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+}
