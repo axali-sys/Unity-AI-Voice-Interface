@@ -52,7 +52,7 @@ export async function POST(request) {
         message,
         ...data,
       });
-    } catch (error) {
+    } catch {
       continue;
     }
   }
