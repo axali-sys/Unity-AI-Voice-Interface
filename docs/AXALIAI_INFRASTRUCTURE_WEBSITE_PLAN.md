@@ -67,3 +67,13 @@ These are product architecture concepts, not claims that every service is alread
 - Existing README describes a Next.js assistant UI and /api/chat proxy to XParallel.
 - package.json reports Next.js 14.2.15, React 18.3.1, React DOM 18.3.1.
 - Existing branch list contains prior Axaliai redesign and Squarespace bridge work. These must be reviewed for reusable work before implementation; do not assume their contents are merged into main.
+
+
+## Milestone execution update (2026-11-07)
+- Milestone 1: repository structure and key files inspected; historical Axaliai redesign and Squarespace bridge branches were compared with main. They are divergent and were not blindly merged. Existing app was identified as Next.js App Router.
+- Milestone 2: a responsive Axaliai public website shell and design system were added to the root route.
+- Milestone 3: the page now covers the umbrella identity, infrastructure layers, technology principles, separate product identities, solutions, research and security.
+- Milestone 4: developer/API/documentation sections and an API publication policy were added. They intentionally do not advertise unverified live endpoints.
+- Milestone 5: existing assistant UI was preserved at /assistant; shared metadata and README were updated. Automated build, browser, accessibility and live backend verification remain pending.
+- Contact destination remains intentionally unconfigured until a verified business inbox is supplied.
+- No DNS, deployment, paid service, production, or main-branch change was made.
