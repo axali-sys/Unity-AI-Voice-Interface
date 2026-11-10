@@ -3,73 +3,64 @@
 import { useMemo, useState } from "react";
 
 const starterPrompts = [
-  "Give me a short project status update",
-  "Summarize my recent AI memory",
-  "Plan the next iteration for this assistant",
-  "What should I build to make this feel launch-ready?",
+  "Explain how the Axaliai infrastructure fits together",
+  "What is the role of XParallel?",
+  "Describe the Omni orchestration architecture",
+  "How should AI memory be verified?",
 ];
 
 const starterMessages = [
   {
     role: "assistant",
     content:
-      "Hello — I’m Axaliai, your assistant. Ask me to summarize the workspace, plan the next step, or explore the project roadmap.",
+      "Welcome to the ƎllE preview. The workspace interface is available for review; live chat will be enabled after sign-in and workspace authorization are connected.",
   },
 ];
 
-export default function Home() {
+export default function AssistantPreview() {
   const [messages, setMessages] = useState(starterMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("Ready");
+  const [status, setStatus] = useState("Preview");
 
   const quickStats = useMemo(
     () => [
-      { label: "Network", value: "XParallel" },
-      { label: "Mode", value: "Voice + AI" },
-      { label: "Status", value: "Listening" },
+      { label: "Network", value: "Not connected" },
+      { label: "Mode", value: "Text preview" },
+      { label: "Status", value: "Preview only" },
     ],
     []
   );
 
   async function sendPrompt(promptText) {
     const message = promptText ?? input.trim();
-    if (!message) return;
+    if (!message || loading) return;
 
     const nextUserMessage = { role: "user", content: message };
     setMessages((prev) => [...prev, nextUserMessage]);
     setInput("");
     setLoading(true);
-    setStatus("Thinking...");
+    setStatus("Checking access…");
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: message,
-          workspace_id: "demo-workspace",
-          actor: "demo-user",
-          messages: [...messages, nextUserMessage],
-          use_memory: true,
-        }),
+        body: JSON.stringify({ query: message }),
       });
-
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data?.error || "The assistant could not respond.");
+        throw new Error(
+          data?.message || data?.error || "Live assistant access is not available."
+        );
       }
 
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            data.message ||
-            data.response ||
-            data.summary ||
-            "I’m ready to help. Try another prompt or connect the project backend for the live model.",
+          content: data.message || data.response || data.answer || "No response was returned.",
         },
       ]);
       setStatus("Connected");
@@ -78,11 +69,10 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content:
-            "I’m in local demo mode right now. Connect the backend by setting XP_API_URL and XP_TOKEN to use the live XParallel service.",
+          content: error.message || "Live assistant access is currently unavailable.",
         },
       ]);
-      setStatus(error.message || "Demo fallback");
+      setStatus("Unavailable");
     } finally {
       setLoading(false);
     }
@@ -92,18 +82,18 @@ export default function Home() {
     <main className="page-shell">
       <aside className="sidebar">
         <div className="brand-block">
-          <div className="brand-mark">A</div>
+          <div className="brand-mark">Ǝ</div>
           <div>
             <p className="eyebrow">AXALIAI</p>
-            <h1>Assistant</h1>
+            <h1>ƎllE</h1>
           </div>
         </div>
 
-        <nav className="nav-panel">
-          <button className="nav-item active">Workspace</button>
-          <button className="nav-item">Memory</button>
-          <button className="nav-item">Voice</button>
-          <button className="nav-item">Deploy</button>
+        <nav className="nav-panel" aria-label="Preview navigation">
+          <span className="nav-item active" aria-current="page">Workspace preview</span>
+          <span className="nav-item">Memory — not connected</span>
+          <span className="nav-item">Voice — not connected</span>
+          <span className="nav-item">Deployment — not available</span>
         </nav>
 
         <div className="stats-block">
@@ -119,33 +109,30 @@ export default function Home() {
       <section className="workspace-panel">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Unity AI Voice Interface</p>
-            <h2>Axaliai control room</h2>
+            <p className="eyebrow">AXALIAI INTELLIGENCE</p>
+            <h2>ƎllE workspace preview</h2>
           </div>
-          <div className="status-pill">{status}</div>
+          <div className="status-pill" role="status">{status}</div>
         </header>
 
         <div className="prompt-grid">
           {starterPrompts.map((prompt) => (
-            <button key={prompt} className="prompt-chip" onClick={() => sendPrompt(prompt)}>
+            <button key={prompt} className="prompt-chip" onClick={() => sendPrompt(prompt)} disabled={loading}>
               {prompt}
             </button>
           ))}
         </div>
 
-        <div className="chat-window">
+        <div className="chat-window" aria-live="polite">
           {messages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}
               className={`message-row ${message.role === "user" ? "user" : "assistant"}`}
             >
-              <div className="message-bubble">
-                {message.content}
-              </div>
+              <div className="message-bubble">{message.content}</div>
             </div>
           ))}
-
-          {loading && <div className="typing-indicator">Thinking…</div>}
+          {loading && <div className="typing-indicator">Checking access…</div>}
         </div>
 
         <form
@@ -158,13 +145,15 @@ export default function Home() {
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask Axaliai to summarize, plan, or build..."
-            aria-label="Ask the assistant"
+            placeholder="Preview the ƎllE workspace…"
+            aria-label="Preview prompt"
+            disabled={loading}
           />
           <button type="submit" disabled={loading || !input.trim()}>
-            {loading ? "Working" : "Send"}
+            {loading ? "Checking" : "Send"}
           </button>
         </form>
+        <p className="eyebrow">Live chat, personal memory and voice remain disabled until secure sign-in and workspace authorization are verified.</p>
       </section>
     </main>
   );
