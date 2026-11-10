@@ -1,42 +1,34 @@
-# Axaliai Assistant starter
+# Axaliai — General AI Infrastructure
 
-This repo now includes a polished AI assistant UI that is designed to sit on top of the XParallel backend.
+This repository contains the Axaliai web experience and the existing AI assistant / XParallel integration work.
+
+## Website
+- `/` — Axaliai public infrastructure website.
+- `/assistant` — preserved assistant workspace UI.
+- `/api/chat` — existing server-side chat proxy; backend configuration is environment-specific.
 
 ## Run locally
+1. Install dependencies: `npm install`
+2. Start the app: `npm run dev`
+3. Visit `http://localhost:3000`
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Existing assistant backend
+The assistant continues to use the existing `/api/chat` route. Configure `XP_API_URL` and `XP_TOKEN` only in the server environment. Never expose bearer credentials in browser code.
 
-2. Start the dev server:
-   ```bash
-   npm run dev
-   ```
+## Website scope
+The public site explains Axaliai's infrastructure direction, architecture layers, independent product identities, developer platform, API publication policy, documentation, research and security principles. It intentionally distinguishes architecture concepts from verified operational services.
 
-3. Open the app:
-   ```bash
-   http://localhost:3000
-   ```
+## Development branch
+Website work is on `feat/axaliai-infrastructure-website`. The default `main` branch and production services are not changed by this work.
 
-## Connect to the live backend
+## Hosting
+Squarespace remains the domain/DNS management surface. Vercel + Next.js is the proposed website host, pending preview review and explicit authorization. No DNS change, production deployment, paid service commitment or domain transfer is included.
 
-Set these environment variables before running the app:
+## Verification
+A successful repository edit is not a build or deployment verification. Run:
+- `npm install`
+- `npm run build`
+- manual checks for mobile/desktop navigation, `/assistant`, and `/api/chat` with configured preview credentials
+- accessibility, link and security review
 
-```bash
-export XP_API_URL=http://localhost:8787
-export XP_TOKEN=your-xparallel-token
-```
-
-The UI calls `/api/chat`, which proxies to the backend. If no backend is configured, the app falls back to a local demo response.
-
-## Frontend stack
-
-- Next.js
-- React
-- Tailwind-style custom CSS
-- XParallel-compatible API proxy
-
-## Notes
-
-This is a starter Lovable-style assistant interface. It is intentionally clean and launch-ready visually, while keeping the underlying XParallel logic in the existing repo.
+Do not describe API endpoints as public services until their method, schema, authentication, limits and runtime availability have been verified.

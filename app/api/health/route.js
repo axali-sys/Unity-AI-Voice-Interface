@@ -11,7 +11,7 @@ export async function GET() {
       status: data.status || "unknown",
       message: response.ok ? "Connected" : data.error || "Backend not reachable",
     });
-  } catch (error) {
+  } catch {
     return Response.json(
       {
         ok: false,
