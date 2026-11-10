@@ -135,3 +135,46 @@ A release candidate is not ready until all gates pass:
 | 8 | Release candidate review | Pending explicit approval |
 
 **Current branch contains planning documentation only. No application source code has been changed by this plan.**
+
+
+## 8. Fresh pull-request diff reconciliation (2026-11-10)
+
+Fresh GitHub metadata confirms:
+
+- PR #48 is open/draft, based on `main`, head `feat/oneai-hybrid-free-access-hub`.
+- PR #49 is open/draft, based on PR #48's head, head `fix/elle-chat-error-transparency`.
+- PR #59 is open/draft, based on `main`, head `feat/elle-omni-knowledge-genome`.
+- PR #60 is open/draft, based on `main`, head `feat/axaliai-infrastructure-website`.
+- All four PRs report mergeable at the time inspected; that flag is not a substitute for integration tests.
+
+### Exact duplicate content between PR #48 and PR #59
+
+The following PR patches are byte-identical in the fetched diffs, so the same changes must not be applied twice:
+
+- `app/api/providers/route.js`
+- `docs/oneai-hybrid-free-access-hub.md`
+- `tests/test_free_access_hub.py`
+- `tests/test_hybrid_chat.py`
+- `tests/test_provider_catalog.py`
+- `xparallel/free_access_hub.py`
+- `xparallel/hybrid_chat.py`
+- `xparallel/provider_catalog.py`
+
+PR #59 includes a larger integration patch than PR #48 for `xparallel/server.py` and `.github/workflows/xparallel-tests.yml`; review those as combined backend/workflow changes rather than assuming either patch is a drop-in replacement.
+
+### Critical frontend reconciliation
+
+- `app/api/chat/route.js) is changed by all four PRs. PR #49 contains the explicit authenticated-only XParallel chat gateway and truthful failure handling. PR #60's small change is part of the website route split. Resolve this file manually against the intended `/assistant` architecture; never reintroduce public/demo chat fallbacks.
+- `app/page.js) is changed by all four PRs. PR #60 replaces the root assistant interface with the Axaliai public website. Keep that website at `/`; retain the assistant UI under `/assistant`. Port Free Access Hub and provider metadata UI into the assistant page deliberately rather than restoring the assistant to the root route.
+- `app/globals.css) has identical PR #48/#59 hub additions, while PR #60 adds the larger website stylesheet. Combine both sets without deleting existing assistant styles.
+- `index.html) patches in PR #49 and #59 are identical; include once if that legacy page remains in the active product route/build.
+
+### Revised integration sequence
+
+1. Use PR #59 as the main backend integration candidate only after validating its full diff and workflow changes; it already contains the byte-identical Free Access Hub modules/tests/docs from PR #48.
+2. Reconcile PR #49's authenticated chat route on top of the PR #59 candidate, because PR #49 is based on #48 and #59's route patch is not byte-identical. Validate all chat payload, timeout, error, origin and workspace assumptions.
+3. Keep PR #60's public website root-page replacement. Integrate assistant and provider-hub UI at `/assistant`, not by replacing the website root.
+4. Merge CSS carefully and preserve the website and assistant design systems.
+5. Do not merge #48 separately if its identical provider-hub implementation has already been adopted from #59. Close/retarget PRs only after explicit review and approval; this plan does not change PR states.
+
+**No PR was merged or modified during this diff reconciliation.**
