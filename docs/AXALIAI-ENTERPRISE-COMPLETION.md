@@ -58,8 +58,14 @@ This first slice is a tested token primitive, not a complete login system. It is
 - Every milestone records changed files, tests executed, failures, remaining blockers and evidence.
 - Branch protection: keep all changes on this development branch; open a draft PR targeting the existing development integration branch only if needed. Never target `main` or `master`.
 
-## Current status
+## Current status (2026-11-11)
 
 - Branch created from existing ƎllE/Omni development work.
-- Trusted tenant identity primitive and focused unit tests added.
-- HTTP integration, membership lookup, existing 113-component reconciliation and remaining milestones are still outstanding.
+- Trusted HS256 identity primitive added; XP_TOKEN remains a distinct service credential.
+- `xparallel/enterprise_auth.py` now enforces signed identity claims and role-based actions on ƎllE, Omni, Parallel Research and XParallel dispatch user API routes. Workspace and actor are derived from the signed token, not request JSON/query parameters.
+- Focused authorization tests added and wired into the XParallel CI workflow.
+- No trusted login adapter currently mints these identity tokens for an authenticated end user. The token issuer is a server-side primitive only; upstream login and authoritative membership lookup remain prerequisites before user access can be activated.
+- The current enterprise UI does not yet complete the login-to-identity-token flow. Do not claim end-to-end user activation.
+- Existing 113-component register still requires source-by-source verification. NexAI and IDEAS remain separate and their independent branches are readiness/audit branches, not runtime integrations.
+- CI for the latest enterprise-auth commit was triggered and is pending at the time of this update.
+- No production deployment, production configuration change, default-branch merge or paid resource was made.
