@@ -69,3 +69,8 @@ This first slice is a tested token primitive, not a complete login system. It is
 - Existing 113-component register still requires source-by-source verification. NexAI and IDEAS remain separate and their independent branches are readiness/audit branches, not runtime integrations.
 - GitHub Actions XParallel Integration Tests run #153 completed successfully, including the added HTTP tenant-isolation and zero-cost chat tests.
 - No production deployment, production configuration change, default-branch merge or paid resource was made.
+
+
+## Optional NexAI identity provider
+
+A separate development branch in `axali-sys/nexai-platform` implements a NexAI-session-authenticated identity assertion endpoint. NexAI verifies its own active user and workspace membership, then issues a 15-minute HS256 assertion with issuer `nexai-platform` and audience `axaliai-enterprise`. The XParallel identity verifier supports configured issuer/audience checks. This does not merge or absorb NexAI. Browser SSO/consent and the enterprise UI handoff remain outstanding. No shared secret or production connection has been configured.
