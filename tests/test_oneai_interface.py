@@ -42,6 +42,14 @@ class OneAIInterfaceSafetyTests(unittest.TestCase):
         self.assertIn("'/public/build'", self.html)
         self.assertIn("'/api/chat'", self.html)
 
+    def test_legacy_python_chat_proxy_cannot_trust_browser_tenant_or_memory_flags(self):
+        proxy = (ROOT / "api" / "index.py").read_text(encoding="utf-8")
+        self.assertIn('"workspace_id": "preview"', proxy)
+        self.assertIn('"actor": "elle-preview"', proxy)
+        self.assertIn('"use_memory": False', proxy)
+        self.assertNotIn('"workspace_id": payload.get("workspace_id")', proxy)
+        self.assertNotIn('"use_memory": payload.get("use_memory")', proxy)
+
 
 if __name__ == "__main__":
     unittest.main()
