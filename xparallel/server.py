@@ -23,7 +23,6 @@ from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
 from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
-from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.free_access_hub import select_provider, provider_directory
@@ -621,11 +620,11 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context(data)["workspace_id"]
             use_memory = data.get("use_memory", True) is not False
             try:
-                if os.getenv("XP_HUB_ENABLED", "").strip().lower() == "true":
-                    from xparallel.hybrid_chat import chat as chat_with_hybrid
-                    result = chat_with_hybrid(messages, workspace, use_memory)
-                else:
-                    result = chat_with_ai(messages, workspace, use_memory)
+                # Zero-cost policy: use local Ollama first and only an explicitly
+                # verified free provider as fallback. Never call the paid legacy gateway
+                # from the default chat route.
+                from xparallel.hybrid_chat import chat as chat_with_hybrid
+                result = chat_with_hybrid(messages, workspace, use_memory)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc:
