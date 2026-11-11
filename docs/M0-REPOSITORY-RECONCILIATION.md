@@ -92,3 +92,27 @@ Until a canonical application origin is confirmed, use only local test callback 
 - Legacy Python proxy preview isolation: patched; CI result pending at time of writing.
 - M1 browser SSO: not implemented.
 - No merge, deployment, paid resource activation, shared-secret provisioning or production configuration change was performed.
+
+
+## XParallel server route inventory — first pass
+
+The dispatch review of `xparallel/server.py` found the following route families. This is a route-level inventory, not a substitute for testing every handler's behavior.
+
+| Route family | Intended access class | Current observation / next check |
+|---|---|---|
+| `/health` | Liveness | Public health response; avoid returning secrets |
+| `/public/health`, `/public/system`, `/public/xparallel/access` | Public read-only | Origin-checked; CORS is not authorization |
+| `/public/ask`, `/public/build`, `/public/route`, `/public/solution`, `/public/verify`, `/public/graph/search` | Public, rate-limited | Keep non-sensitive; verify no unintended execution or private memory exposure |
+| `/api/elle/tasks*` | Human identity + action role | Signed enterprise identity is required |
+| `/api/omni/records*`, `/api/omni/search` | Human identity + action role | Signed enterprise identity is required; workspace scoping in store also applies |
+| `/api/parallel/research`, `/api/xparallel/dispatch` | Human identity + action role | Signed enterprise identity is required; dispatch remains approval-gated |
+| `/roaming/register`, `/roaming/tasks/dispatch`, `/roaming/discover` | Machine/service credential | Verify per-runtime capability, tenant and task policy |
+| `/roaming/heartbeat`, `/roaming/tasks/claim`, `/roaming/tasks/complete` | Runtime-specific credential | Verify lease expiry, ownership, replay and idempotency |
+| `/provider/route` | Machine/service credential | Verify provider allow-list and secrets remain server-side |
+| `/conversations*`, `/memory/*`, `/chat`, `/world/plan`, `/repair/jobs` | Machine/service credential currently | Not yet an authenticated multi-user human API. Do not expose browser access with client-controlled workspace claims |
+| `/execute`, `/experiment` | Machine credential + separate execution approval for execution | Keep sandbox and approval checks mandatory |
+| `/registry`, `/services`, `/knowledge/*`, `/fetch`, `/graph*`, `/billing/preview`, `/agent/plan`, `/route`, `/build` | Mixed legacy/private/public contract | Complete per-handler authorization and data classification audit before external exposure |
+
+### Additional security note
+
+The current `/chat` endpoint authenticates the calling service using `XP_TOKEN`, then uses workspace and actor values in its request JSON to choose memory scope. That is acceptable only behind a trusted server proxy that pins preview context or derives tenant context from a verified user session. The patched Next.js and Python preview proxies now pin the non-personal preview workspace and disable memory. The future authenticated route must attach signed tenant identity or derive context server-side; never accept these fields as proof of user membership.
