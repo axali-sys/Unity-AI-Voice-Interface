@@ -21,7 +21,7 @@
 | Next.js `app/api/chat/route.js` | Next.js server route | Proxies to XParallel `/chat` using server-side `XP_TOKEN`; pins actor/workspace to `elle-preview` / `preview`; disables memory | Safe preview posture; not authenticated multi-user chat |
 | Python `api/index.py` | Vercel Python entrypoint | Also proxies to XParallel `/chat` using server-side `XP_TOKEN` | Was accepting browser-supplied workspace/actor and memory flag; patched in this branch to the same isolated preview context |
 | XParallel `POST /chat` | `xparallel/server.py` | Requires machine `XP_TOKEN`; reads workspace/actor and `use_memory` from JSON | Machine authentication is not human identity. Must only receive trusted tenant context from a server-side adapter |
-| ƎllE / Omni / Parallel / XParallel selected APIs | `xparallel/enterprise_auth.py` + `tenant_identity.py` | Verify signed `X-Enterprise-Identity` claims and authorize action | Good foundation; upstream session and membership handoff still missing |
+| ƎllE / Omni / Parallel / XParallel selected APIs | `xparallel/enterprise_auth.py` + `tenant_identity.py` | Verify signed `X-Enterprise-Identity` claims and authorize action | Good foundation; upstream NexAI authorization-code protocol now exists, but enterprise callback/session handoff remains missing |
 | Public XParallel APIs | `xparallel/server.py` | Origin/rate-limit controlled public intent/build/route/health endpoints | CORS/origin is not authorization; keep public operations non-sensitive and non-executing |
 
 ### Security correction made in this review
@@ -59,7 +59,7 @@ Important limitation: current serverless defaults may use ephemeral `/tmp` stora
 
 The branch includes focused tests for tenant identity, enterprise authorization, hybrid chat, memory retrieval, conversation storage, Omni Genome, roaming tasks/workers, provider catalog, and interface safety. The XParallel workflow runs compile checks, JS syntax checks and these focused Python test suites.
 
-The workflow currently does not constitute browser SSO, live-host Ollama, serverless persistence, backup/restore or full 113-component verification.
+The workflow does not constitute completed browser SSO, live-host Ollama, serverless persistence, backup/restore or full 113-component verification.
 
 ## Next M0 inspection queue
 
@@ -71,7 +71,7 @@ The workflow currently does not constitute browser SSO, live-host Ollama, server
 
 ## M1 implementation gate
 
-Do not enable the NexAI identity assertion endpoint as browser SSO. It currently returns a 15-minute signed assertion directly to an authenticated NexAI API caller; that is an identity-token primitive, not a browser authorization-code flow.
+Do not use the legacy `/identity` assertion endpoint as browser SSO. NexAI PR #1 now also implements a separate authorization-code + PKCE S256 server protocol; the enterprise callback, server-to-server exchange client and AI-owned session handoff remain to be connected.
 
 The next implementation must introduce:
 - allow-listed redirect URIs and a stable client identifier;
@@ -89,8 +89,8 @@ Until a canonical application origin is confirmed, use only local test callback 
 
 - Initial M0 high-risk topology review: completed for the paths listed above.
 - M0 full repository and route inventory: still in progress.
-- Legacy Python proxy preview isolation: patched; CI result pending at time of writing.
-- M1 browser SSO: not implemented.
+- Legacy Python proxy preview isolation: patched; XParallel Integration Tests run #160 passed.
+- M1 NexAI authorization-code + PKCE server protocol: implemented on the independent NexAI development branch; browser consent UI and AI Enterprise callback/session integration remain outstanding.
 - No merge, deployment, paid resource activation, shared-secret provisioning or production configuration change was performed.
 
 
