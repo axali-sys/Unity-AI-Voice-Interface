@@ -1,5 +1,6 @@
 import unittest
 import time
+import os
 
 from xparallel.enterprise_auth import authorize_enterprise_request, required_action
 from xparallel.tenant_identity import issue_identity_token
@@ -10,6 +11,14 @@ SECRET = "enterprise-test-secret-at-least-thirty-two-bytes"
 class EnterpriseAuthTests(unittest.TestCase):
     def setUp(self):
         self.secret = SECRET
+        self.old_secret = os.environ.get('XP_IDENTITY_SIGNING_SECRET')
+        os.environ['XP_IDENTITY_SIGNING_SECRET'] = self.secret
+
+    def tearDown(self):
+        if self.old_secret is None:
+            os.environ.pop('XP_IDENTITY_SIGNING_SECRET', None)
+        else:
+            os.environ['XP_IDENTITY_SIGNING_SECRET'] = self.old_secret
 
     def token(self, role="operator", workspace="trusted-workspace", actor="human-7"):
         return issue_identity_token(
