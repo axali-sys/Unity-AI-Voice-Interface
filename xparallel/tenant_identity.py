@@ -47,7 +47,7 @@ def issue_identity_token(*, subject: str, workspace_id: str, role: str,
     workspace = str(workspace_id or "").strip()
     if not sub or len(sub) > 128 or not workspace or len(workspace) > 128:
         raise IdentityError("invalid_identity_claims")
-    if role not in {"owner", "admin", "operator", "viewer"}:
+    if not isinstance(role, str) or role not in {"owner", "admin", "operator", "viewer"}:
         raise IdentityError("invalid_identity_role")
     if not isinstance(ttl_seconds, int) or not 1 <= ttl_seconds <= 3600:
         raise IdentityError("invalid_identity_ttl")
@@ -94,7 +94,7 @@ def verify_identity_token(token: str, *, secret: str | None = None,
         raise IdentityError("invalid_identity_claims") from exc
     if not subject or len(subject) > 128 or not workspace or len(workspace) > 128:
         raise IdentityError("invalid_identity_claims")
-    if role not in {"owner", "admin", "operator", "viewer"}:
+    if not isinstance(role, str) or role not in {"owner", "admin", "operator", "viewer"}:
         raise IdentityError("invalid_identity_role")
     if issued > current + 30 or expires <= current or expires <= issued or expires - issued > 3600:
         raise IdentityError("identity_token_expired_or_invalid")
