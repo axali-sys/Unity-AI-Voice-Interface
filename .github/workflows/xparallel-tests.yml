@@ -64,6 +64,8 @@ jobs:
 
       - name: Test Omni Knowledge Genome
         run: python -m unittest discover -s tests -p "test_omni_genome.py" -v
+      - name: Test signed enterprise tenant identity
+        run: python -m unittest discover -s tests -p "test_tenant_identity.py" -v
       - name: Test ƎllE task lifecycle
         run: python -m unittest discover -s tests -p "test_elle_lifecycle.py" -v
       - name: Test OneAI protocol contracts
