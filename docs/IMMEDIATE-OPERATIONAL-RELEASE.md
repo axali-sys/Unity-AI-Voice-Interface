@@ -85,3 +85,12 @@ These commands are for local development only. If the backend runs remotely, its
 5. Audit and connect NexAI and IDEAS through explicit independent adapters.
 6. Reconcile every C001–C113 and P001–P015 against code/tests/evidence and retain honest statuses.
 7. Review the draft PR before any release decision. Main/master and production remain untouched.
+
+
+## Optional NexAI identity-provider adapter (development integration)
+
+The independent `axali-sys/nexai-platform` repository now has a separate development branch, `integration/axaliai-nexai-identity`, implementing a NexAI-authenticated identity assertion endpoint. NexAI checks the authenticated user and workspace membership in its own SQLite-backed identity store before issuing a 15-minute HS256 token. The token identifies issuer `nexai-platform` and audience `axaliai-enterprise`.
+
+The XParallel verifier on this branch now supports configured `XP_IDENTITY_ISSUER=nexai-platform` and `XP_IDENTITY_AUDIENCE=axaliai-enterprise` checks. To enable the integration in a private environment, an operator must provision the same independently generated 32+ byte secret as `NEXAI_AXALIAI_IDENTITY_SECRET` in NexAI and `XP_IDENTITY_SIGNING_SECRET` in XParallel. These are server-side secrets; they must never be exposed to frontend code or committed.
+
+This is not yet an end-to-end SSO release. A browser consent/redirect flow and enterprise UI token handoff remain to be implemented and tested. The NexAI integration is optional; NexAI retains its own authentication, database, workspaces and product identity. No secrets have been configured, no live connection has been enabled, and no deployment has been performed.
