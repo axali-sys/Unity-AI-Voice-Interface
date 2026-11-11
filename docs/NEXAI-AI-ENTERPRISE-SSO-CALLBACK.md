@@ -2,6 +2,8 @@
 
 ## Implemented
 
+- `POST /api/auth/nexai/start` creates cryptographically random state and PKCE verifier/challenge, stores the verifier only in a signed HttpOnly cookie, and returns the authorization request data for the NexAI consent UI. The browser never receives the verifier.
+
 - `GET /api/auth/nexai/callback` validates the one-time OAuth state cookie and state query parameter.
 - The callback exchanges the authorization code with NexAI from the server, using the confidential client secret and PKCE verifier. The verifier is never returned to browser JavaScript.
 - The NexAI HS256 assertion is verified for signature, algorithm, issuer (`nexai-platform`), audience (`axaliai-enterprise`), expiry, subject, workspace and role.
