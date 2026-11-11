@@ -168,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 401, {"error": "unauthorized"})
             return send_json(self, 200, registry_status())
         parsed = urlparse(self.path)
+        params = parse_qs(parsed.query)
         enterprise_ctx, enterprise_error = authorize_enterprise_request(self.headers, "GET", parsed.path)
         if enterprise_error:
             return send_json(self, 403 if enterprise_error == "forbidden" else 401, {"error": enterprise_error})
@@ -181,16 +182,16 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path.startswith("/api/omni/records/") and parsed.path.endswith("/history"):
             parts = parsed.path.strip("/").split("/")
             if len(parts) == 5:
-                workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+                workspace = enterprise_ctx["workspace_id"]
                 versions = omni_genome.list_versions(parts[3], workspace)
                 return send_json(self, 200, {"versions": versions})
         if parsed.path.startswith("/api/omni/records/"):
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             record_id = parsed.path.rsplit("/", 1)[-1]
             record = omni_genome.get_record(record_id, workspace)
             return send_json(self, 200 if record else 404, record or {"error": "not_found"})
         if parsed.path == "/api/omni/search":
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             query = params.get("q", [""])[0]
             return send_json(self, 200, {"records": omni_genome.search_records(workspace, query)})
         if parsed.path == "/api/xparallel/agents":
@@ -207,7 +208,7 @@ class Handler(BaseHTTPRequestHandler):
             })
         if parsed.path == "/repair/jobs":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             try:
                 jobs = list_jobs(workspace, params.get("limit", ["50"])[0], params.get("status", [""])[0])
             except ValueError:
@@ -215,13 +216,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, "jobs": jobs})
         if parsed.path.startswith("/repair/jobs/"):
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             job_id = parsed.path.rsplit("/", 1)[-1]
             job = get_job(job_id, workspace)
             return send_json(self, 200 if job else 404, job or {"error": "not_found"})
         if parsed.path == "/conversations":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             try:
                 conversations = list_conversations(workspace, limit)
@@ -230,13 +231,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"workspace_id": workspace, "conversations": conversations})
         if parsed.path.startswith("/conversations/"):
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             conversation_id = parsed.path.rsplit("/", 1)[-1]
             conversation = get_conversation(conversation_id, workspace)
             return send_json(self, 200 if conversation else 404, conversation or {"error": "not_found"})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             query = params.get("q", [""])[0]
             if query:
@@ -302,7 +303,7 @@ class Handler(BaseHTTPRequestHandler):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
             ctx = enterprise_ctx
-            if not self.require_role("verify"): return send_json(self, 403, {"error": "forbidden"})
+            if not authorize(ctx["role"], "approve_deployment"): return send_json(self, 403, {"error": "forbidden"})
             try:
                 task = elle_lifecycle.approve_task(parts[3], ctx["workspace_id"], ctx["actor"], authorized=True)
                 if task: arot_record("elle.task.approved", ctx["workspace_id"], ctx["actor"], task["id"], {"approved": True})
@@ -336,7 +337,7 @@ class Handler(BaseHTTPRequestHandler):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
             ctx = enterprise_ctx
-            if not self.require_role("verify"): return send_json(self, 403, {"error": "forbidden"})
+            if not authorize(ctx["role"], "verify"): return send_json(self, 403, {"error": "forbidden"})
             try:
                 record = omni_genome.verify_record(parts[3], ctx["workspace_id"], method=data.get("method"), actor_id=ctx["actor"], result=data.get("result"), evidence=data.get("evidence"))
                 if record: arot_record("omni.record.verification", ctx["workspace_id"], ctx["actor"], record["id"], {"result": data.get("result")})
