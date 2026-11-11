@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from xparallel.tenant_identity import (
     IdentityError, issue_identity_token, verify_identity_token,
@@ -47,6 +48,25 @@ class TenantIdentityTests(unittest.TestCase):
                 subject="u", workspace_id="w", role="root",
                 secret=SECRET, now=1,
             )
+
+    def test_configured_issuer_and_audience_are_enforced(self):
+        token = issue_identity_token(
+            subject="nexai-user", workspace_id="nexai-workspace", role="owner",
+            secret=SECRET, now=1000, issuer="nexai-platform",
+            audience="axaliai-enterprise",
+        )
+        with patch.dict("os.environ", {
+            "XP_IDENTITY_ISSUER": "nexai-platform",
+            "XP_IDENTITY_AUDIENCE": "axaliai-enterprise",
+        }):
+            claims = verify_identity_token(token, secret=SECRET, now=1001)
+            self.assertEqual(claims["actor"], "nexai-user")
+        with patch.dict("os.environ", {"XP_IDENTITY_ISSUER": "other-issuer"}):
+            with self.assertRaisesRegex(IdentityError, "issuer"):
+                verify_identity_token(token, secret=SECRET, now=1001)
+        with patch.dict("os.environ", {"XP_IDENTITY_AUDIENCE": "other-audience"}):
+            with self.assertRaisesRegex(IdentityError, "audience"):
+                verify_identity_token(token, secret=SECRET, now=1001)
 
     def test_token_lifetime_is_bounded(self):
         with self.assertRaisesRegex(IdentityError, "invalid_identity_ttl"):
