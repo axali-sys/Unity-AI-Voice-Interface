@@ -94,3 +94,8 @@ The independent `axali-sys/nexai-platform` repository now has a separate develop
 The XParallel verifier on this branch now supports configured `XP_IDENTITY_ISSUER=nexai-platform` and `XP_IDENTITY_AUDIENCE=axaliai-enterprise` checks. To enable the integration in a private environment, an operator must provision the same independently generated 32+ byte secret as `NEXAI_AXALIAI_IDENTITY_SECRET` in NexAI and `XP_IDENTITY_SIGNING_SECRET` in XParallel. These are server-side secrets; they must never be exposed to frontend code or committed.
 
 This is not yet an end-to-end SSO release. A browser consent/redirect flow and enterprise UI token handoff remain to be implemented and tested. The NexAI integration is optional; NexAI retains its own authentication, database, workspaces and product identity. No secrets have been configured, no live connection has been enabled, and no deployment has been performed.
+
+
+## NexAI authorization-code protocol update
+
+The independent NexAI PR #1 now adds a server-side authorization-code + PKCE S256 protocol with allow-listed redirects, explicit consent, hashed 90-second single-use authorization codes, atomic replay prevention, confidential client exchange and membership revalidation. NexAI CI run #59 passed lint and the full test suite. The browser consent interface and AI Enterprise callback/exchange/session handoff remain outstanding; no secret, production callback or deployment has been configured.
