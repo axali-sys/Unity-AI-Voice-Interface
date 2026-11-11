@@ -208,7 +208,7 @@ class Handler(BaseHTTPRequestHandler):
             })
         if parsed.path == "/repair/jobs":
             params = parse_qs(parsed.query)
-            workspace = enterprise_ctx["workspace_id"]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             try:
                 jobs = list_jobs(workspace, params.get("limit", ["50"])[0], params.get("status", [""])[0])
             except ValueError:
@@ -216,13 +216,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, "jobs": jobs})
         if parsed.path.startswith("/repair/jobs/"):
             params = parse_qs(parsed.query)
-            workspace = enterprise_ctx["workspace_id"]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             job_id = parsed.path.rsplit("/", 1)[-1]
             job = get_job(job_id, workspace)
             return send_json(self, 200 if job else 404, job or {"error": "not_found"})
         if parsed.path == "/conversations":
             params = parse_qs(parsed.query)
-            workspace = enterprise_ctx["workspace_id"]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             try:
                 conversations = list_conversations(workspace, limit)
@@ -231,13 +231,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"workspace_id": workspace, "conversations": conversations})
         if parsed.path.startswith("/conversations/"):
             params = parse_qs(parsed.query)
-            workspace = enterprise_ctx["workspace_id"]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             conversation_id = parsed.path.rsplit("/", 1)[-1]
             conversation = get_conversation(conversation_id, workspace)
             return send_json(self, 200 if conversation else 404, conversation or {"error": "not_found"})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
-            workspace = enterprise_ctx["workspace_id"]
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             query = params.get("q", [""])[0]
             if query:
