@@ -67,5 +67,5 @@ This first slice is a tested token primitive, not a complete login system. It is
 - No trusted login adapter currently mints these identity tokens for an authenticated end user. The token issuer is a server-side primitive only; upstream login and authoritative membership lookup remain prerequisites before user access can be activated.
 - The current enterprise UI does not yet complete the login-to-identity-token flow. Do not claim end-to-end user activation.
 - Existing 113-component register still requires source-by-source verification. NexAI and IDEAS remain separate and their independent branches are readiness/audit branches, not runtime integrations.
-- CI for the latest enterprise-auth commit was triggered and is pending at the time of this update.
+- GitHub Actions XParallel Integration Tests run #153 completed successfully, including the added HTTP tenant-isolation and zero-cost chat tests.
 - No production deployment, production configuration change, default-branch merge or paid resource was made.
