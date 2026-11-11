@@ -73,7 +73,7 @@ These commands are for local development only. If the backend runs remotely, its
 ## Verification evidence
 
 - GitHub Actions XParallel Integration Tests run #149 completed successfully: compile, JavaScript syntax, roaming/task queue, provider catalog, hybrid chat, memory, conversation, Omni, tenant identity, enterprise route authorization and ƎllE lifecycle steps all passed.
-- A later integration slice adds end-to-end HTTP checks for signed tenant workspace isolation and ensures default chat does not call the legacy paid-provider route. Its CI result must be checked after the run completes.
+- A later integration slice adds end-to-end HTTP checks for signed tenant workspace isolation and ensures default chat does not call the legacy paid-provider route. The resulting CI run #153 passed all workflow steps, including both tests.
 - Passing CI validates the covered test behavior only. It does not establish production readiness or live provider/host availability.
 
 ## Next activation gates
