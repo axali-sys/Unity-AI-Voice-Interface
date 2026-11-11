@@ -28,12 +28,18 @@ Omni records begin as `received` and `unverified`. Verification requires a metho
 ## Security boundary
 These are service modules, not authentication middleware. HTTP adapters must derive actor and workspace identity from authenticated context, enforce workspace membership, and only pass `authorized=True` after checking a human principal's permission. Never trust a client-provided workspace or approval boolean.
 
+## HTTP integration status
+- `xparallel/enterprise_auth.py` now verifies the `X-Enterprise-Identity` short-lived token and applies role-based authorization to ƎllE, Omni, Parallel Research and XParallel dispatch routes.
+- Workspace and actor values for these routes are derived from signed claims; request-body and query-string identity fields are ignored.
+- `XP_TOKEN` remains a machine/service credential and is not treated as a human identity.
+- The server-side issuer primitive must only be called after upstream human authentication and authoritative workspace membership validation.
+- No upstream login adapter or membership service is yet connected. These routes fail closed without a valid signed identity token; end-user activation is therefore not complete.
+
 ## Not yet complete
-1. Authenticated HTTP routes in `xparallel/server.py`.
-2. Adapter to existing `workspace_context`, authz and AROT audit repository.
-3. Integration with existing memory and conversation retrieval.
-4. OneAI UI for task and knowledge history.
-5. End-to-end tests and runtime verification.
-6. Retention, deletion, migration, backup and concurrency review.
+1. Trusted login adapter and authoritative workspace-membership lookup/token issuance.
+2. Integration with existing memory and conversation retrieval, including shared tenant context.
+3. OneAI UI for task and knowledge history and login-to-token flow.
+4. End-to-end tests and real runtime verification across UI, API and SQLite.
+5. Retention, deletion, migration, backup and concurrency review.
 
 Do not describe this branch as production-ready or end-to-end operational until these items are implemented and verified.
