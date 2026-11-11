@@ -51,10 +51,12 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         query,
-        workspace_id: payload.workspace_id || "default",
-        actor: payload.actor || "elle-user",
+        // Until a trusted browser login + membership adapter exists, do not accept
+        // workspace/actor claims from the browser or read a shared memory partition.
+        workspace_id: "preview",
+        actor: "elle-preview",
         messages,
-        use_memory: payload.use_memory !== false,
+        use_memory: false,
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(50000),
