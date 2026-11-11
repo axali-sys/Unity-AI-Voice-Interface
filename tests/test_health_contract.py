@@ -10,6 +10,7 @@ import time
 import unittest
 import urllib.error
 import urllib.request
+from xparallel.tenant_identity import issue_identity_token
 
 
 class XParallelHTTPContractTests(unittest.TestCase):
@@ -27,6 +28,15 @@ class XParallelHTTPContractTests(unittest.TestCase):
             "PORT": str(cls.port),
             "XP_NETWORK": "test-network",
             "XP_PUBLIC_ORIGINS": "https://preview.vercel.app",
+            "XP_IDENTITY_SIGNING_SECRET": "integration-test-identity-secret-at-least-32-bytes",
+            "OMNI_DB": os.path.join(cls.data_dir.name, "omni-test.db"),
+            "ELLE_DB": os.path.join(cls.data_dir.name, "elle-test.db"),
+            "XP_HUB_LOCAL_URL": "",
+            "XP_HUB_LOCAL_MODEL": "",
+            "XP_HUB_FREE_PROVIDER_URL": "",
+            "XP_HUB_FREE_PROVIDER_MODEL": "",
+            "XP_HUB_FREE_PROVIDER_API_KEY": "",
+            "XP_AI_API_KEY": "must-not-be-used-by-zero-cost-chat-test",
         })
         cls.proc = subprocess.Popen(
             [sys.executable, "-m", "xparallel.server"],
@@ -60,7 +70,7 @@ class XParallelHTTPContractTests(unittest.TestCase):
         cls.data_dir.cleanup()
 
     @classmethod
-    def request(cls, method, path, payload=None, token=None, host="preview.vercel.app", approval=None):
+    def request(cls, method, path, payload=None, token=None, host="preview.vercel.app", approval=None, identity=None):
         headers = {"Host": host, "Accept": "application/json"}
         data = None
         if payload is not None:
@@ -70,6 +80,8 @@ class XParallelHTTPContractTests(unittest.TestCase):
             headers["Authorization"] = f"Bearer {token}"
         if approval:
             headers["X-XParallel-Approval"] = approval
+        if identity:
+            headers["X-Enterprise-Identity"] = identity
         req = urllib.request.Request(cls.base_url + path, data=data, headers=headers, method=method)
         try:
             with urllib.request.urlopen(req, timeout=3) as response:
@@ -131,6 +143,45 @@ class XParallelHTTPContractTests(unittest.TestCase):
         status, fetched = self.request("GET", "/repair/jobs/" + job["job_id"] + "?workspace_id=repair-test", token="test-token", host="localhost")
         self.assertEqual(status, 200)
         self.assertEqual(fetched["job_id"], job["job_id"])
+
+    def test_enterprise_knowledge_routes_require_signed_tenant_identity(self):
+        payload = {
+            "workspace_id": "attacker-workspace",
+            "actor": "attacker",
+            "record_type": "note",
+            "subject": "Trusted tenant test",
+            "content": "This record must belong to the signed tenant.",
+        }
+        status, denied = self.request("POST", "/api/omni/records", payload, host="localhost")
+        self.assertEqual(status, 401)
+        self.assertEqual(denied.get("error"), "unauthorized")
+
+        secret = "integration-test-identity-secret-at-least-32-bytes"
+        identity = issue_identity_token(subject="verified-human", workspace_id="trusted-workspace",
+                                        role="operator", secret=secret)
+        status, created = self.request("POST", "/api/omni/records", payload, host="localhost", identity=identity)
+        self.assertEqual(status, 201, created)
+        self.assertEqual(created["workspace_id"], "trusted-workspace")
+        self.assertEqual(created["actor_id"], "verified-human")
+
+        status, fetched = self.request("GET", f"/api/omni/records/{created['id']}?workspace_id=attacker-workspace",
+                                       host="localhost", identity=identity)
+        self.assertEqual(status, 200, fetched)
+        self.assertEqual(fetched["workspace_id"], "trusted-workspace")
+
+        other_identity = issue_identity_token(subject="other-human", workspace_id="other-workspace",
+                                              role="operator", secret=secret)
+        status, isolated = self.request("GET", f"/api/omni/records/{created['id']}",
+                                        host="localhost", identity=other_identity)
+        self.assertEqual(status, 404)
+        self.assertEqual(isolated.get("error"), "not_found")
+
+    def test_zero_cost_chat_does_not_fall_back_to_paid_legacy_gateway(self):
+        status, payload = self.request("POST", "/chat",
+                                       {"messages": [{"role": "user", "content": "Hello"}]},
+                                       token="test-token", host="localhost")
+        self.assertEqual(status, 503, payload)
+        self.assertEqual(payload.get("error"), "hybrid_provider_not_configured")
 
     def test_execution_requires_explicit_approval_even_for_owner(self):
         body = {"query": "run a controlled test", "execution": {"files": [{"path": "note.txt", "content": "safe test"}]}}

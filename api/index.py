@@ -58,10 +58,13 @@ class VercelHandler(Handler):
 
         body = json.dumps({
             "query": query,
-            "workspace_id": payload.get("workspace_id") or "default",
-            "actor": payload.get("actor") or "elle-user",
+            # This legacy Python proxy is not a trusted login adapter. Never let
+            # browser JSON select a tenant or enable shared memory. Keep it aligned
+            # with the Next.js preview route until a server-verified session exists.
+            "workspace_id": "preview",
+            "actor": "elle-preview",
             "messages": messages,
-            "use_memory": payload.get("use_memory") is not False,
+            "use_memory": False,
         }).encode()
         request = Request(
             backend_url + "/chat",

@@ -14,6 +14,7 @@ from xparallel.persistence import REPOSITORY
 from xparallel.workspace import workspace_context
 from xparallel.billing import usage_event, invoice_preview
 from xparallel.authz import authorize
+from xparallel.enterprise_auth import authorize_enterprise_request, required_action
 from xparallel.audit_repository import AUDIT_REPOSITORY
 from xparallel.store import get, load
 from xparallel.v1_runner import available
@@ -22,7 +23,6 @@ from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
 from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
-from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.free_access_hub import select_provider, provider_directory
@@ -162,29 +162,35 @@ class Handler(BaseHTTPRequestHandler):
             if not public_allowed(self):
                 return send_json(self, 403, {"error": "origin_not_allowed"}, cors=True)
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()}, cors=True)
-        if not self.authorized():
-            return send_json(self, 401, {"error": "unauthorized"})
         if self.path in {"/roaming/services", "/roaming/status"}:
+            if not self.authorized():
+                return send_json(self, 401, {"error": "unauthorized"})
             return send_json(self, 200, registry_status())
         parsed = urlparse(self.path)
+        params = parse_qs(parsed.query)
+        enterprise_ctx, enterprise_error = authorize_enterprise_request(self.headers, "GET", parsed.path)
+        if enterprise_error:
+            return send_json(self, 403 if enterprise_error == "forbidden" else 401, {"error": enterprise_error})
+        if required_action("GET", parsed.path) is None and not self.authorized():
+            return send_json(self, 401, {"error": "unauthorized"})
         if parsed.path.startswith("/api/elle/tasks/"):
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             task_id = parsed.path.rsplit("/", 1)[-1]
             task = elle_lifecycle.get_task(task_id, workspace)
             return send_json(self, 200 if task else 404, task or {"error": "not_found"})
         if parsed.path.startswith("/api/omni/records/") and parsed.path.endswith("/history"):
             parts = parsed.path.strip("/").split("/")
             if len(parts) == 5:
-                workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+                workspace = enterprise_ctx["workspace_id"]
                 versions = omni_genome.list_versions(parts[3], workspace)
                 return send_json(self, 200, {"versions": versions})
         if parsed.path.startswith("/api/omni/records/"):
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             record_id = parsed.path.rsplit("/", 1)[-1]
             record = omni_genome.get_record(record_id, workspace)
             return send_json(self, 200 if record else 404, record or {"error": "not_found"})
         if parsed.path == "/api/omni/search":
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = enterprise_ctx["workspace_id"]
             query = params.get("q", [""])[0]
             return send_json(self, 200, {"records": omni_genome.search_records(workspace, query)})
         if parsed.path == "/api/xparallel/agents":
@@ -256,7 +262,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 429, {"error": "rate_limit_exceeded"}, cors=True)
             if self.path not in public_paths:
                 return send_json(self, 404, {"error": "not_found"}, cors=True)
-        elif self.path not in {"/roaming/heartbeat", "/roaming/tasks/claim", "/roaming/tasks/complete"} and not self.authorized():
+        elif required_action("POST", self.path) is None and self.path not in {"/roaming/heartbeat", "/roaming/tasks/claim", "/roaming/tasks/complete"} and not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
 
         try:
@@ -265,8 +271,12 @@ class Handler(BaseHTTPRequestHandler):
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
 
+        enterprise_ctx, enterprise_error = authorize_enterprise_request(self.headers, "POST", self.path)
+        if enterprise_error:
+            return send_json(self, 403 if enterprise_error == "forbidden" else 401, {"error": enterprise_error})
+
         if self.path == "/api/elle/tasks":
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try:
                 task = elle_lifecycle.create_task(
                     ctx["workspace_id"], ctx["actor"], data.get("objective"),
@@ -281,7 +291,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/api/elle/tasks/") and self.path.endswith("/transition"):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try:
                 task = elle_lifecycle.transition(parts[3], ctx["workspace_id"], ctx["actor"], data.get("state"), detail=data.get("detail"))
                 if task: arot_record("elle.task.transition", ctx["workspace_id"], ctx["actor"], task["id"], {"state": task["state"]})
@@ -291,8 +301,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/api/elle/tasks/") and self.path.endswith("/approve"):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
-            ctx = workspace_context(data)
-            if not self.require_role("verify"): return send_json(self, 403, {"error": "forbidden"})
+            ctx = enterprise_ctx
+            if not authorize(ctx["role"], "approve_deployment"): return send_json(self, 403, {"error": "forbidden"})
             try:
                 task = elle_lifecycle.approve_task(parts[3], ctx["workspace_id"], ctx["actor"], authorized=True)
                 if task: arot_record("elle.task.approved", ctx["workspace_id"], ctx["actor"], task["id"], {"approved": True})
@@ -302,14 +312,14 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/api/elle/tasks/") and self.path.endswith("/verify"):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try:
                 task = elle_lifecycle.submit_verification(parts[3], ctx["workspace_id"], ctx["actor"], data.get("result"), data.get("evidence"))
                 if task: arot_record("elle.task.verified", ctx["workspace_id"], ctx["actor"], task["id"], {"result": data.get("result")})
             except ValueError as exc: return send_json(self, 409, {"error": str(exc)})
             return send_json(self, 200 if task else 404, task or {"error": "not_found"})
         if self.path == "/api/omni/records":
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try:
                 record = omni_genome.create_record(ctx["workspace_id"], data.get("record_type"), data.get("subject"), data.get("content"),
                     context=data.get("context"), origin=data.get("origin", "user"), actor_id=ctx["actor"], source=data.get("source"))
@@ -317,7 +327,7 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, TypeError) as exc: return send_json(self, 400, {"error": str(exc)})
             return send_json(self, 201, record)
         if self.path == "/api/omni/search":
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             query = str(data.get("query", ""))
             records = omni_genome.search_records(ctx["workspace_id"], query, data.get("limit", 20))
             arot_record("omni.search", ctx["workspace_id"], ctx["actor"], "knowledge-search", {"query_length": len(query), "result_count": len(records)})
@@ -325,22 +335,22 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/api/omni/records/") and self.path.endswith("/verify"):
             parts = self.path.strip("/").split("/")
             if len(parts) != 5: return send_json(self, 404, {"error": "not_found"})
-            ctx = workspace_context(data)
-            if not self.require_role("verify"): return send_json(self, 403, {"error": "forbidden"})
+            ctx = enterprise_ctx
+            if not authorize(ctx["role"], "verify"): return send_json(self, 403, {"error": "forbidden"})
             try:
                 record = omni_genome.verify_record(parts[3], ctx["workspace_id"], method=data.get("method"), actor_id=ctx["actor"], result=data.get("result"), evidence=data.get("evidence"))
                 if record: arot_record("omni.record.verification", ctx["workspace_id"], ctx["actor"], record["id"], {"result": data.get("result")})
             except ValueError as exc: return send_json(self, 400, {"error": str(exc)})
             return send_json(self, 200 if record else 404, record or {"error": "not_found"})
         if self.path == "/api/parallel/research":
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try: result = parallel_research(data.get("query", ""), ctx["workspace_id"])
             except ValueError as exc: return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc: return send_json(self, 503, {"error": str(exc)})
             arot_record("parallel.research.completed", ctx["workspace_id"], ctx["actor"], "research", {"mode": result["mode"], "collaboration_status": result["collaboration_status"]})
             return send_json(self, 200, result)
         if self.path == "/api/xparallel/dispatch":
-            ctx = workspace_context(data)
+            ctx = enterprise_ctx
             try:
                 task = dispatch_approved_task(data.get("runtime_id"), data.get("task_type"), data.get("payload", {}), ctx["workspace_id"], approved=bool(data.get("approved")) and self.execution_approved())
                 arot_record("xparallel.task.dispatched", ctx["workspace_id"], ctx["actor"], task.get("task_id"), {"runtime_id": data.get("runtime_id"), "task_type": data.get("task_type")})
@@ -610,11 +620,11 @@ class Handler(BaseHTTPRequestHandler):
             workspace = workspace_context(data)["workspace_id"]
             use_memory = data.get("use_memory", True) is not False
             try:
-                if os.getenv("XP_HUB_ENABLED", "").strip().lower() == "true":
-                    from xparallel.hybrid_chat import chat as chat_with_hybrid
-                    result = chat_with_hybrid(messages, workspace, use_memory)
-                else:
-                    result = chat_with_ai(messages, workspace, use_memory)
+                # Zero-cost policy: use local Ollama first and only an explicitly
+                # verified free provider as fallback. Never call the paid legacy gateway
+                # from the default chat route.
+                from xparallel.hybrid_chat import chat as chat_with_hybrid
+                result = chat_with_hybrid(messages, workspace, use_memory)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
             except RuntimeError as exc:
