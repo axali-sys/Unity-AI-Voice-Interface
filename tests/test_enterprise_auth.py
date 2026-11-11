@@ -1,4 +1,5 @@
 import unittest
+import time
 
 from xparallel.enterprise_auth import authorize_enterprise_request, required_action
 from xparallel.tenant_identity import issue_identity_token
@@ -13,7 +14,7 @@ class EnterpriseAuthTests(unittest.TestCase):
     def token(self, role="operator", workspace="trusted-workspace", actor="human-7"):
         return issue_identity_token(
             subject=actor, workspace_id=workspace, role=role,
-            secret=self.secret, now=1000,
+            secret=self.secret, now=int(time.time()),
         )
 
     def test_enterprise_routes_require_separate_identity_header(self):
@@ -55,7 +56,7 @@ class EnterpriseAuthTests(unittest.TestCase):
 
     def test_tampered_identity_is_rejected(self):
         token = self.token()
-        bad = token[:-1] + ("A" if token[-1] != "A" else "B")
+        parts = token.split(".")\n        parts[2] = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]\n        bad = ".".join(parts)
         context, error = authorize_enterprise_request(
             {"X-Enterprise-Identity": bad}, "GET", "/api/omni/search",
         )
