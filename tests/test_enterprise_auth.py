@@ -65,7 +65,9 @@ class EnterpriseAuthTests(unittest.TestCase):
 
     def test_tampered_identity_is_rejected(self):
         token = self.token()
-        parts = token.split(".")\n        parts[2] = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]\n        bad = ".".join(parts)
+        parts = token.split(".")
+        parts[2] = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]
+        bad = ".".join(parts)
         context, error = authorize_enterprise_request(
             {"X-Enterprise-Identity": bad}, "GET", "/api/omni/search",
         )
