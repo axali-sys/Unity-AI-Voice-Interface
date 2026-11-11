@@ -41,7 +41,8 @@ def _secret(secret: str | None = None) -> bytes:
 
 def issue_identity_token(*, subject: str, workspace_id: str, role: str,
                          secret: str | None = None, ttl_seconds: int = 900,
-                         now: int | None = None) -> str:
+                         now: int | None = None, issuer: str | None = None,
+                         audience: str | None = None) -> str:
     """Issue claims for a trusted server-side auth adapter, never directly from browser input."""
     sub = str(subject or "").strip()
     workspace = str(workspace_id or "").strip()
@@ -55,6 +56,10 @@ def issue_identity_token(*, subject: str, workspace_id: str, role: str,
     header = {"alg": "HS256", "typ": "JWT"}
     payload = {"sub": sub, "workspace_id": workspace, "role": role,
                "iat": issued, "exp": issued + ttl_seconds}
+    if issuer:
+        payload["iss"] = issuer
+    if audience:
+        payload["aud"] = audience
     signing_input = _b64encode(json.dumps(header, separators=(",", ":"), sort_keys=True).encode()) + "." + _b64encode(
         json.dumps(payload, separators=(",", ":"), sort_keys=True).encode())
     signature = hmac.new(_secret(secret), signing_input.encode(), hashlib.sha256).digest()
@@ -98,5 +103,11 @@ def verify_identity_token(token: str, *, secret: str | None = None,
         raise IdentityError("invalid_identity_role")
     if issued > current + 30 or expires <= current or expires <= issued or expires - issued > 3600:
         raise IdentityError("identity_token_expired_or_invalid")
+    expected_issuer = os.getenv("XP_IDENTITY_ISSUER", "").strip()
+    expected_audience = os.getenv("XP_IDENTITY_AUDIENCE", "").strip()
+    if expected_issuer and claims.get("iss") != expected_issuer:
+        raise IdentityError("invalid_identity_issuer")
+    if expected_audience and claims.get("aud") != expected_audience:
+        raise IdentityError("invalid_identity_audience")
     return {"actor": subject, "workspace_id": workspace, "role": role,
             "issued_at": issued, "expires_at": expires}
