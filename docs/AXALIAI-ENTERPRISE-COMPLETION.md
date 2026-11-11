@@ -74,3 +74,8 @@ This first slice is a tested token primitive, not a complete login system. It is
 ## Optional NexAI identity provider
 
 A separate development branch in `axali-sys/nexai-platform` implements a NexAI-session-authenticated identity assertion endpoint. NexAI verifies its own active user and workspace membership, then issues a 15-minute HS256 assertion with issuer `nexai-platform` and audience `axaliai-enterprise`. The XParallel identity verifier supports configured issuer/audience checks. This does not merge or absorb NexAI. Browser SSO/consent and the enterprise UI handoff remain outstanding. No shared secret or production connection has been configured.
+
+
+## NexAI authorization-code protocol update
+
+The independent NexAI development branch now contains the server-side authorization-code + PKCE S256 protocol: exact redirect allow-list, explicit consent requirement, hashed 90-second one-time codes, atomic redemption, confidential server-to-server exchange, and a current active-user/workspace-membership recheck before issuing the signed assertion. NexAI CI run #59 passed Ruff and the full pytest suite. This is not end-to-end SSO yet: the consent UI, AI Enterprise callback handler, confidential exchange client and AI-owned session creation remain outstanding. No shared secrets or production redirect URIs are configured.
