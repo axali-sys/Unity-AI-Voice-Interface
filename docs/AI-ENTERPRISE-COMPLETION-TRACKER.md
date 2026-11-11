@@ -45,7 +45,7 @@ Until the actual application origin is known:
 - Dedicated shared-secret configuration, disabled by default.
 - Draft PR #1 and successful NexAI CI run #52, as recorded in its PR.
 
-These are foundations only. Browser SSO, actual hosted inference, complete memory lifecycle, full 113-component audit and release evidence remain outstanding.
+These are foundations only. The NexAI SSO server protocol exists, but browser consent UI and AI Enterprise callback/session handoff, actual hosted inference, complete memory lifecycle, full 113-component audit and release evidence remain outstanding.
 
 ## Dependency-ordered completion milestones
 
@@ -61,16 +61,16 @@ These are foundations only. Browser SSO, actual hosted inference, complete memor
 **Exit evidence:** reviewed repository map, duplicate/conflict register, route/service ownership matrix and agreed development baseline.
 
 ### M1 — Identity, sessions and workspace security
-**Status:** Partial; browser handoff outstanding.
+**Status:** Partial; NexAI authorization-code protocol implemented, enterprise browser handoff outstanding.
 
 - Complete a first-party AI login/session and authoritative workspace membership path, or integrate an approved independent provider through an adapter.
-- Convert the NexAI identity assertion into a proper authorization-code flow: state, PKCE, explicit consent, allow-listed redirect, short-lived single-use code, server-to-server exchange, replay prevention and AI-owned session creation.
+- Connect the NexAI authorization-code + PKCE protocol to an enterprise callback, server-to-server code exchange and AI-owned session creation; retain exact redirect allow-list, state validation, explicit consent and replay prevention.
 - Do not place bearer tokens in query strings, localStorage or browser-readable persistent storage.
 - Enforce authentication, membership, role, workspace isolation and revocation on every user-facing API route.
 - Keep service credentials separate from human identity.
 - Add session expiry, CSRF protections, secure cookie settings, rate limits and audit events.
 
-**Exit evidence:** browser and API integration tests for login, logout, consent, expiry, replay, revoked membership, cross-workspace denial and privilege escalation. The final callback origin is configured only after the actual application host is confirmed.
+**Exit evidence:** NexAI API protocol tests pass; remaining browser/API integration tests must cover login, logout, consent UI, state, expiry, replay, revoked membership, cross-workspace denial and privilege escalation. The final callback origin is configured only after the actual application host is confirmed.
 
 ### M2 — Core runtime and provider gateway
 **Status:** Partial; live host inference unverified.
