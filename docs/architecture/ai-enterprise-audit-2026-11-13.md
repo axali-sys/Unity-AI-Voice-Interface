@@ -86,3 +86,60 @@ Other components retain their source-register status until their code, call path
 6. Prioritize security, identity, persistence, model access, observability, and recovery dependencies before expanding higher-level capabilities.
 
 **Audit state:** Initial evidence pass started. This report does not declare the 113-component ecosystem complete or production-ready.
+
+
+## 7. Expanded source/test mapping (second pass)
+
+Additional files inspected on `enterprise/axaliai-completion`:
+
+- `xparallel/omni_genome.py` and `tests/test_omni_genome.py`: source-aware Omni records, versions and workspace isolation have a focused test. This supports partial evidence for **C018 OmniGraph** and **C027 Knowledge Genome**, but does not prove a complete universal graph/index/search stack.
+- `xparallel/elle_lifecycle.py` and `tests/test_elle_lifecycle.py`: explicit task state transitions and a high-risk human-approval gate have focused tests. This supports partial evidence for **C001 Cognitive Core orchestration boundary**, **C029 OmniPlan** only where planning state is represented, **C032 OmniPilot** only at the lifecycle-record level, **C033 OmniControl**, and preservation identity **P001 ƎllE**. It does not establish autonomous planning/reasoning or a complete assistant UI.
+- `xparallel/roaming_registry.py` and `tests/test_roaming_tasks.py`: persistent runtime registration/heartbeat/discovery and task-queue behavior are represented in code/tests. Together with closed PRs **#50, #53 and #54**, this supports partial evidence for **C040 XParallel Roaming**, **C041 XParallel Exchange**, **C042 XParallel Protocol**, **C045 XParallel Registry**, **C046 XParallel Passport**, and **C102 Queue Engine**. The worker PR explicitly says no worker is deployed or started, no live runtime is registered, and failover/workspace hardening remain.
+- `xparallel/interoperability_protocol.py`: defines a versioned XParallel interoperability passport and allowlisted task types. This is a protocol primitive, not proof of cross-vendor compatibility or a live mesh; **C038 Discovery**, **C039 Connect**, **C043 Mesh**, and **C044 Sandbox** remain unverified by this file alone.
+- `xparallel/parallel_world.py` and `tests/test_parallel_world.py`: provider-backed plan generation has a focused test for missing provider failure and the human approval boundary. This is partial evidence for **C013 Strategic Planning**, **C029 OmniPlan**, and **P003 XParallel**; provider connectivity and broader orchestration remain unverified.
+- `xparallel/repair_jobs.py`: stores workspace-scoped repair job records and is explicitly planning/diagnostics only. This is partial evidence for preservation identity **P014 AI Repair Shop**, not proof that it can repair, test, roll back, or execute changes.
+- `xparallel/arot_evidence.py`: records entity-linked events through the audit repository. This supports partial evidence for **C078 AROT** and **P005 AROT**, with the external immutability limitation stated above.
+- `xparallel/parallel_intelligence.py`: independently calls configured HTTPS OpenAI-compatible endpoints and distinguishes provider results. This supports partial evidence for **C002 Multi-Model Intelligence** and **P004 Parallel Intelligence**. The module explicitly avoids claiming factual consensus; no live provider calls were made.
+- `xparallel/free_access_hub.py` and `xparallel/provider_catalog.py`: provide policy/configuration-based local/free/paid provider selection. This is partial evidence for **C097 Model Gateway** and **P015 AI Mixer** only at provider policy/catalog level; it does not prove a live model gateway, provider quota or UI integration.
+- `xparallel/tenant_identity.py`, `xparallel/enterprise_auth.py`, and `tests/test_tenant_identity.py` / `tests/test_enterprise_auth.py`: signed claim verification, expiry/tamper checks and role/action checks have test sources. This supports partial evidence for **C072 UIDaaS**, **C075 Permission Engine**, and **C081 Policy Engine**. It does not supply upstream login, membership lookup, browser sign-in, or token handoff.
+- `xparallel/audit_repository.py` and `xparallel/audit.py`: SQLite audit events and event fingerprints support partial evidence for **C082 Audit Intelligence** only at the event-recording level. Searchable correlated traces, incident analysis and externally anchored tamper evidence remain unverified.
+
+### Additional preliminary status assignments
+
+| Component ID | Component | Preliminary finding | Evidence boundary / remaining gap |
+|---|---|---|---|
+| C002 | Multi-Model Intelligence | Partial | Independent provider panel exists; no live provider comparison or consensus verification. |
+| C013 | Strategic planning engine | Partial | Provider-backed plan generation exists; broad strategic planning evaluation remains outstanding. |
+| C018 | OmniGraph | Partial | Omni graph/record primitives and source/version test exist; complete graph traversal and provenance are not established. |
+| C027 | Knowledge Genome | Partial | SQLite knowledge-relationship primitives exist; comprehensive graph semantics and cross-source lineage are unverified. |
+| C029 | OmniPlan | Partial | Plan generation and lifecycle state exist; workflow validation, scheduling and durable orchestration remain outstanding. |
+| C032 | OmniPilot | Partial | Task lifecycle primitives exist; supervisory multi-step runtime is not established. |
+| C033 | OmniControl | Partial | Human approval/state gates exist; complete policy control plane is not established. |
+| C041 | XParallel Exchange | Partial | Allowlisted task contracts and queue primitives exist; broad exchange compatibility is unverified. |
+| C042 | XParallel Protocol | Partial | Versioned interoperability contract exists; external compatibility suite is absent. |
+| C046 | XParallel Passport | Partial | Signed identity/passport primitives exist; portable revocation across systems is unverified. |
+| C081 | Policy Engine | Partial | Role/action decisions exist; full resource policy coverage is unverified. |
+| C082 | Audit Intelligence | Partial | Event records and fingerprints exist; correlated investigation/immutable anchoring is unverified. |
+| C102 | Queue Engine | Partial | SQLite-backed roaming queue with lease/task tests exists; production durability, dead-letter/replay and cross-runtime failover are unverified. |
+
+### Preservation identity review (preliminary)
+
+| Identity | Preliminary finding | Evidence boundary |
+|---|---|---|
+| P001 ƎllE | Partial | Task lifecycle and chat-related backend code exist; end-user login and complete UI integration remain open. |
+| P002 Omni | Partial | Memory vault and knowledge record primitives exist; complete stream/search/archive plane is not established. |
+| P003 XParallel | Partial | API, routing, roaming and queue primitives exist; live roaming operations and hardened tenancy are unverified. |
+| P004 Parallel Intelligence | Partial | Multi-provider panel source exists; no live multi-provider run was performed. |
+| P005 AROT | Partial | Audit adapter and ledger exist; external immutability is not established. |
+| P006 UnitAI | Unverified | No dedicated UnitAI manifest/registry and acceptance tests were established in this pass. |
+| P009 QCode | Unverified | Developer/code assistance identity needs dedicated source-to-test mapping; do not infer from general repository tooling. |
+| P010 UIDaaS | Partial | Signed tenant identity verification exists; human login and membership integration remain incomplete. |
+| P013 Build Studio | Unverified | No complete create/build/test/preview workflow was established in this pass. |
+| P014 AI Repair Shop | Partial | Diagnostic/repair job records exist; no actual repair executor or rollback proof. |
+| P015 AI Mixer | Partial | Provider catalog and routing primitives exist; UI and live model comparisons remain unverified. |
+
+## 8. Audit limitations and next action
+
+This second pass inspected source and test files through GitHub. It did **not** run the test suite in a local checkout, call live model providers, register a worker, probe a production endpoint, or verify persistent storage on a deployed host. CI claims above are copied from the relevant PR descriptions and should be independently rechecked against workflow run details before a release decision.
+
+Next, continue the register reconciliation by inspecting the remaining source groups (creative/media, engineering, personal/organizational assistants, data/compute/observability/backup) and their actual frontend/API wiring. Where no evidence is found, retain **Unverified** rather than upgrading status based on naming or roadmap text.
