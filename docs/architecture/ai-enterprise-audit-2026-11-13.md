@@ -143,3 +143,43 @@ Additional files inspected on `enterprise/axaliai-completion`:
 This second pass inspected source and test files through GitHub. It did **not** run the test suite in a local checkout, call live model providers, register a worker, probe a production endpoint, or verify persistent storage on a deployed host. CI claims above are copied from the relevant PR descriptions and should be independently rechecked against workflow run details before a release decision.
 
 Next, continue the register reconciliation by inspecting the remaining source groups (creative/media, engineering, personal/organizational assistants, data/compute/observability/backup) and their actual frontend/API wiring. Where no evidence is found, retain **Unverified** rather than upgrading status based on naming or roadmap text.
+
+
+## 9. Third pass — current branch integration and zero-cost guardrails
+
+The audit branch's current `README.md` and `package.json` were inspected:
+
+- The README describes a Next.js/React frontend and says the intended chat path is browser `/api/chat` → server-side proxy → XParallel. It explicitly states that the proxy does not return a demo answer. This is a documented integration contract, not runtime proof that the proxy is reachable or that the backend is healthy.
+- The README states that preview chat is pinned to a non-personal `preview` workspace and memory retrieval is disabled until trusted login and workspace membership are connected. This is a fail-closed privacy boundary; it also means authenticated personal/workspace chat is not yet established.
+- The README documents a local-first chat path: Ollama first, then an explicitly enabled and operator-verified free provider. Free-cloud fallback is disabled unless its endpoint/model/key and verification flag are configured. The documentation says paid providers are not selected by the default chat path. This is configuration/documentation evidence, not proof that Ollama is installed, a model is downloaded, or inference succeeds.
+- The README says enterprise identity APIs accept signed `X-Enterprise-Identity` claims distinct from `XP_TOKEN`, and that token issuance must follow trusted login and membership checks. It explicitly records that the login/membership adapter and browser session flow are incomplete and that the APIs fail closed until then.
+- `package.json` confirms a Next.js 14.2.15 / React 18.3.1 application with `dev`, `build`, `start`, and `lint` scripts. Dependency metadata alone does not prove a successful build, lint, or deployed frontend.
+- Conventional frontend entry guesses (`app/page.tsx`, `src/app/page.tsx`, `pages/index.tsx`) were not found at those paths on this branch. The actual frontend route/component map therefore remains to be established from repository inventory rather than inferred.
+
+### Third-pass status impact
+
+No component is upgraded to **Existing and verified** in this pass. The README improves the evidence for intended privacy and zero-cost provider guardrails, but does not close the runtime, identity, UI workflow, or test-execution gaps.
+
+| Area / component | Updated finding | Evidence boundary / next proof |
+|---|---|---|
+| C097 Model Gateway | Partial | Local-first Ollama and opt-in verified free fallback are documented; verify actual adapter implementation, model availability and successful local inference without paid calls. |
+| C072 UIDaaS / C075 Permission Engine / C081 Policy Engine | Partial | Fail-closed signed-identity contract is documented; upstream login, membership authority and browser session/token handoff remain incomplete. |
+| C016 OmniMemory | Partial | Preview memory retrieval is deliberately disabled until identity is trusted; verify the authenticated retrieval path and durable storage before enabling it. |
+| P001 ƎllE | Partial | Chat route contract is documented; complete frontend route/component wiring and authenticated user experience remain unverified. |
+| P013 Build Studio | Unverified | No create/build/test/preview workflow or frontend component map was established by this pass. |
+| P014 AI Repair Shop | Partial | Earlier diagnostic job records remain the only evidence; no repair executor, isolated patch application, tests, rollback or approval flow was verified. |
+| Creative/media (C048–C061) | Unverified | No source-to-test-to-UI evidence established in this pass. |
+| Engineering/science/industrial (C062–C071) | Unverified | No domain-specific source, acceptance tests or UI wiring established in this pass. |
+| Personal/organizational intelligence (C083–C095) | Unverified | No component-level source, permission model, tests or UI wiring established in this pass. |
+| Infrastructure/computing (C096–C107) | Mixed / Partial only where listed above | Existing provider, storage and queue primitives are partial; compute fabric, observability, backup/restore and operational recovery are not verified by the inspected evidence. |
+
+### Fourth-pass work required
+
+1. Establish the actual repository file inventory and frontend entry points; map every visible module to an API route and permission boundary.
+2. Trace `/api/chat` end-to-end through the proxy, backend route, provider adapter and memory policy, using a local non-production environment.
+3. Run the documented build, lint and focused test suites in an isolated checkout; record exact commands, exit codes and commit SHA.
+4. Audit C048–C095 by source, tests and UI wiring; do not promote any component based on labels or roadmap descriptions.
+5. Audit C096–C107 for compute, storage durability, observability, backup/restore, queue replay and recovery evidence.
+6. Keep provider testing local-first and $0; do not call paid providers or activate paid resources.
+
+**Third-pass conclusion:** the branch documents a sensible fail-closed identity boundary and a $0/local-first provider policy, but these are not operational acceptance evidence. The 113-component register remains an audit baseline; broad component groups remain unverified.
