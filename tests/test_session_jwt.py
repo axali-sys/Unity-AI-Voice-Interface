@@ -38,7 +38,7 @@ class HS256SessionVerifierTests(unittest.TestCase):
         claims = self.verifier(token(self.claims, self.key))
         self.assertEqual(claims, {
             "authenticated": True, "subject": "user:alice",
-            "workspace_id": "workspace-a",
+            "workspace_id": "workspace-a", "role": "viewer",
         })
 
     def test_tampered_signature_is_rejected(self):
