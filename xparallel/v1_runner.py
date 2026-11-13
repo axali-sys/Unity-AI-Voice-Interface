@@ -155,6 +155,7 @@ def _run_bounded(command, *, timeout, env, output_limit=10000, should_continue=N
         process.stderr: bytearray(),
     }
     truncated = {"stdout": False, "stderr": False}
+    byte_counts = {"stdout": 0, "stderr": 0}
     names = {process.stdout: "stdout", process.stderr: "stderr"}
     for stream in streams:
         os.set_blocking(stream.fileno(), False)
@@ -175,6 +176,7 @@ def _run_bounded(command, *, timeout, env, output_limit=10000, should_continue=N
                     key.fileobj.close()
                     continue
                 buffer = streams[key.fileobj]
+                byte_counts[names[key.fileobj]] += len(chunk)
                 buffer.extend(chunk)
                 if len(buffer) > output_limit:
                     del buffer[:-output_limit]
@@ -199,6 +201,7 @@ def _run_bounded(command, *, timeout, env, output_limit=10000, should_continue=N
         "stdout": streams[process.stdout].decode("utf-8", errors="replace"),
         "stderr": streams[process.stderr].decode("utf-8", errors="replace"),
         "output_truncated": truncated,
+        "output_bytes": byte_counts["stdout"] + byte_counts["stderr"],
     }
 
 def run_project(intent, *, approved_limits=None, expected_image_digest=None, should_continue=None):
@@ -273,7 +276,10 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
             "output_truncated": completed["output_truncated"],
             "test_profile": profile,
             "approved_limits": dict(approved_limits),
-            "output_bytes": len(completed["stdout"].encode("utf-8")) + len(completed["stderr"].encode("utf-8")),
+            "output_bytes": completed.get(
+                "output_bytes",
+                len(completed["stdout"].encode("utf-8")) + len(completed["stderr"].encode("utf-8")),
+            ),
             "isolation": {
                 "network": "none", "root_filesystem": "read-only",
                 "capabilities": "dropped-all", "non_root_uid": NONROOT_UID,
