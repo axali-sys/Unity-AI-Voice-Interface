@@ -38,7 +38,7 @@ class TrustedExecutionControlPlane:
         # The registry authenticates the external session first. From this point
         # onward, internal callbacks receive only that normalized principal.
         self._gate = trusted_host.build_action_gate(
-            authenticate=lambda principal: principal
+            authenticate=lambda principal: {"authenticated": True, **principal}
         )
 
         def current_state(principal: dict[str, str], intent: dict[str, Any], stage: str) -> bool:
