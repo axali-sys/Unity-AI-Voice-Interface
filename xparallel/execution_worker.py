@@ -65,7 +65,7 @@ class ApprovedExecutionWorker:
                 resource_usage=data["resource_usage"],
                 evidence_refs=data["evidence_refs"],
             )
-        terminal = self._approvals.complete_finalization(session, intent_id)
+        terminal = self._approvals.complete_finalization(session, intent_id, receipt_hash=receipt["receipt_hash"])
         return {
             "intent_id": intent_id, "status": terminal["status"],
             "outcome": pending["outcome"], "receipt": receipt,
@@ -171,7 +171,7 @@ class ApprovedExecutionWorker:
                 "receipt_error": type(exc).__name__,
             }
 
-        terminal = self._approvals.complete_finalization(session, intent_id)
+        terminal = self._approvals.complete_finalization(session, intent_id, receipt_hash=receipt["receipt_hash"])
         return {
             "intent_id": intent_id, "status": terminal["status"],
             "outcome": outcome, "runner_result": result, "receipt": receipt,
