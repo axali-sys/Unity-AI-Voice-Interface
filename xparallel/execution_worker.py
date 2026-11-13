@@ -166,24 +166,40 @@ class ApprovedExecutionWorker:
 
         # Freeze the outcome first, but do not make it terminal until a signed
         # receipt has been appended. Failed evidence preparation remains recoverable.
+        evidence_errors = []
         try:
             policy = self._resolve_policy(intent)
             if not isinstance(policy, dict) or policy.get("allowed") is not True:
                 raise PermissionError("trusted_policy_evidence_unavailable_for_receipt")
+        except Exception as exc:
+            policy = {"allowed": False, "reason_code": "policy_evidence_unavailable"}
+            evidence_errors.append(type(exc).__name__)
+        try:
             usage = self._measure(result, intent)
+        except Exception as exc:
+            usage = {
+                "wall_ms": None, "cpu_ms": None, "memory_peak_mb": None,
+                "output_bytes": None, "pids_peak": None,
+            }
+            evidence_errors.append(type(exc).__name__)
+        try:
             evidence_refs = self._store_evidence(result, intent)
-            if not isinstance(evidence_refs, list) or not evidence_refs:
+            if not isinstance(evidence_refs, list) or (outcome == "success" and not evidence_refs):
                 raise ValueError("execution_evidence_storage_required")
         except Exception as exc:
-            finalizing = self._approvals.begin_finalization(
-                session, intent_id, outcome="failure"
-            )
-            return {
-                "intent_id": intent_id, "status": finalizing["status"],
-                "outcome": "failure", "runner_result": result, "receipt": None,
-                "receipt_pending": True, "error": "execution_evidence_pipeline_failed",
-                "evidence_error": type(exc).__name__,
-            }
+            evidence_refs = []
+            evidence_errors.append(type(exc).__name__)
+        if evidence_errors:
+            # Preserve the actual execution outcome. The signed failure receipt
+            # records unavailable measurements/evidence as unknown, never zero
+            # or a fabricated successful policy decision.
+            if outcome == "success":
+                outcome = "failure"
+                result = {"status": "failed", "error": "execution_evidence_pipeline_incomplete"}
+            if policy.get("allowed") is not True and outcome == "success":
+                outcome = "failure"
+            if policy.get("allowed") is not True and not policy.get("reason_code"):
+                policy = {"allowed": False, "reason_code": "policy_evidence_unavailable"}
 
         try:
             finalizing = self._approvals.begin_finalization(
