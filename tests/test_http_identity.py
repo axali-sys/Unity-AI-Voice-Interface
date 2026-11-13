@@ -35,6 +35,16 @@ class HttpIdentityBindingTests(unittest.TestCase):
         }, self.claims)
         self.assertEqual(result["workspace_id"], "workspace-a")
 
+    def test_query_string_identity_is_checked_without_trusting_parameter_lists(self):
+        result = bind_request_identity({
+            "workspace_id": ["workspace-a"], "limit": ["10"]
+        }, self.claims)
+        self.assertEqual(result["workspace_id"], "workspace-a")
+        with self.assertRaisesRegex(IdentityBindingError, "workspace_claim_mismatch"):
+            bind_request_identity({"workspace_id": ["workspace-b"]}, self.claims)
+        with self.assertRaisesRegex(IdentityBindingError, "ambiguous_identity_parameter"):
+            bind_request_identity({"workspace_id": ["workspace-a", "workspace-b"]}, self.claims)
+
     def test_cross_workspace_and_actor_spoofing_are_rejected(self):
         with self.assertRaisesRegex(IdentityBindingError, "workspace_claim_mismatch"):
             bind_request_identity({"workspace_id": "workspace-b"}, self.claims)
