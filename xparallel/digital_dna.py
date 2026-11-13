@@ -54,6 +54,14 @@ def _no_secret_fields(value: Any, path: str = "manifest") -> None:
             _no_secret_fields(child, f"{path}[{index}]")
 
 
+def _assert_unverified_submission(data: dict[str, Any]) -> None:
+    """Prevent a submitter from self-activating an entity or self-certifying capabilities."""
+    if data["status"] != "pending":
+        raise ValueError("registry_submission_must_be_pending")
+    if any(item.get("status") not in {"declared", "under_review"} for item in data["capabilities"]):
+        raise ValueError("capabilities_cannot_self_certify")
+
+
 def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     """Validate the required Digital DNA 0.1 contract fields and safety invariants."""
     data = _object(manifest, "manifest")
@@ -182,6 +190,7 @@ class DigitalDNARegistry:
     def register(self, workspace_id: str, manifest: dict[str, Any]) -> dict[str, Any]:
         workspace = _workspace(workspace_id)
         data = validate_manifest(manifest)
+        _assert_unverified_submission(data)
         entity_id = data["entity_id"]
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -203,6 +212,7 @@ class DigitalDNARegistry:
     ) -> dict[str, Any]:
         workspace = _workspace(workspace_id)
         data = validate_manifest(manifest)
+        _assert_unverified_submission(data)
         if data["entity_id"] != entity_id:
             raise ValueError("entity_id_immutable")
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
