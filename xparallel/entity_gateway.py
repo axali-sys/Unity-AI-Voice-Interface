@@ -45,7 +45,7 @@ class EntityCommunicationGateway:
             raise TypeError("trusted_authentication_and_authorization_adapters_required")
         self._messages = message_service
         self._authenticate = authenticate
-        self._authorize = authorize
+        self._authorize_callback = authorize
         if db_path != ":memory:":
             Path(db_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
@@ -91,19 +91,11 @@ class EntityCommunicationGateway:
         _identifier(identity["entity_id"], "entity_id")
         return identity
 
-    def _authorize(self, identity: dict[str, Any], metadata: dict[str, Any], direction: str) -> None:
+    def _require_authorized(self, identity: dict[str, Any], metadata: dict[str, Any], direction: str) -> None:
         decision = self._authorize_callback(identity, metadata, direction)
         if not isinstance(decision, dict) or decision.get("allowed") is not True:
             reason = decision.get("reason", "authorization_denied") if isinstance(decision, dict) else "authorization_denied"
             raise PermissionError(str(reason))
-
-    @property
-    def _authorize_callback(self):
-        return self.__authorize
-
-    @_authorize_callback.setter
-    def _authorize_callback(self, value):
-        self.__authorize = value
 
     def submit(self, session: Any, envelope: dict[str, Any]) -> dict[str, Any]:
         identity = self._identity(session)
@@ -122,7 +114,7 @@ class EntityCommunicationGateway:
             "sender_entity_id": sender, "recipient_entity_id": recipient,
             "message_type": envelope.get("message_type"),
         }
-        self._authorize(identity, metadata, "send")
+        self._require_authorized(identity, metadata, "send")
         verified = self._messages.verify_and_accept(
             envelope, expected_workspace_id=identity["workspace_id"],
             expected_recipient_entity_id=recipient,
@@ -165,7 +157,7 @@ class EntityCommunicationGateway:
                 "message_type": envelope.get("message_type"),
             }
             try:
-                self._authorize(identity, metadata, "receive")
+                self._require_authorized(identity, metadata, "receive")
             except PermissionError:
                 continue
             now = datetime.now(timezone.utc).isoformat()
