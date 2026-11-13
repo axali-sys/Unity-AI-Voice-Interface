@@ -114,3 +114,29 @@ claiming that policy allowed the action.
 The tests cover a signed failure receipt with unavailable metrics, denied
 policy evidence and no stored evidence references, plus rejection of the same
 incomplete package for a success receipt.
+
+## Supervised host-side receipt recovery
+
+`xparallel/execution_recovery_service.py` adds an explicitly host-invoked
+single-flight recovery loop. Each cycle obtains a fresh short-lived executor
+session from a host-supplied session provider and calls the worker's bounded
+recovery API (default batch size 25, maximum 100). The registry independently
+authenticates the session and limits the query to pending jobs owned by that
+executor in its workspace.
+
+The service:
+- never launches, resumes, or repeats a workload;
+- recovers only receipts from persisted immutable finalization packages;
+- skips overlapping cycles rather than running duplicate recovery work;
+- rejects missing sessions and malformed recovery summaries;
+- retries after transient failures using a fresh session on the next cycle;
+- supports explicit shutdown through a host supervisor stop event.
+
+The service is not started by module import or by the HTTP server. A host
+operator must deliberately construct it with a trusted executor-session
+provider and run it under a supervised background process. This branch does
+not configure a production identity provider, scheduler, persistent volume,
+service manager, or live recovery process. The recovery loop and concurrency
+behavior are unit-tested only; deployment and restart behavior remain
+unverified.
+
