@@ -144,7 +144,7 @@ class GovernanceRegistryTests(unittest.TestCase):
             self.registry.request_grant(
                 "owner", entity_id="entity-a", key_id="key-a",
                 capability_id="research.read", action="read",
-                resource_scope="source:doc\\nother"
+                resource_scope="source:doc\nother"
             )
 
     def test_audit_history_is_append_only_and_scoped(self):
