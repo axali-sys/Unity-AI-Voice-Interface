@@ -222,7 +222,13 @@ class DriSecurityIntegrationTests(unittest.TestCase):
                 evidence_refs=["test-evidence:execution-output"],
             )
             self.assertEqual(receipt["receipt"]["intent_id"], intent["intent_id"])
-            terminal = approvals.complete_finalization("worker", intent["intent_id"])
+            approvals.set_receipt_commit_verifier(
+                lambda session, principal, intent_id, receipt_hash:
+                    ledger.verify_committed_receipt(session, intent_id, receipt_hash)
+            )
+            terminal = approvals.complete_finalization(
+                "worker", intent["intent_id"], receipt_hash=receipt["receipt_hash"]
+            )
             self.assertEqual(terminal["status"], "completed")
             self.assertTrue(ledger.verify_chain("worker")["valid"])
         finally:
