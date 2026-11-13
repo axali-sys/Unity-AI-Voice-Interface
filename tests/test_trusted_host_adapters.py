@@ -18,7 +18,7 @@ class TrustedHostAdapterTests(unittest.TestCase):
         self.dna = DigitalDNARegistry(str(root / "dna.sqlite3"))
         self.keys = EntityKeyStore(str(root / "keys.sqlite3"))
         self.governance = EntityGovernanceRegistry(
-            authenticate=lambda session: self.owner if session == "valid" else {"authenticated": False},
+            authenticate=lambda session: self.owner if session == "valid" else session if isinstance(session, dict) else {"authenticated": False},
             resolve_owner=lambda workspace, entity: "owner:1" if (workspace, entity) == ("ws-a", "entity-1234") else None,
             authorize_governance=lambda principal, entity, operation: principal["subject"] == "governor:1",
             db_path=str(root / "governance.sqlite3"),
