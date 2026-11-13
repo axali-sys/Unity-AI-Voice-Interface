@@ -1,10 +1,17 @@
-name: XParallel Integration Tests
+name: XParallel Integration Tests (DRI-001)
 
 on:
+  push:
+    branches:
+      - "dri-001/xparallel-master-blueprint"
   pull_request:
     paths:
       - "xparallel/**"
       - "tests/**"
+      - "app/**"
+      - "lib/**"
+      - "package.json"
+      - ".env.example"
       - "public/xparallel.html"
       - ".github/workflows/xparallel-tests.yml"
   workflow_dispatch:
@@ -22,6 +29,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install project and test dependencies
+        run: python -m pip install cryptography
+      - name: Set up Node.js for frontend configuration tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Test public application URL configuration
+        run: npm run test:public-url
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
       - name: Check Axaliai and XParallel JavaScript syntax
@@ -51,3 +66,62 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+      - name: Test Digital DNA registry
+        run: python -m unittest discover -s tests -p "test_digital_dna.py" -v
+      - name: Test entity identity and key trust
+        run: python -m unittest discover -s tests -p "test_identity_trust.py" -v
+      - name: Test entity action authorization policy
+        run: python -m unittest discover -s tests -p "test_entity_authorization.py" -v
+      - name: Test signed entity messaging and replay protection
+        run: python -m unittest discover -s tests -p "test_entity_messaging.py" -v
+      - name: Test secure entity communication gateway
+        run: python -m unittest discover -s tests -p "test_entity_gateway.py" -v
+      - name: Test entity governance, approval separation, revocation, and expiry
+        run: python -m unittest discover -s tests -p "test_entity_governance.py" -v
+      - name: Test evidence-based capability verification laboratory
+        run: python -m unittest discover -s tests -p "test_capability_verification.py" -v
+      - name: Test verified entity action gate composition
+        run: python -m unittest discover -s tests -p "test_verified_action_gate.py" -v
+      - name: Test cross-module governance, verification and action-gate integration
+        run: python -m unittest discover -s tests -p "test_dri_security_integration.py" -v
+      - name: Test trusted host adapters and workspace enforcement boundary
+        run: python -m unittest discover -s tests -p "test_trusted_host_adapters.py" -v
+      - name: Test human-approved execution tickets and lifecycle
+        run: python -m unittest discover -s tests -p "test_execution_approval.py" -v
+      - name: Test signed execution receipts and provenance chain
+        run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
+      - name: Test transactional storage, migrations, backup and recovery
+        run: python -m unittest discover -s tests -p "test_storage_recovery.py" -v
+      - name: Test independent entity SDK and protocol conformance
+        run: python -m unittest discover -s tests -p "test_protocol_conformance.py" -v
+      - name: Test Parallel Verse SQLite persistence and workspace isolation
+        run: python -m unittest discover -s tests -p "test_parallel_verse.py" -v
+      - name: Test Parallel Verse authenticated service boundary
+        run: python -m unittest discover -s tests -p "test_parallel_verse_service.py" -v
+      - name: Test Omni workflow authorization approval retries and receipts
+        run: python -m unittest discover -s tests -p "test_omni_orchestrator.py" -v
+      - name: Test simulation-only reality interface safety boundary
+        run: python -m unittest discover -s tests -p "test_reality_interface.py" -v
+      - name: Test approval-gated evolution laboratory
+        run: python -m unittest discover -s tests -p "test_evolution_lab.py" -v
+      - name: Test bounded Parallel Intelligence collaboration and verification
+        run: python -m unittest discover -s tests -p "test_parallel_intelligence.py" -v
+      - name: Test provider-neutral cognitive runtime and model gateway
+        run: python -m unittest discover -s tests -p "test_cognitive_runtime.py" -v
+      - name: Test encrypted entity memory, provenance and access controls
+        run: python -m unittest discover -s tests -p "test_entity_memory.py" -v
+      - name: Test signed entity federation discovery and visibility controls
+        run: python -m unittest discover -s tests -p "test_entity_federation.py" -v
+      - name: Test encrypted transport and reliable delivery outbox
+        run: python -m unittest discover -s tests -p "test_secure_transport.py" -v
+      - name: Test restricted Docker execution boundary
+        run: python -m unittest discover -s tests -p "test_v1_runner.py" -v
+      - name: Test Docker cgroup v2 resource meter
+        run: python -m unittest discover -s tests -p "test_docker_cgroup_meter.py" -v
+
+      - name: Test approved execution host-service boundary
+        run: python -m unittest discover -s tests -p "test_execution_host_services.py" -v
+      - name: Test persistent execution evidence storage
+        run: python -m unittest discover -s tests -p "test_execution_evidence_store.py" -v
+      - name: Test approved execution worker
+        run: python -m unittest discover -s tests -p "test_execution_worker.py" -v

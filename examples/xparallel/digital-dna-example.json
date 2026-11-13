@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.1.0",
+  "entity_id": "xp:example:research-assistant-001",
+  "entity_type": "agent",
+  "display_name": "Example Research Assistant",
+  "description": "Illustrative manifest only; not registered or verified.",
+  "issuer": "xp:local-registry",
+  "status": "pending",
+  "created_at": "2026-11-13T00:00:00Z",
+  "updated_at": "2026-11-13T00:00:00Z",
+  "owner": {
+    "subject": "workspace:demo",
+    "controller": null,
+    "proof_ref": null,
+    "transfer_policy": "owner-approval-required"
+  },
+  "protocols": [
+    {
+      "id": "xparallel.entity-message",
+      "version": "0.1.0"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "task-request",
+      "version": "0.1.0",
+      "transport": "https",
+      "direction": "bidirectional",
+      "contract_ref": "contracts/task-request-0.1.0.json"
+    }
+  ],
+  "runtime": {
+    "family": "provider-neutral-agent",
+    "version": "0.1",
+    "adapters": []
+  },
+  "capabilities": [
+    {
+      "capability_id": "research.summarize",
+      "version": "0.1.0",
+      "purpose": "Summarize supplied public research sources.",
+      "input_contract_ref": "contracts/research-input-0.1.0.json",
+      "output_contract_ref": "contracts/research-output-0.1.0.json",
+      "status": "declared",
+      "evidence_refs": [],
+      "verifier": null,
+      "limits": {
+        "max_sources": 5,
+        "external_side_effects": false
+      },
+      "required_scopes": [
+        "research.read"
+      ]
+    }
+  ],
+  "permission_requests": [
+    {
+      "action": "read",
+      "resource_scope": "user-supplied-public-sources",
+      "reason": "Required to summarize user-provided sources."
+    }
+  ],
+  "data_handling": {
+    "memory_classes": [
+      "ephemeral-task-context"
+    ],
+    "retention_policy": "Discard task context at task completion unless separately authorized.",
+    "export_supported": false,
+    "deletion_supported": true,
+    "encryption_claim": null,
+    "data_residency": null
+  },
+  "provenance": {
+    "manifest_digest": null,
+    "previous_digest": null,
+    "signing_key_id": null,
+    "signature_ref": null,
+    "signed_at": null
+  }
+}

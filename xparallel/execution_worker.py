@@ -1,0 +1,251 @@
+"""Approval-bound execution worker; all host evidence and measurement adapters are injected.
+
+The worker launches no code until the one-time ticket is consumed, the trusted
+payload/artifact are checked, and a live revocation checkpoint passes.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from typing import Any, Callable
+
+
+def _canonical_digest(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+class ApprovedExecutionWorker:
+    def __init__(
+        self, *, approvals: Any, runner: Callable[..., dict[str, Any]],
+        load_payload: Callable[[dict[str, Any]], dict[str, Any]],
+        resolve_artifact_digest: Callable[[dict[str, Any]], str],
+        resolve_policy_evidence: Callable[[dict[str, Any]], dict[str, Any]],
+        measure_resources: Callable[[dict[str, Any], dict[str, Any]], dict[str, int]],
+        store_evidence: Callable[[dict[str, Any], dict[str, Any]], list[str]],
+        receipts: Any,
+    ):
+        adapters = (runner, load_payload, resolve_artifact_digest,
+                    resolve_policy_evidence, measure_resources, store_evidence)
+        if not all(callable(x) for x in adapters):
+            raise TypeError("trusted_worker_adapters_required")
+        if not callable(getattr(approvals, "start", None)) or not callable(getattr(approvals, "check_running", None)) or not callable(getattr(approvals, "begin_finalization", None)) or not callable(getattr(approvals, "complete_finalization", None)) or not callable(getattr(approvals, "get_finalization_for_recovery", None)):
+            raise TypeError("execution_approval_registry_required")
+        if not callable(getattr(receipts, "append", None)) or not callable(getattr(receipts, "get_by_intent", None)):
+            raise TypeError("execution_receipt_ledger_required")
+        self._approvals = approvals
+        self._runner = runner
+        self._load_payload = load_payload
+        self._resolve_artifact = resolve_artifact_digest
+        self._resolve_policy = resolve_policy_evidence
+        self._measure = measure_resources
+        self._store_evidence = store_evidence
+        self._receipts = receipts
+
+    def recover_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
+        """Retry receipt commit from persisted evidence; never re-run the workload."""
+        pending = self._approvals.get_finalization_for_recovery(session, intent_id)
+        data = pending.get("finalization_data")
+        if not isinstance(data, dict):
+            raise ValueError("finalization_receipt_data_unavailable")
+        existing = self._receipts.get_by_intent(session, intent_id)
+        if existing is not None:
+            receipt = existing
+            if pending["status"] in {"completed", "failed"}:
+                expected_status = "completed" if pending.get("outcome") == "success" else "failed"
+                if pending["status"] != expected_status:
+                    raise ValueError("terminal_execution_outcome_mismatch")
+                return {
+                    "intent_id": intent_id, "status": pending["status"],
+                    "outcome": pending["outcome"], "receipt": receipt,
+                    "receipt_pending": False, "recovered": True,
+                }
+        else:
+            if pending["status"] != "finalizing":
+                raise ValueError("terminal_execution_receipt_missing")
+            outcome = pending.get("outcome")
+            if outcome not in {"success", "failure", "blocked"}:
+                raise ValueError("invalid_pending_execution_outcome")
+            try:
+                receipt = self._receipts.append(
+                    session, intent_id=intent_id,
+                    policy_decision=data["policy_decision"],
+                    started_at=data["started_at"],
+                    finished_at=pending["finished_at"],
+                    exit_code=0 if outcome == "success" else 1,
+                    resource_usage=data["resource_usage"],
+                    evidence_refs=data["evidence_refs"],
+                )
+            except Exception:
+                # A competing recovery attempt may have committed the unique
+                # receipt between lookup and append. Accept only the verified
+                # ledger entry, never a raw duplicate/constraint error.
+                receipt = self._receipts.get_by_intent(session, intent_id)
+                if receipt is None:
+                    raise
+        terminal = self._approvals.complete_finalization(
+            session, intent_id, receipt_hash=receipt["receipt_hash"]
+        )
+        return {
+            "intent_id": intent_id, "status": terminal["status"],
+            "outcome": pending["outcome"], "receipt": receipt,
+            "receipt_pending": False, "recovered": True,
+        }
+
+    def recover_pending_finalizations(self, session: Any, *, limit: int = 50) -> dict[str, Any]:
+        """Recover a bounded batch of this executor's pending receipts without rerunning jobs."""
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
+            raise ValueError("pending_finalization_limit_out_of_range")
+        list_pending = getattr(self._approvals, "list_pending_finalizations", None)
+        if not callable(list_pending):
+            raise TypeError("pending_finalization_listing_required")
+        pending = list_pending(session, limit=limit)
+        results = []
+        for job in pending:
+            intent_id = job.get("intent_id") if isinstance(job, dict) else None
+            if not isinstance(intent_id, str):
+                continue
+            try:
+                results.append(self.recover_finalization(session, intent_id))
+            except Exception as exc:
+                # Keep the batch moving; return a stable error class, not adapter details.
+                results.append({
+                    "intent_id": intent_id, "status": "finalizing",
+                    "receipt_pending": True, "recovered": False,
+                    "error": "execution_receipt_recovery_failed",
+                    "failure_type": type(exc).__name__,
+                })
+        return {
+            "scanned": len(pending),
+            "recovered": sum(1 for item in results if item.get("receipt_pending") is False),
+            "pending": sum(1 for item in results if item.get("receipt_pending") is True),
+            "results": results,
+        }
+
+    def execute(self, session: Any, one_time_ticket: str) -> dict[str, Any]:
+        running = self._approvals.start(session, one_time_ticket)
+        intent_id = running["intent_id"]
+        intent = running["intent"]
+        started_at = running["started_at"]
+
+        def checkpoint() -> bool:
+            try:
+                result = self._approvals.check_running(session, intent_id)
+                return isinstance(result, dict) and result.get("continue") is True
+            except Exception:
+                return False
+
+        try:
+            if not checkpoint():
+                raise PermissionError("execution_revoked_before_worker_start")
+            payload = self._load_payload(intent)
+            if not isinstance(payload, dict) or _canonical_digest(payload) != intent["payload_digest"]:
+                raise PermissionError("approved_payload_digest_mismatch")
+            if self._resolve_artifact(intent) != intent["artifact_digest"]:
+                raise PermissionError("approved_artifact_digest_mismatch")
+            if not checkpoint():
+                raise PermissionError("execution_revoked_before_runner_start")
+            result = self._runner(
+                payload,
+                approved_limits=intent["limits"],
+                expected_image_digest=intent["runner_image_digest"],
+                should_continue=checkpoint,
+            )
+            if not isinstance(result, dict) or result.get("status") not in {"success", "failed", "blocked"}:
+                result = {"status": "failed", "error": "runner_returned_invalid_result"}
+            outcome = "success" if result["status"] == "success" else (
+                "blocked" if result["status"] == "blocked" else "failure"
+            )
+        except PermissionError as exc:
+            result = {"status": "blocked", "error": str(exc)}
+            outcome = "blocked"
+        except Exception as exc:
+            result = {"status": "failed", "error": "worker_adapter_failure", "detail": type(exc).__name__}
+            outcome = "failure"
+
+        # Freeze the outcome first, but do not make it terminal until a signed
+        # receipt has been appended. Failed evidence preparation remains recoverable.
+        evidence_errors = []
+        try:
+            policy = self._resolve_policy(intent)
+            if not isinstance(policy, dict) or policy.get("allowed") is not True:
+                raise PermissionError("trusted_policy_evidence_unavailable_for_receipt")
+        except Exception as exc:
+            policy = {"allowed": False, "reason_code": "policy_evidence_unavailable"}
+            evidence_errors.append(type(exc).__name__)
+        try:
+            usage = self._measure(result, intent)
+        except Exception as exc:
+            usage = {
+                "wall_ms": None, "cpu_ms": None, "memory_peak_mb": None,
+                "output_bytes": None, "pids_peak": None,
+            }
+            evidence_errors.append(type(exc).__name__)
+        try:
+            evidence_refs = self._store_evidence(result, intent)
+            if not isinstance(evidence_refs, list) or (outcome == "success" and not evidence_refs):
+                raise ValueError("execution_evidence_storage_required")
+        except Exception as exc:
+            evidence_refs = []
+            evidence_errors.append(type(exc).__name__)
+        if evidence_errors:
+            # Preserve the actual execution outcome. The signed failure receipt
+            # records unavailable measurements/evidence as unknown, never zero
+            # or a fabricated successful policy decision.
+            if outcome == "success":
+                outcome = "failure"
+                result = {"status": "failed", "error": "execution_evidence_pipeline_incomplete"}
+            if policy.get("allowed") is not True and outcome == "success":
+                outcome = "failure"
+            if policy.get("allowed") is not True and not policy.get("reason_code"):
+                policy = {"allowed": False, "reason_code": "policy_evidence_unavailable"}
+
+        try:
+            finalizing = self._approvals.begin_finalization(
+                session, intent_id, outcome=outcome,
+                receipt_data={
+                    "policy_decision": policy, "started_at": started_at,
+                    "resource_usage": usage, "evidence_refs": evidence_refs,
+                },
+            )
+        except PermissionError:
+            # A revocation racing with successful completion must downgrade
+            # the recorded outcome, never leave a false success or running job.
+            if outcome != "success":
+                raise
+            outcome = "blocked"
+            result = {"status": "blocked", "error": "execution_revoked_or_stale_at_completion"}
+            finalizing = self._approvals.begin_finalization(
+                session, intent_id, outcome=outcome,
+                receipt_data={
+                    "policy_decision": policy, "started_at": started_at,
+                    "resource_usage": usage, "evidence_refs": evidence_refs,
+                },
+            )
+        try:
+            receipt = self._receipts.append(
+                session,
+                intent_id=intent_id,
+                policy_decision=policy,
+                started_at=started_at,
+                finished_at=finalizing["finished_at"],
+                exit_code=0 if outcome == "success" else 1,
+                resource_usage=usage,
+                evidence_refs=evidence_refs,
+            )
+        except Exception as exc:
+            return {
+                "intent_id": intent_id, "status": "finalizing", "outcome": outcome,
+                "runner_result": result, "receipt": None, "receipt_pending": True,
+                "error": "execution_receipt_commit_failed",
+                "receipt_error": type(exc).__name__,
+            }
+
+        terminal = self._approvals.complete_finalization(session, intent_id, receipt_hash=receipt["receipt_hash"])
+        return {
+            "intent_id": intent_id, "status": terminal["status"],
+            "outcome": outcome, "runner_result": result, "receipt": receipt,
+            "receipt_pending": False,
+        }
+

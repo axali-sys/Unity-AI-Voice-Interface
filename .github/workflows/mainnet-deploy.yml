@@ -14,6 +14,9 @@ env:
 
 jobs:
   deploy:
+    # Never deploy from workflow_dispatch or a feature branch.
+    # Production deployment remains reachable only through a push to main.
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     concurrency:
       group: axaliai-mainnet
