@@ -40,6 +40,12 @@ revalidates identity and workspace instead of trusting a caller-built dict.
         return {"subject": subject, "workspace_id": workspace, "role": role}
 
     @staticmethod
+    def _session_token(token: Any) -> str:
+        if not isinstance(token, str) or not token.strip():
+            raise PermissionError("trusted_session_token_required")
+        return token
+
+    @staticmethod
     def _exact(data: Any, fields: set[str]) -> dict[str, Any]:
         if not isinstance(data, dict) or set(data) != fields:
             raise ValueError("execution_request_schema_mismatch")
@@ -51,17 +57,15 @@ revalidates identity and workspace instead of trusting a caller-built dict.
             "entity_id", "key_id", "capability_id", "action", "resource_scope",
             "payload_digest", "artifact_digest", "runner_image_digest", "limits",
         })
-        result = self._approvals.request_intent(
-            principal, **body
-        )
+        token = self._session_token(session_token)
+        result = self._approvals.request_intent(token, **body)
         return {"intent": result}
 
     def approve_intent(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"owner", "admin"})
         body = self._exact(data, {"intent_id", "reason"})
-        result = self._approvals.approve(
-            principal, body["intent_id"], reason=body["reason"]
-        )
+        token = self._session_token(session_token)
+        result = self._approvals.approve(token, body["intent_id"], reason=body["reason"])
         # The one-use ticket is returned only to the approving principal.
         return {"approval": result}
 
@@ -70,7 +74,8 @@ revalidates identity and workspace instead of trusting a caller-built dict.
         body = self._exact(data, {"one_time_ticket"})
         if not isinstance(body["one_time_ticket"], str):
             raise ValueError("invalid_execution_ticket")
-        token = self._session_token(session_token)\n        return self._worker.execute(token, body["one_time_ticket"])
+        token = self._session_token(session_token)
+        return self._worker.execute(token, body["one_time_ticket"])
 
     def recover_pending(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"operator"})
