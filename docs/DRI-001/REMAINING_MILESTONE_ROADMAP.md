@@ -51,7 +51,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no model specialists, durable queue, concurrency scheduler, cancellation/timeouts, token/cost accounting, evidence validation service, quality benchmark, review UI, approval-ticket binding or verified execution integration exists. Conflict detection is supplied by the synthesis adapter and is not independently calibrated.
 
 ### M3.4 — Omni orchestration
-Connect planning, scheduling, routing, retries, policy checks, approval gates and execution receipts through typed workflows. Every external or consequential action must use the same server-side enforcement boundary.
+**Partial implementation:** `xparallel/omni_orchestrator.py` adds typed workflow validation, dependency ordering, cycle rejection, mandatory policy authorization, human approval-ticket verification for consequential steps, bounded idempotent retries, dependency stop behavior and mandatory receipt recording. Tests cover authorization, approval, retries, receipt failures and dependencies. See `docs/DRI-001/OMNI_ORCHESTRATION.md`.
+
+**Not operational:** no durable scheduler/queue, worker leases, resume/recovery, connection to existing planners/Parallel Intelligence/execution-ticket/receipt stores, real approval UI/provider, configured executor, timeout/cancellation, concurrency, observability or production integration exists. Host adapters must enforce the verified action gate; the orchestrator is not itself a trust authority.
 
 ### M3.5 — Parallel Verse persistent environments
 Integrate workspace-scoped spaces, entities, conversations, tasks and event histories with durable storage, access control, lifecycle management and multi-entity isolation. The existing SQLite/optional PostgreSQL prototype is not yet a deployed persistent universe.
