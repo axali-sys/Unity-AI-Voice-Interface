@@ -126,7 +126,7 @@ class ExecutionApprovalRegistry:
                 decided_at TEXT, expires_at TEXT NOT NULL,
                 ticket_id TEXT, ticket_hash TEXT, ticket_expires_at TEXT,
                 executor_subject TEXT, started_at TEXT, finished_at TEXT,
-                outcome TEXT, cancellation_reason TEXT, finalization_json TEXT,
+                outcome TEXT, cancellation_reason TEXT, finalization_json TEXT, finalization_digest TEXT,
                 PRIMARY KEY(workspace_id, intent_id),
                 UNIQUE(workspace_id, ticket_id),
                 UNIQUE(ticket_hash)
@@ -143,6 +143,18 @@ class ExecutionApprovalRegistry:
         columns = {row["name"] for row in self._db.execute("PRAGMA table_info(execution_intents)")}
         if "finalization_json" not in columns:
             self._db.execute("ALTER TABLE execution_intents ADD COLUMN finalization_json TEXT")
+        if "finalization_digest" not in columns:
+            self._db.execute("ALTER TABLE execution_intents ADD COLUMN finalization_digest TEXT")
+        self._db.execute("""
+            CREATE TRIGGER IF NOT EXISTS immutable_finalization_package
+            BEFORE UPDATE OF finalization_json, finalization_digest ON execution_intents
+            WHEN OLD.status IN ('finalizing', 'completed', 'failed')
+             AND (NEW.finalization_json IS NOT OLD.finalization_json
+                  OR NEW.finalization_digest IS NOT OLD.finalization_digest)
+            BEGIN
+                SELECT RAISE(ABORT, 'finalization_package_immutable');
+            END
+        """)
         self._db.commit()
 
     def set_receipt_commit_verifier(self, verifier: Callable[[Any, dict[str, str], str, str], bool]) -> None:
@@ -413,6 +425,7 @@ class ExecutionApprovalRegistry:
                 raise ValueError("finalization_receipt_data_too_large")
         else:
             encoded_receipt_data = None
+        finalization_digest = hashlib.sha256(encoded_receipt_data.encode("utf-8")).hexdigest() if encoded_receipt_data else None
         with _LOCK, self._db:
             row = self._db.execute(
                 "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
@@ -427,9 +440,9 @@ class ExecutionApprovalRegistry:
                 raise PermissionError("execution_revoked_or_stale_at_completion")
             now = _now()
             self._db.execute(
-                """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?, finalization_json=?
+                """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?, finalization_json=?, finalization_digest=?
                    WHERE workspace_id=? AND intent_id=? AND status='running'""",
-                (outcome, _iso(now), encoded_receipt_data, principal["workspace_id"], key),
+                (outcome, _iso(now), encoded_receipt_data, finalization_digest, principal["workspace_id"], key),
             )
             self._event(principal["workspace_id"], key, principal["subject"],
                         "execution_finalizing", {"outcome": outcome}, now)
@@ -454,8 +467,11 @@ class ExecutionApprovalRegistry:
             raise ValueError("execution_not_pending_finalization")
         if row["executor_subject"] != principal["subject"]:
             raise PermissionError("execution_executor_mismatch")
-        if not row["finalization_json"]:
+        if not row["finalization_json"] or not row["finalization_digest"]:
             raise ValueError("finalization_receipt_data_unavailable")
+        actual_digest = hashlib.sha256(row["finalization_json"].encode("utf-8")).hexdigest()
+        if not secrets.compare_digest(actual_digest, row["finalization_digest"]):
+            raise ValueError("finalization_receipt_data_integrity_failed")
         record = self._record(row)
         record["finalization_data"] = json.loads(row["finalization_json"])
         return record
