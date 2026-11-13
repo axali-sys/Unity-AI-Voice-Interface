@@ -39,3 +39,18 @@ all four JWT-only routes dispatch with the verified workspace claims, and
 authorization failures map to safe HTTP responses. These are in-process tests;
 they do not establish a live network listener, configured identity provider,
 or production host integration.
+
+
+## Independent host-session revalidation
+
+The HTTP layer verifies the bearer token to obtain issuer-signed role claims.
+The private execution adapter now forwards the original bearer token—not a
+caller-constructed principal dictionary—to the approval registry and worker.
+The registry's configured host authenticator must independently validate that
+token and return the authoritative subject and workspace. This prevents the
+execution control plane from treating an ordinary claims dictionary as a
+session credential.
+
+This is still a host integration contract: the host must configure its
+authenticator to validate the same issuer, audience, expiry and signing key.
+No identity provider or live host authenticator is configured by this branch.
