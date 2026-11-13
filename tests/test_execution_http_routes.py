@@ -19,19 +19,19 @@ class FakeAPI:
         self.calls = []
 
     def request_intent(self, claims, data, *, session_token):
-        self.calls.append(("request", claims, data))
+        self.calls.append(("request", claims, data, session_token))
         return {"intent": {"status": "requested"}}
 
     def approve_intent(self, claims, data, *, session_token):
-        self.calls.append(("approve", claims, data))
+        self.calls.append(("approve", claims, data, session_token))
         return {"approval": {"status": "approved"}}
 
     def execute_ticket(self, claims, data, *, session_token):
-        self.calls.append(("execute", claims, data))
+        self.calls.append(("execute", claims, data, session_token))
         return {"status": "completed"}
 
     def recover_pending(self, claims, data, *, session_token):
-        self.calls.append(("recover", claims, data))
+        self.calls.append(("recover", claims, data, session_token))
         return {"pending": 0}
 
 
