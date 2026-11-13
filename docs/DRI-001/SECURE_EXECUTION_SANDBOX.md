@@ -14,7 +14,8 @@ Implemented as a hardened local Docker-runner configuration and unit-tested comm
 - /tmp is a bounded noexec/nosuid/nodev tmpfs.
 - Only a disposable temporary workspace is mounted; no host credentials, source checkout, Docker socket, or home directory is mounted.
 - Input files have per-file, total-size, count, path-traversal, and base64 validation limits.
-- Returned stdout/stderr strings are truncated to 10,000 characters after capture. This does not yet cap peak memory or pipe volume during capture; a production runner must implement streaming output quotas and process-tree cleanup.
+- Stdout and stderr are drained concurrently with bounded retained output (10,000 bytes per stream by default); excess output is discarded while pipes continue draining. The result records whether either stream was truncated.
+- The Docker CLI is launched in a separate process group and that group is killed on timeout. This does not yet prove that every Docker-daemon-managed container is terminated on every host/runtime failure; container-ID tracking and daemon-side cleanup verification remain required before hostile public workloads.
 - The execution command remains an explicit test command supplied to the runner and is treated as untrusted code.
 
 ## Required configuration
@@ -35,10 +36,10 @@ This milestone hardens the existing local runner module only. It does not wire e
 
 ## Verification
 
-Unit tests inspect workspace validation and Docker command construction, including non-root identity, digest pinning, no network, read-only root, dropped capabilities, resource limits, and absence of host credential mounts. These tests verify configuration construction, not that a live Docker host enforces every control.
+Unit tests inspect workspace validation, strict resource bounds, Docker command construction, digest pinning, no network, read-only root, dropped capabilities, absence of host credential mounts, bounded stdout/stderr capture, and timeout process-group cleanup. These tests verify local process behavior and configuration construction, not that a live Docker host enforces every control.
 
 
 CI note: the test suite includes explicit checks for digest pinning, workspace path and size limits, non-root ownership, Docker command hardening, and the blocked state when Docker is unavailable.
 
 
-Open hardening item: current subprocess capture truncates the returned strings only after process completion; it is not a strict streaming output quota. Do not expose this runner to untrusted public workloads until bounded streaming capture, process-tree termination, and stronger isolation are implemented and tested.
+Open hardening items: verify daemon-side container termination on timeout, add concurrency and host-level disk quotas, and independently validate the Docker host configuration. Do not expose this runner to untrusted public workloads until those controls and stronger isolation are independently reviewed.
