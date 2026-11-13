@@ -16,7 +16,7 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 |---|---|---|---|---|
 | C001 | Cognitive Core | Partial | main | Chat service, planning agent and intent routing inspected; broader cognitive acceptance incomplete. |
 | C002 | Multi-Model Intelligence | Partial | feature branches #30/#42 | Mixer adapters and tests exist; live providers and mainline integration unverified. |
-| C003 | Self-Evaluation Engine | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
+| C003 | Self-Evaluation Engine | Partial | DRI branch | Deterministic evaluation harness and experiment-runner adapter exist; calibrated model self-evaluation is not established. |
 | C004 | Adaptive Intelligence | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C005 | Reasoning Laboratory | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C006 | Decision Intelligence | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
@@ -27,14 +27,14 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 | C011 | Scientific research assistant | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C012 | Mathematical and engineering intelligence | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C013 | Strategic planning engine | Partial | main + PR #37 | Basic planner and feature-branch roaming planner; durable constrained planning incomplete. |
-| C014 | Collective intelligence engine | Partial | feature branches #30/#37 | Multi-model synthesis and staged planner exist; independent attributed collective runtime incomplete. |
+| C014 | Collective intelligence engine | Partial | feature branches #30/#37 + DRI branch | Attributed specialist proposals, verifier adapter and synthesis added; connected specialists and durable coordination remain absent. |
 
 ## 2. Omni knowledge plane (C015–C027)
 
 | ID | Component | Status | Evidence scope | Remaining gap |
 |---|---|---|---|---|
 | C015 | OmniStream | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
-| C016 | OmniMemory | Partial | main | SQLite workspace memory save/search; retention, encryption, deletion and durable hosting incomplete. |
+| C016 | OmniMemory | Partial | main + DRI branch | Main SQLite memory plus encrypted entity-memory prototype with provenance/ACL adapters; migration, KMS, semantic index and production retention remain incomplete. |
 | C017 | OmniSearch | Partial | main | Keyword retrieval exists; unified connectors, ranking and ACL filtering incomplete. |
 | C018 | OmniGraph | Partial | main | Solution graph exists; general provenance-aware knowledge graph incomplete. |
 | C019 | OmniVault | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
@@ -51,7 +51,7 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 
 | ID | Component | Status | Evidence scope | Remaining gap |
 |---|---|---|---|---|
-| C028 | OmniFlow | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
+| C028 | OmniFlow | Partial | DRI branch | Typed workflow dependency validation and approval-gated adapter execution exist; durable scheduling, queues, leases and recovery remain absent. |
 | C029 | OmniPlan | Partial | main + PR #37 | Basic planning exists; versioned durable plan and validation incomplete. |
 | C030 | OmniScheduler | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C031 | OmniSwarm | Partial | PR #37 | Staged planner/researcher/arbiter proposal exists; no durable distributed swarm. |
@@ -66,14 +66,14 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 
 | ID | Component | Status | Evidence scope | Remaining gap |
 |---|---|---|---|---|
-| C038 | XParallel Discovery | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
+| C038 | XParallel Discovery | Partial | DRI branch | Signed local registry discovery with visibility and peer-trust hooks; no network registry, cross-organization replication or distributed revocation. |
 | C039 | XParallel Connect | Partial | main | Provider gateway and explicit HTTPS connector surfaces; general connector lifecycle incomplete. |
 | C040 | XParallel Roaming | Partial | PR #37/#42 | Bounded planning and allowlisted retrieval fan-out; no worker lifecycle or execution fabric. |
 | C041 | XParallel Exchange | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
-| C042 | XParallel Protocol | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
+| C042 | XParallel Protocol | Partial | DRI branch | Versioned compatibility contracts, SDK and conformance tests; no released network SDK, external implementation or live key exchange. |
 | C043 | XParallel Mesh | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
-| C044 | XParallel Sandbox | Partial | main | Docker runner with resource bounds; hardening, egress and escape testing incomplete. |
-| C045 | XParallel Registry | Partial | PR #44 | SQLite workspace agent registration/discovery; signed identity/revocation/durable service incomplete. |
+| C044 | XParallel Sandbox | Partial | main + DRI branch | Runner input/resource validation, bounded output capture and timeout cleanup added; no live hostile-code, daemon-cleanup or escape testing. |
+| C045 | XParallel Registry | Partial | PR #44 + DRI branch | Verse registry plus Digital DNA, key-proof and federation primitives; no trusted public registry service or route integration. |
 | C046 | XParallel Passport | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C047 | Parallel Verse | Partial | PR #44 | SQLite spaces/agents/tasks/events and optional Postgres adapter; not merged or deployed. |
 
@@ -117,15 +117,15 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 |---|---|---|---|---|
 | C072 | UIDaaS | Partial | main | Role/action authorization helper exists; identity issuance/session lifecycle incomplete. |
 | C073 | AI Guardian | Unverified | PR #42 helper only | Read-only infrastructure smoke checks do not establish threat monitoring. |
-| C074 | Trust Engine | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
-| C075 | Permission Engine | Partial | main | Basic action authorization exists; granular resource-scope deny-by-default matrix incomplete. |
+| C074 | Trust Engine | Partial | DRI branch | Ed25519 proof-of-possession, key rotation/revocation and capability-evidence primitives exist; no external identity assurance or live trust service. |
+| C075 | Permission Engine | Partial | main + DRI branch | Exact-scope deny-by-default action gate and governed grant registry prototypes; not enforced across production routes. |
 | C076 | Privacy Vault | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C077 | Credential Vault | Unverified | main configuration only | Secrets are read from environment; dedicated vault and rotation not verified. |
 | C078 | AROT | Partial | main | Fingerprint/audit events exist; immutable provenance/chain-of-custody incomplete. |
 | C079 | VOUCHER | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C080 | AI Firewall | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C081 | Policy Engine | Partial | main | Basic role/action and approval checks; unified contextual policy engine incomplete. |
-| C082 | Audit Intelligence | Partial | main | Audit event storage exists; full actor/policy/resource timeline incomplete. |
+| C082 | Audit Intelligence | Partial | main + DRI branch | Scoped append-only event/audit records across entity modules; no tamper-proof distributed ledger or unified timeline. |
 
 ## 8. Personal and organizational intelligence (C083–C095)
 
@@ -160,14 +160,14 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 | C104 | Edge Runtime | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C105 | Observability Engine | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
 | C106 | Backup Engine | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
-| C107 | Developer SDK | Unverified | not inspected | No source-to-code acceptance evidence inspected yet. |
+| C107 | Developer SDK | Partial | DRI branch | Python SDK/protocol compatibility helpers and conformance tests exist; no published package or independent client implementation. |
 
 ## 10. Experimental components (C108–C113)
 
 | ID | Component | Status | Evidence scope | Remaining gap |
 |---|---|---|---|---|
 | C108 | Parallel Reality Engine | Experimental | register | Research candidate; no verified implementation. |
-| C109 | Controlled experiments for agent workflows | Experimental | register | Research candidate; no verified controlled workflow experiment implementation. |
+| C109 | Controlled experiments for agent workflows | Partial | DRI branch | Dataset/config digests, baseline/candidate evaluation and human-approved proposal lifecycle; no training, canary, live promotion or runtime rollback. |
 | C110 | Time Intelligence | Experimental | register | Research candidate; no verified time intelligence implementation. |
 | C111 | Governed network of independent AI agents | Experimental | PR #37/#42 | Governed network is a research goal; bounded planner/roaming code does not satisfy it. |
 | C112 | World Model | Experimental | register | Research candidate; no verified world model implementation. |
@@ -197,8 +197,8 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 
 - Source entries parsed: 113 of 113 expected.
 - Preservation identities parsed: 15 of 15 expected.
-- Partial: 26 components and 8 identities.
-- Experimental: 6 components.
+- Partial: 35 components and 8 identities (updated conservative evidence mapping; no component is Complete).
+- Experimental: 5 components (C108, C110–C113).
 - Remaining entries are Unverified, not presumed absent.
 
 ## Audit method and next actions
