@@ -20,6 +20,7 @@ Status: integration planning and local CI evidence register; no production accep
 | Evolution → deployment | Signed datasets, independent eval, canary, approval, rollback | Record-only proposal lifecycle | Blocked |
 | Reality interface → physical world | Device identity, operator consent, safety interlocks, emergency stop | Simulation-only; no external connector | Blocked |
 | Storage → recovery | Encrypted backup, restore rehearsal, external anchor | Local SQLite backup primitives | Partial |
+| Recovery supervisor → health store/API | Append-only history, restart restoration, JWT operator-only health access, sanitized failures | SQLite adapter and in-process JWT dispatch tests pass; host volume and live listener not configured | Partial |
 | CI → release artifact | Pinned dependencies/actions, SBOM, vulnerability scan, signed provenance | CI test workflows only | Blocked |
 
 ## Cross-module acceptance sequence
