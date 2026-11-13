@@ -20,8 +20,9 @@ class FakeApprovals:
     def check_running(self, session, intent_id):
         return {"continue": self.checkpoint_allowed}
 
-    def begin_finalization(self, session, intent_id, *, outcome):
+    def begin_finalization(self, session, intent_id, *, outcome, receipt_data=None):
         self.finalizing = outcome
+        self.finalization_data = receipt_data
         return {
             "intent_id": intent_id, "status": "finalizing", "outcome": outcome,
             "started_at": "2026-11-13T10:00:00+00:00",
