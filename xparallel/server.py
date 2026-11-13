@@ -101,7 +101,7 @@ def public_rate_ok(handler):
 
 def retrieve_memory_context(query, data):
     """Return a small, workspace-scoped memory context for authenticated AI workflows."""
-    workspace = self.workspace_context(data)["workspace_id"]
+    workspace = workspace_context(data)["workspace_id"]
     matches = search_memories(query, workspace, limit=3)
     return [
         {
