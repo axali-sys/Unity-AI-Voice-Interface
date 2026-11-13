@@ -141,10 +141,15 @@ class TrustedHostAdapters:
         trusted = _trusted_principal(principal)
         return self._governance.active_grants(trusted["workspace_id"], entity_id)
 
-    def build_action_gate(self) -> VerifiedEntityActionGate:
-        """Return the decision-only gate; callers must still enforce its result."""
+    def build_action_gate(self, *, authenticate: Callable[[Any], dict[str, Any]] | None = None) -> VerifiedEntityActionGate:
+        """Return the decision-only gate; callers must still enforce its result.
+
+        Internal control-plane adapters may supply an authenticator that accepts
+        an already-normalized principal returned by this host's own authenticate
+        method. External callers should omit this argument.
+        """
         return VerifiedEntityActionGate(
-            authenticate=self.authenticate,
+            authenticate=authenticate or self.authenticate,
             resolve_entity_context=self.resolve_entity_context,
             load_active_grants=self.load_active_grants,
             verification_lab=self._lab,
