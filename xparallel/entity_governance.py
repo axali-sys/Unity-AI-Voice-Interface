@@ -191,9 +191,9 @@ class EntityGovernanceRegistry:
             ).fetchone()
             if row is None:
                 raise ValueError("grant_not_found")
-            self._require_governance(principal, row["entity_id"], "approve")
             if principal["subject"] == row["requester_subject"]:
                 raise PermissionError("requester_cannot_approve_own_grant")
+            self._require_governance(principal, row["entity_id"], "approve")
             if row["status"] != "pending":
                 raise ValueError("grant_not_pending")
             now = _now()
