@@ -119,7 +119,41 @@ The prototype's “AI memory” is browser `localStorage`, local keyword search,
 
 These repositories must not be merged or treated as one product. NexAI and IDEAS remain independent.
 
-## 8. Audit gaps and next actions
+## 8. Existing 113-component register and branch audit
+
+The pre-existing owner-supplied register was located at:
+
+- Branch: `docs/113-component-register`
+- File: `docs/architecture/113-component-register.md`
+- Pull request: [#58 — Add traceable 113-component AI ecosystem register](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/58)
+- PR state at audit: open, draft, not merged into `main`.
+
+The register accounts for 113 entries C001–C113 across ten groups: intelligence/cognition (14), Omni knowledge (13), Omni orchestration (10), XParallel interoperability (10), creative intelligence (14), engineering/science/industrial (10), identity/trust/security (11), personal/organizational intelligence (13), infrastructure/computing (12), and experimental systems (6). It separately tracks 15 preservation identities P001–P015; those are excluded from the 113 count. The register supplies responsibilities, proposed owners, dependencies/overlaps, and acceptance evidence. Its initial status is Unverified by default; names and branch presence are not implementation proof.
+
+### Relevant existing PR evidence
+
+| PR | Current state and target | Evidence and audit interpretation |
+|---|---|---|
+| [#30 AI Mixer V1](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/30) | Closed/merged into `xparallel-dual-space-expansion`, not `main` | Mixer/plugin code and tests exist on the feature line. PR description reports 23 unit tests passed, but no workflow run was returned for the cited head commit. No live external-provider smoke test was claimed. Treat as feature-branch implementation, not default-branch availability or verified live service. |
+| [#37 Roaming multi-agent planner](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/37) | Open draft against `main` | Contains `xparallel/roaming_ai.py`, `xparallel/parallel_world.py`, documentation and tests. CI workflows for its head commit completed successfully. This is proposed, unmerged code; provider calls still depend on configured runtime credentials. |
+| [#42 OneAI mixer, roaming retrieval and workspace evidence](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/42) | Open draft against `main` | Contains mixer, roaming retrieval, Omni/UnitAI manifest and infrastructure verification modules plus tests. Both listed CI workflows completed successfully for its head commit. It is not merged; a system manifest explicitly describes itself as configuration-report-only and does not prove GPS, biometrics or blockchain verification is active. |
+| [#44 Parallel Verse foundation](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/44) | Open draft against `main` | Contains a local SQLite Parallel Verse store, an opt-in PostgreSQL adapter, migrations, API documentation and tests. Both listed CI workflows completed successfully for its head commit. The SQLite module warns that serverless `/tmp` is not durable; deployed persistence requires a durable volume or configured PostgreSQL. It is not merged or deployed. |
+| [#58 113-component register](https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/58) | Open draft against `main` | The register is present on its feature branch and provides the authoritative brainstorm traceability baseline; it is not yet merged. |
+
+### Default-branch implementation evidence observed
+
+The inspected `main` version of `xparallel/server.py` contains routes for health and public manifests, authenticated workspace conversations and memory, chat, planning, solution creation/verification, graph search, repair-job planning, and approval-gated execution/experiments. It includes role-based authorization, workspace context, audit calls, and server-side provider configuration.
+
+This supports a finding of a real backend foundation in the repository, but not the complete 113-component ecosystem. The route code and imported modules need dedicated tests, security review, and runtime verification before any component is marked Existing and verified. In particular, `/repair/jobs` returns a preliminary plan and explicitly reports that no target repository/service probe/test suite was executed by that endpoint; it is not proof of a completed repair.
+
+### Preliminary component mapping
+
+- **Potential existing foundation, requires component-level tests:** Model Gateway/provider-backed chat, workspace memory, conversation persistence, authorization, audit events, solution graph/repository, repair-job planning, and basic XParallel public/private API surfaces.
+- **Feature-branch implementation, not mainline availability:** AI Mixer/plugin adapters (#30); roaming planner (#37); integrated roaming/mixer/Omni-UnitAI verification (#42); Parallel Verse storage and APIs (#44).
+- **Prototype only:** standalone browser dual-space/profile and local-memory UI; it must not be counted as real Android app virtualization, secure memory, or a production agent sandbox.
+- **Unverified:** remaining C001–C113 and P001–P015 until each is mapped to exact code paths, tests, runtime evidence, and acceptance criteria.
+
+## 9. Audit gaps and next actions
 
 - Inspect the full XParallel backend source and deployed service configuration using authorized repository/service access.
 - Inventory routes, authentication, authorization, data stores, queues, workers, observability, and tests.
@@ -129,7 +163,7 @@ These repositories must not be merged or treated as one product. NexAI and IDEAS
 - Verify zero-cost feasibility and flag any feature that requires paid compute, hosting, or external APIs.
 - Keep all implementation work on isolated branches and verify no production deployment or merge occurs.
 
-## 9. Evidence labels
+## 10. Evidence labels
 
 Use these labels in all status reporting:
 
@@ -140,6 +174,6 @@ Use these labels in all status reporting:
 - **Not found:** not located in the inspected scope; does not prove it exists nowhere.
 - **Blocked:** access, credentials, dependency, or cost constraint prevents verification.
 
-## 10. Milestone acceptance gates
+## 11. Milestone acceptance gates
 
 M1 is complete only when the relevant repositories and authoritative component register have been inspected, the 113 components are reconciled without duplication, dependencies and evidence statuses are recorded, and the resulting plan is reviewed. This initial document is a baseline, not M1 completion.
