@@ -36,7 +36,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no network registry, cross-organization replication, trust-authority hierarchy, transparency log, distributed anti-enumeration controls, revocation propagation, route integration or independent registry conformance suite exists.
 
 ### M3.1 — Entity memory and knowledge provenance
-Build permission-aware memory scopes, provenance, retention, export/deletion, encrypted storage design, retrieval evaluation and workspace/entity isolation. Do not store credentials in model memory.
+**Partial implementation:** `xparallel/entity_memory.py` adds workspace/entity-scoped encrypted memory, mandatory host authentication and per-action authorization adapters, AES-256-GCM encryption with host-resolved keys, authenticated context binding, source/content provenance, bounded retention, authorized export/deletion, lexical retrieval and precision/recall/reciprocal-rank evaluation metrics. Tests cover encrypted storage, provenance, access denial, tampering, deletion and retrieval metrics. See `docs/DRI-001/ENTITY_MEMORY_AND_PROVENANCE.md`.
+
+**Not operational:** no production key-management service, route/chat integration, semantic index, benchmark corpus, scheduled retention service, deletion verification across backups/replicas, cross-device sync or independent privacy/security review. Existing memory vaults have not been migrated. Host ingestion must prevent credentials from entering memory.
 
 ### M3.2 — Cognitive runtime and model gateway
 Create provider-neutral runtime adapters, tool contracts, context budgets, model selection, structured outputs, failure handling and evaluation harnesses. Provider credentials remain server-side and optional; zero-cost/local mode must remain viable.
