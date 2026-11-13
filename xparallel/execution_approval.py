@@ -420,7 +420,7 @@ class ExecutionApprovalRegistry:
                 raise PermissionError("execution_revoked_or_stale_at_completion")
             now = _now()
             self._db.execute(
-                """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?
+                """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?, finalization_json=?
                    WHERE workspace_id=? AND intent_id=? AND status='running'""",
                 (outcome, _iso(now), encoded_receipt_data, principal["workspace_id"], key),
             )
