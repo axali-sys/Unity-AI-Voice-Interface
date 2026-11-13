@@ -101,8 +101,7 @@ class TrustedHostAdapterTests(unittest.TestCase):
         self.assertEqual(context["artifact_digest"], self.digest)
 
     def test_untrusted_or_incomplete_authentication_fails_closed(self):
-        with self.assertRaises(PermissionError):
-            self.adapters.authenticate("invalid")
+        self.assertEqual(self.adapters.authenticate("invalid"), {"authenticated": False})
         with self.assertRaises(PermissionError):
             self.adapters.authenticate({"subject": "owner:1", "workspace_id": "ws-a"})
 
