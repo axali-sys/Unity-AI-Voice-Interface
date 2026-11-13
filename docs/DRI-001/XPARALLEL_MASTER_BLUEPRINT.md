@@ -197,3 +197,15 @@ The full traceability matrix now includes all **113 source components** and all 
 - All remaining entries are **Unverified**, not presumed absent.
 
 This confirms coverage of the source register IDs, not completion of the engineering audit. The matrix is a first-pass triage based on inspected code/branches and must be refined through further source, test, security, and runtime verification.
+
+## 14. M2 — Digital DNA contract foundation
+
+Draft contract, JSON Schema and illustrative manifest have been added on this isolated branch:
+
+- [Digital DNA Contract Specification](./DIGITAL_DNA_CONTRACT.md)
+- [Digital DNA JSON Schema 0.1.0](../../schemas/xparallel/digital-dna-0.1.0.schema.json)
+- [Illustrative Digital DNA Manifest](../../examples/xparallel/digital-dna-example.json)
+
+These files define a portable declaration for entity identity, ownership references, protocol compatibility, capability claims, permission requests, data handling and provenance. The example is explicitly pending and unverified. A manifest is not proof of capability or authorization; registry verification and policy enforcement remain separate services.
+
+**M2 status:** contract design drafted; schema/example files parse as JSON and required top-level fields are present. No registry, cryptographic identity service, runtime enforcement or production capability is claimed as implemented. Next: implement deterministic schema validation and a local SQLite registry prototype with revision history and workspace isolation, then add signature, challenge-response, permission and revocation tests.
