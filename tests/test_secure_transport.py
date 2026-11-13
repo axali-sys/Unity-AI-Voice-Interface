@@ -26,7 +26,7 @@ class EncryptedTransportTests(unittest.TestCase):
             sent=[]
             box=ReliableDeliveryOutbox(send=lambda packet: sent.append(packet) or {"message_id":"m-1","accepted":True},
               verify_ack=lambda ack,mid: ack.get("message_id")==mid and ack.get("accepted") is True,
-              authorize_delivery=lambda mid: True,db_path=f"{root}/outbox.sqlite3")
+              authorize_delivery=lambda ws,mid: True,db_path=f"{root}/outbox.sqlite3")
             self.assertTrue(box.enqueue(workspace_id="ws-a",message_id="m-1",sender_entity_id="sender",encrypted_packet={"x":1})["queued"])
             self.assertTrue(box.enqueue(workspace_id="ws-a",message_id="m-1",sender_entity_id="sender",encrypted_packet={"x":2})["duplicate"])
             self.assertEqual(box.dispatch_one("ws-a","m-1")["status"],"delivered"); self.assertEqual(len(sent),1); box.close()
