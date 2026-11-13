@@ -16,7 +16,7 @@ class FakeReceipts:
 class ExecutionHostServicesTests(unittest.TestCase):
     def setUp(self):
         self.intent = {"artifact_digest": "a" * 64, "limits": {
-            "timeout_seconds": 30, "memory_mb": 256, "output_bytes": 4096, "pids": 32,
+            "timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000, "output_bytes": 4096, "pids": 32,
         }}
         self.services = ExecutionHostServices(
             approvals=FakeApprovals(), runner=lambda *a, **k: {"status": "success"},
@@ -64,6 +64,15 @@ class ExecutionHostServicesTests(unittest.TestCase):
     def test_rejects_usage_over_approved_limits(self):
         self.services._measure = lambda result, intent: {
             "wall_ms": 31000, "cpu_ms": 1, "memory_peak_mb": 1,
+            "output_bytes": 1, "pids_peak": 1,
+        }
+        with self.assertRaisesRegex(ValueError, "exceeds_approved_limits"):
+            self.services.measure_resources({}, self.intent)
+
+
+    def test_rejects_cpu_usage_above_approved_quota(self):
+        self.services._measure = lambda result, intent: {
+            "wall_ms": 1000, "cpu_ms": 1001, "memory_peak_mb": 1,
             "output_bytes": 1, "pids_peak": 1,
         }
         with self.assertRaisesRegex(ValueError, "exceeds_approved_limits"):
