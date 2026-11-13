@@ -118,10 +118,12 @@ class ExecutionReceiptLedger:
         return _principal(self._authenticate(session))
 
     @staticmethod
-    def _validate_usage(usage: Any, limits: dict[str, Any]) -> dict[str, int]:
+    def _validate_usage(usage: Any, limits: dict[str, Any], *, allow_unknown: bool = False) -> dict[str, int | None]:
         if not isinstance(usage, dict) or set(usage) != _USAGE_KEYS:
             raise ValueError("resource_usage_schema_mismatch")
         for key, value in usage.items():
+            if value is None and allow_unknown:
+                continue
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ValueError(f"invalid_resource_usage:{key}")
         bounds = {
@@ -131,7 +133,7 @@ class ExecutionReceiptLedger:
             "output_bytes": limits["output_bytes"],
             "pids_peak": limits["pids"],
         }
-        if any(usage[key] > bounds[key] for key in _USAGE_KEYS):
+        if any(usage[key] is not None and usage[key] > bounds[key] for key in _USAGE_KEYS):
             raise ValueError("resource_usage_exceeds_approved_limits")
         return {key: usage[key] for key in sorted(_USAGE_KEYS)}
 
@@ -171,17 +173,33 @@ class ExecutionReceiptLedger:
         if datetime.fromisoformat(job_finished) < datetime.fromisoformat(job_started):
             raise ValueError("execution_finished_before_start")
 
-        if not isinstance(policy_decision, dict) or policy_decision.get("allowed") is not True:
+        outcome = job.get("outcome")
+        if not isinstance(policy_decision, dict):
+            raise ValueError("policy_decision_required")
+        if policy_decision.get("allowed") is True:
+            grant_id = _id(policy_decision.get("grant_id"), "grant_id")
+            evidence_run_id = _id(policy_decision.get("evidence_run_id"), "evidence_run_id")
+            policy_record = {"allowed": True, "grant_id": grant_id,
+                             "evidence_run_id": evidence_run_id}
+        elif outcome in {"failure", "blocked"}:
+            reason = policy_decision.get("reason_code")
+            if not isinstance(reason, str) or not reason.strip() or len(reason) > 120:
+                raise ValueError("non_success_policy_reason_required")
+            policy_record = {"allowed": False, "reason_code": reason}
+        else:
             raise ValueError("successful_policy_decision_required")
-        grant_id = _id(policy_decision.get("grant_id"), "grant_id")
-        evidence_run_id = _id(policy_decision.get("evidence_run_id"), "evidence_run_id")
         if not isinstance(exit_code, int) or isinstance(exit_code, bool) or not 0 <= exit_code <= 255:
             raise ValueError("invalid_exit_code")
         if (job.get("outcome") == "success") != (exit_code == 0):
             raise ValueError("exit_code_does_not_match_job_outcome")
-        usage = self._validate_usage(resource_usage, intent.get("limits", {}))
-        if not isinstance(evidence_refs, list) or not 1 <= len(evidence_refs) <= 100:
-            raise ValueError("evidence_refs_required")
+        usage = self._validate_usage(
+            resource_usage, intent.get("limits", {}),
+            allow_unknown=outcome in {"failure", "blocked"},
+        )
+        if not isinstance(evidence_refs, list) or len(evidence_refs) > 100 or (
+            outcome == "success" and not evidence_refs
+        ):
+            raise ValueError("evidence_refs_required_for_success")
         refs = []
         for ref in evidence_refs:
             if not isinstance(ref, str) or not ref.strip() or len(ref) > 1000:
@@ -203,8 +221,7 @@ class ExecutionReceiptLedger:
             "artifact_digest": intent["artifact_digest"],
             "runner_image_digest": intent["runner_image_digest"],
             "approval": {"approver_subject": approver, "approved_at": approved_at},
-            "policy_decision": {"allowed": True, "grant_id": grant_id,
-                                "evidence_run_id": evidence_run_id},
+            "policy_decision": policy_record,
             "started_at": job_started, "finished_at": job_finished,
             "exit_code": exit_code, "outcome": job.get("outcome"),
             "resource_usage": usage, "evidence_refs": refs,
