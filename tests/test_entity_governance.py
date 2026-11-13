@@ -156,6 +156,11 @@ class GovernanceRegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(PermissionError, "grant_audit_forbidden"):
             self.registry.events("outsider", approved["grant_id"])
 
+    def test_unrelated_workspace_member_cannot_read_grant_details(self):
+        approved = self.approved()
+        with self.assertRaisesRegex(PermissionError, "grant_read_forbidden"):
+            self.registry.get("outsider", approved["grant_id"])
+
     def test_governance_adapters_are_mandatory(self):
         with self.assertRaises(TypeError):
             EntityGovernanceRegistry(authenticate=lambda s: {}, resolve_owner=None,
