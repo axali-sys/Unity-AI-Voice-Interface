@@ -24,7 +24,7 @@ class VerifiedActionGateTests(unittest.TestCase):
             "action": "read", "resource_scope": "doc:7", "status": "approved",
             "expires_at": "2099-01-01T00:00:00+00:00",
         }]
-        self.allowed_ops = {"run", "read", "audit"}
+        self.allowed_ops = {"run", "read", "audit", "suspended", "revoked"}
         self.lab = CapabilityVerificationLab(
             authenticate=lambda s: {"authenticated": True, "subject": "verifier", "workspace_id": "ws-a"},
             authorize_verifier=lambda p, e, c, op: op in self.allowed_ops,
