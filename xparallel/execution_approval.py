@@ -124,7 +124,7 @@ class ExecutionApprovalRegistry:
                 decided_at TEXT, expires_at TEXT NOT NULL,
                 ticket_id TEXT, ticket_hash TEXT, ticket_expires_at TEXT,
                 executor_subject TEXT, started_at TEXT, finished_at TEXT,
-                outcome TEXT, cancellation_reason TEXT,
+                outcome TEXT, cancellation_reason TEXT, finalization_json TEXT,
                 PRIMARY KEY(workspace_id, intent_id),
                 UNIQUE(workspace_id, ticket_id),
                 UNIQUE(ticket_hash)
@@ -138,6 +138,9 @@ class ExecutionApprovalRegistry:
                 occurred_at TEXT NOT NULL, detail_json TEXT NOT NULL
             )
         """)
+        columns = {row["name"] for row in self._db.execute("PRAGMA table_info(execution_intents)")}
+        if "finalization_json" not in columns:
+            self._db.execute("ALTER TABLE execution_intents ADD COLUMN finalization_json TEXT")
         self._db.commit()
 
     def _get_principal(self, session: Any) -> dict[str, str]:
@@ -163,7 +166,7 @@ class ExecutionApprovalRegistry:
             "ticket_id": row["ticket_id"], "ticket_expires_at": row["ticket_expires_at"],
             "executor_subject": row["executor_subject"], "started_at": row["started_at"],
             "finished_at": row["finished_at"], "outcome": row["outcome"],
-            "cancellation_reason": row["cancellation_reason"],
+            "cancellation_reason": row["cancellation_reason"],\n            "finalization_data": json.loads(row["finalization_json"]) if row["finalization_json"] else None,
         }
 
     def request_intent(
@@ -386,12 +389,22 @@ class ExecutionApprovalRegistry:
             ).fetchone()
         return self._record(updated)
 
-    def begin_finalization(self, session: Any, intent_id: str, *, outcome: str) -> dict[str, Any]:
+    def begin_finalization(self, session: Any, intent_id: str, *, outcome: str, receipt_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Freeze execution outcome while keeping the job non-terminal until receipt commit."""
         principal = self._get_principal(session)
         key = _id(intent_id, "intent_id")
         if outcome not in {"success", "failure", "blocked"}:
             raise ValueError("invalid_execution_outcome")
+        if receipt_data is not None:
+            if not isinstance(receipt_data, dict) or set(receipt_data) != {
+                "policy_decision", "started_at", "resource_usage", "evidence_refs"
+            }:
+                raise ValueError("invalid_finalization_receipt_data")
+            encoded_receipt_data = _canonical(receipt_data)
+            if len(encoded_receipt_data.encode("utf-8")) > 65536:
+                raise ValueError("finalization_receipt_data_too_large")
+        else:
+            encoded_receipt_data = None
         with _LOCK, self._db:
             row = self._db.execute(
                 "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
@@ -408,7 +421,7 @@ class ExecutionApprovalRegistry:
             self._db.execute(
                 """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?
                    WHERE workspace_id=? AND intent_id=? AND status='running'""",
-                (outcome, _iso(now), principal["workspace_id"], key),
+                (outcome, _iso(now), encoded_receipt_data, principal["workspace_id"], key),
             )
             self._event(principal["workspace_id"], key, principal["subject"],
                         "execution_finalizing", {"outcome": outcome}, now)
@@ -417,6 +430,25 @@ class ExecutionApprovalRegistry:
                 (principal["workspace_id"], key),
             ).fetchone()
         return self._record(updated)
+
+    def get_finalization_for_recovery(self, session: Any, intent_id: str) -> dict[str, Any]:
+        """Return the immutable pending receipt package only to the bound executor."""
+        principal = self._get_principal(session)
+        key = _id(intent_id, "intent_id")
+        with _LOCK:
+            row = self._db.execute(
+                "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
+                (principal["workspace_id"], key),
+            ).fetchone()
+        if row is None:
+            raise LookupError("execution_intent_not_found")
+        if row["status"] != "finalizing":
+            raise ValueError("execution_not_pending_finalization")
+        if row["executor_subject"] != principal["subject"]:
+            raise PermissionError("execution_executor_mismatch")
+        if not row["finalization_json"]:
+            raise ValueError("finalization_receipt_data_unavailable")
+        return self._record(row)
 
     def complete_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
         """Mark terminal only after a receipt exists and has been committed by the caller."""
