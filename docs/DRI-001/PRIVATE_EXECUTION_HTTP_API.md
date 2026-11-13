@@ -21,8 +21,10 @@ metering, or an identity provider.
 
 ## Server integration boundary
 
-The adapter is not enabled by default and is not a public endpoint. A host
-must explicitly construct it with real trusted adapters and inject it into
-the HTTP server. Until that is done, the server must fail closed and report
-execution unavailable. Legacy shared-token authentication is not sufficient
-for this API. No route is enabled by this module alone.
+The HTTP server now dispatches four private POST paths: `/execution/intents`,
+`/execution/approve`, `/execution/run`, and `/execution/recover`. Dispatch is
+fail-closed: it requires JWT mode, a configured verifier, and an explicitly
+injected `ExecutionHTTPAPI` instance. With no host bootstrap, requests return
+`trusted_execution_host_not_configured`; in legacy shared-token mode they
+return `trusted_execution_identity_unavailable`. No default execution adapters
+are created, and these routes are not public.
