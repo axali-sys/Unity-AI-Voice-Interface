@@ -21,11 +21,15 @@
   The signed receipt is appended against that authoritative finalizing record;
   only after append succeeds does the registry transition to `completed` or
   `failed`.
-- If evidence preparation or receipt append fails, the job remains
-  `finalizing` with `receipt_pending: true`; it is not falsely reported as
-  terminal. This is a durable pending marker, not yet an automated recovery
-  worker or transactional outbox. Operators still need a controlled recovery
-  path to reconstruct/retry pending receipt creation.
+- If evidence preparation is incomplete, the worker now creates a signed
+  non-success receipt where unavailable measurements are explicitly `null`,
+  policy evidence failure is explicitly denied with a reason code, and missing
+  evidence references remain an empty list. It never substitutes zero or a
+  fabricated allowed decision. Success receipts still require complete measured
+  values, an allowed policy decision and evidence references.
+- If receipt append itself fails, the job remains `finalizing` with
+  `receipt_pending: true`; the immutable receipt package supports retry without
+  rerunning the workload.
 
 ## Mandatory trusted adapters
 
@@ -95,3 +99,18 @@ batches of 1–100 jobs. Each item is recovered independently, so one failed
 receipt does not prevent later jobs from being attempted. This batch API is
 suitable for a future authenticated host scheduler, but no scheduler, HTTP
 endpoint, background process, or automatic startup recovery is enabled.
+
+
+## Explicitly incomplete failure evidence
+
+The receipt schema now distinguishes verified values from unavailable values
+for non-success outcomes. For a failed or blocked execution, a resource field
+may be `null` only when the host could not measure it; a policy failure is
+recorded as `allowed: false` with a stable reason code; and evidence references
+may be empty. These exceptions are prohibited for successful receipts. This
+allows a signed, auditable failure record without inventing telemetry or
+claiming that policy allowed the action.
+
+The tests cover a signed failure receipt with unavailable metrics, denied
+policy evidence and no stored evidence references, plus rejection of the same
+incomplete package for a success receipt.
