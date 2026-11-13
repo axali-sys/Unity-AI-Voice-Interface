@@ -81,7 +81,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not complete / release blocked:** this is a threat-model draft, not an independent security assessment. No full cross-module production integration, trusted identity provider, API-level tenant isolation proof, live executor integration, multi-node transport/federation, hostile-code red team, independent penetration test, SBOM/vulnerability review, disaster-recovery rehearsal, privacy/accessibility/performance review or external conformance audit has been completed. Critical/high findings cannot yet be declared closed.
 
 ### M6 — Release-readiness dossier
-Produce a component-by-component evidence register, operational runbooks, cost and hosting analysis, backup/restore proof, incident response, governance terms, user documentation, API compatibility guarantees and explicit release blockers. A release recommendation is not a deployment authorization.
+**Draft evidence dossier created:** `docs/DRI-001/RELEASE_READINESS_DOSSIER.md` records project boundaries, evidence classifications, milestone status, CI references, release blockers, cost posture and sign-off checklist. It explicitly recommends **DO NOT RELEASE / DO NOT DEPLOY**.
+
+**Not complete:** the 113-component source-to-code audit, operational runbooks, independent security sign-off, cost/hosting analysis, backup/restore rehearsal, incident response, governance/legal terms, full user documentation, API compatibility guarantees and external conformance evidence remain outstanding. The dossier must be refreshed against the exact candidate release commit. A release recommendation is not deployment authorization.
 
 ## Cross-cutting completion rules
 
