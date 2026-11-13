@@ -80,4 +80,5 @@ revalidates identity and workspace instead of trusting a caller-built dict.
     def recover_pending(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"operator"})
         body = self._exact(data, {"limit"})
-        token = self._session_token(session_token)\n        return self._worker.recover_pending_finalizations(token, limit=body["limit"])
+        token = self._session_token(session_token)
+        return self._worker.recover_pending_finalizations(token, limit=body["limit"])
