@@ -112,7 +112,7 @@ class ExecutionApprovalRegistry:
         self._authorize_cancel = authorize_cancel
         self._authorize_executor = authorize_executor
         self._validate_current = validate_current_state
-        self._verify_receipt_commit = verify_receipt_commit or (lambda principal, intent_id, receipt_hash: False)
+        self._verify_receipt_commit = verify_receipt_commit or (lambda session, principal, intent_id, receipt_hash: False)
         if db_path != ":memory:":
             Path(db_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
