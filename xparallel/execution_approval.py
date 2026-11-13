@@ -110,7 +110,7 @@ class ExecutionApprovalRegistry:
         self._authorize_approval = authorize_approval
         self._authorize_cancel = authorize_cancel
         self._authorize_executor = authorize_executor
-        self._validate_current = validate_current_state
+        self._validate_current = validate_current_state\n        self._verify_receipt_commit = verify_receipt_commit or (lambda principal, intent_id, receipt_hash: False)
         if db_path != ":memory:":
             Path(db_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
@@ -452,7 +452,7 @@ class ExecutionApprovalRegistry:
         record["finalization_data"] = json.loads(row["finalization_json"])
         return record
 
-    def complete_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
+    def complete_finalization(self, session: Any, intent_id: str, *, receipt_hash: str) -> dict[str, Any]:
         """Mark terminal only after a receipt exists and has been committed by the caller."""
         principal = self._get_principal(session)
         key = _id(intent_id, "intent_id")
