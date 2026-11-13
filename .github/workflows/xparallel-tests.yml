@@ -57,3 +57,5 @@ jobs:
         run: python -m unittest discover -s tests -p "test_digital_dna.py" -v
       - name: Test entity identity and key trust
         run: python -m unittest discover -s tests -p "test_identity_trust.py" -v
+      - name: Test entity action authorization policy
+        run: python -m unittest discover -s tests -p "test_entity_authorization.py" -v
