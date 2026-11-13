@@ -400,6 +400,9 @@ class ExecutionApprovalRegistry:
                 raise ValueError("execution_not_running")
             if row["executor_subject"] != principal["subject"]:
                 raise PermissionError("execution_executor_mismatch")
+            intent = self._record(row)["intent"]
+            if outcome == "success" and self._validate_current(principal, intent, "finish") is not True:
+                raise PermissionError("execution_revoked_or_stale_at_completion")
             now = _now()
             status = "completed" if outcome == "success" else "failed"
             self._db.execute(
