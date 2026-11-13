@@ -80,6 +80,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
       - name: Test transactional storage, migrations, backup and recovery
         run: python -m unittest discover -s tests -p "test_storage_recovery.py" -v
+      - name: Test independent entity SDK and protocol conformance
+        run: python -m unittest discover -s tests -p "test_protocol_conformance.py" -v
       - name: Test Parallel Verse SQLite persistence and workspace isolation
         run: python -m unittest discover -s tests -p "test_parallel_verse.py" -v
       - name: Test Parallel Verse authenticated service boundary
