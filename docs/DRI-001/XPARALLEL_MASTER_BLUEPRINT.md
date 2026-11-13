@@ -82,7 +82,9 @@ This is a conceptual contract, not yet a finalized JSON Schema or implemented pr
 - Evolution: updates are evaluated, versioned, reversible, and never silently applied.
 - Interoperability: an independently developed conforming entity can register and communicate without depending on a specific model vendor.
 
-## 7. Repository audit — evidence currently inspected
+## 7. Repository and prototype audit — evidence inspected
+
+### 7.1 Unity-AI-Voice-Interface
 
 Repository: `axali-sys/Unity-AI-Voice-Interface`  
 Default branch observed: `main`  
@@ -94,7 +96,21 @@ The README describes the repository as an Axaliai assistant starter UI designed 
 
 **Audit interpretation:** this README establishes the documented frontend integration contract only. It does not establish that the backend, authentication, execution fabric, entity registry, memory, or other proposed XParallel capabilities are implemented or operational.
 
-Other accessible repositories identified for future scope mapping include:
+### 7.2 Standalone XParallel browser prototypes
+
+Previously saved Library artifacts inspected:
+
+- `xparallel.html` — original standalone browser prototype.
+- `xparallel_upgraded.html` — upgraded standalone browser prototype.
+- `xparallel_integration_notes.md` — notes describing the prototype changes and limits.
+
+The upgraded prototype includes a local profile/clone-style UI, split-view presentation, notifications, local memory CRUD/search/export, and browser storage estimates. The integration notes explicitly classify it as a browser HTML prototype and state that it does not clone installed Android apps, create OS-level isolated accounts, control Android RAM, clear other apps' caches, or encrypt browser memory.
+
+The prototype's “AI memory” is browser `localStorage`, local keyword search, and a lightweight snippet-summary heuristic; the notes state that no AI model or remote API is connected. Browser local storage is not encrypted and is unsuitable for passwords, authentication codes, or sensitive secrets. The displayed profile storage values are illustrative. The RAM action recalculates a UI estimate and does not change device RAM. The PIN gate is a demo, not real security; the code includes a fixed demo PIN.
+
+**Audit classification:** these are useful UX and interaction prototypes, not verified OS-level virtualization, secure memory, production AI memory, or a real execution/sandbox fabric. They should be treated as design references and selectively ported only after requirements, platform feasibility, and security are reviewed.
+
+### 7.3 Other accessible repositories identified for future scope mapping
 
 - `axali-sys/oneai-workspace` — private workspace repository; README describes a Lovable-built combined workspace.
 - `axali-sys/Brick-by-Brick-Infrastructure` — separate testable infrastructure DAO prototype.
@@ -120,6 +136,7 @@ Use these labels in all status reporting:
 - **Verified implemented:** source and/or repeatable test evidence inspected.
 - **Partially implemented:** some source exists; required behavior or tests are incomplete.
 - **Documented only:** present in plans or documentation, not verified in code.
+- **Prototype only:** demonstrated in a mockup or local prototype, without the claimed production/platform capability.
 - **Not found:** not located in the inspected scope; does not prove it exists nowhere.
 - **Blocked:** access, credentials, dependency, or cost constraint prevents verification.
 
