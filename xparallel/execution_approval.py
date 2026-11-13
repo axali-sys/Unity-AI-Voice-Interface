@@ -27,7 +27,7 @@ _LIMITS = {
     "pids": (1, 1024),
     "output_bytes": (1024, 10_000_000),
 }
-_INTENT_STATES = {"requested", "approved", "denied", "running", "completed", "failed", "cancelled"}
+_INTENT_STATES = {"requested", "approved", "denied", "running", "finalizing", "completed", "failed", "cancelled"}
 
 
 def _now() -> datetime:
@@ -380,6 +380,69 @@ class ExecutionApprovalRegistry:
             self._event(principal["workspace_id"], key, principal["subject"],
                         "execution_cancelled", {"reason": reason.strip(),
                                                 "previous_status": row["status"]}, now)
+            updated = self._db.execute(
+                "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
+                (principal["workspace_id"], key),
+            ).fetchone()
+        return self._record(updated)
+
+    def begin_finalization(self, session: Any, intent_id: str, *, outcome: str) -> dict[str, Any]:
+        """Freeze execution outcome while keeping the job non-terminal until receipt commit."""
+        principal = self._get_principal(session)
+        key = _id(intent_id, "intent_id")
+        if outcome not in {"success", "failure", "blocked"}:
+            raise ValueError("invalid_execution_outcome")
+        with _LOCK, self._db:
+            row = self._db.execute(
+                "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
+                (principal["workspace_id"], key),
+            ).fetchone()
+            if row is None or row["status"] != "running":
+                raise ValueError("execution_not_running")
+            if row["executor_subject"] != principal["subject"]:
+                raise PermissionError("execution_executor_mismatch")
+            intent = self._record(row)["intent"]
+            if outcome == "success" and self._validate_current(principal, intent, "finish") is not True:
+                raise PermissionError("execution_revoked_or_stale_at_completion")
+            now = _now()
+            self._db.execute(
+                """UPDATE execution_intents SET status='finalizing', outcome=?, finished_at=?
+                   WHERE workspace_id=? AND intent_id=? AND status='running'""",
+                (outcome, _iso(now), principal["workspace_id"], key),
+            )
+            self._event(principal["workspace_id"], key, principal["subject"],
+                        "execution_finalizing", {"outcome": outcome}, now)
+            updated = self._db.execute(
+                "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
+                (principal["workspace_id"], key),
+            ).fetchone()
+        return self._record(updated)
+
+    def complete_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
+        """Mark terminal only after a receipt exists and has been committed by the caller."""
+        principal = self._get_principal(session)
+        key = _id(intent_id, "intent_id")
+        with _LOCK, self._db:
+            row = self._db.execute(
+                "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
+                (principal["workspace_id"], key),
+            ).fetchone()
+            if row is None or row["status"] != "finalizing":
+                raise ValueError("execution_not_finalizing")
+            if row["executor_subject"] != principal["subject"]:
+                raise PermissionError("execution_executor_mismatch")
+            outcome = row["outcome"]
+            if outcome not in {"success", "failure", "blocked"} or not row["finished_at"]:
+                raise ValueError("execution_finalization_record_incomplete")
+            status = "completed" if outcome == "success" else "failed"
+            now = _now()
+            self._db.execute(
+                """UPDATE execution_intents SET status=?
+                   WHERE workspace_id=? AND intent_id=? AND status='finalizing'""",
+                (status, principal["workspace_id"], key),
+            )
+            self._event(principal["workspace_id"], key, principal["subject"],
+                        "execution_receipt_committed", {"outcome": outcome}, now)
             updated = self._db.execute(
                 "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
                 (principal["workspace_id"], key),
