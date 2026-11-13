@@ -32,8 +32,8 @@ The gateway does not accept identity claims from the message body, infer identit
 - Delivery is marked before the response is returned. A process/network failure after marking may mean the caller does not receive the response; this prototype does not implement acknowledgement/retry semantics.
 - The authentication adapter must bind authenticated subjects to active entities and trusted workspaces.
 - The authorization adapter must apply the explicit grant model and enforce least privilege for both send and receive.
-- Expired messages are not revalidated at pull time by this prototype; a production gateway must discard expired queue entries and implement retention/cleanup.
-- A database-backed audit table is queryable but not immutable against privileged database modification.
+- Expired messages are marked expired at pull time and are not returned. A production gateway still needs scheduled retention/cleanup.
+- Audit visibility is restricted to the sender and recipient entity. A database-backed audit table is queryable but not immutable against privileged database modification.
 
 ## Production requirements
 
