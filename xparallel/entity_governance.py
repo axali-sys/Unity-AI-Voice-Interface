@@ -315,7 +315,15 @@ class EntityGovernanceRegistry:
                    WHERE workspace_id=? AND grant_id=?""",
                 (principal["workspace_id"], grant_key),
             ).fetchone()
-        return self._record(row) if row else None
+            if row is None:
+                return None
+            owner = self._resolve_owner(principal["workspace_id"], row["entity_id"])
+            allowed = owner == principal["subject"] or self._authorize_governance(
+                principal, row["entity_id"], "audit"
+            )
+            if not allowed:
+                raise PermissionError("grant_read_forbidden")
+        return self._record(row)
 
     def events(self, session: Any, grant_id: str) -> list[dict[str, Any]]:
         principal = self._get_principal(session)
