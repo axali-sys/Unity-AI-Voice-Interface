@@ -14,6 +14,7 @@ Status: **draft / not release-ready**. This dossier is an evidence index and blo
 - Draft PR: https://github.com/axali-sys/Unity-AI-Voice-Interface/pull/62
 - Master architecture: `docs/DRI-001/XPARALLEL_MASTER_BLUEPRINT.md`
 - Component coverage: `docs/DRI-001/FULL_REGISTER_COVERAGE_MATRIX.md`
+- New branch audit addendum: `docs/DRI-001/COMPONENT_AUDIT_ADDENDUM_2026-11-13.md`
 - Remaining roadmap: `docs/DRI-001/REMAINING_MILESTONE_ROADMAP.md`
 - Threat model: `docs/DRI-001/SECURITY_THREAT_MODEL.md`
 - Integration acceptance: `docs/DRI-001/INTEGRATION_ACCEPTANCE_MATRIX.md`
