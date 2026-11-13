@@ -30,7 +30,7 @@ class ApprovedExecutionWorker:
                     resolve_policy_evidence, measure_resources, store_evidence)
         if not all(callable(x) for x in adapters):
             raise TypeError("trusted_worker_adapters_required")
-        if not callable(getattr(approvals, "start", None)) or not callable(getattr(approvals, "check_running", None)) or not callable(getattr(approvals, "finish", None)):
+        if not callable(getattr(approvals, "start", None)) or not callable(getattr(approvals, "check_running", None)) or not callable(getattr(approvals, "begin_finalization", None)) or not callable(getattr(approvals, "complete_finalization", None)):
             raise TypeError("execution_approval_registry_required")
         if not callable(getattr(receipts, "append", None)):
             raise TypeError("execution_receipt_ledger_required")
@@ -84,9 +84,8 @@ class ApprovedExecutionWorker:
             result = {"status": "failed", "error": "worker_adapter_failure", "detail": type(exc).__name__}
             outcome = "failure"
 
-        # Prepare all trusted evidence before committing a successful terminal state.
-        # If any adapter fails, close the job as failure rather than falsely recording
-        # successful execution without the required measurements and evidence.
+        # Freeze the outcome first, but do not make it terminal until a signed
+        # receipt has been appended. Failed evidence preparation remains recoverable.
         try:
             policy = self._resolve_policy(intent)
             if not isinstance(policy, dict) or policy.get("allowed") is not True:
@@ -96,16 +95,44 @@ class ApprovedExecutionWorker:
             if not isinstance(evidence_refs, list) or not evidence_refs:
                 raise ValueError("execution_evidence_storage_required")
         except Exception as exc:
-            failed = self._approvals.finish(session, intent_id, outcome="failure")
+            finalizing = self._approvals.begin_finalization(
+                session, intent_id, outcome="failure"
+            )
             return {
-                "intent_id": intent_id,
-                "status": failed["status"],
-                "outcome": "failure",
-                "runner_result": result,
-                "receipt": None,
-                "error": "execution_evidence_pipeline_failed",
+                "intent_id": intent_id, "status": finalizing["status"],
+                "outcome": "failure", "runner_result": result, "receipt": None,
+                "receipt_pending": True, "error": "execution_evidence_pipeline_failed",
                 "evidence_error": type(exc).__name__,
             }
+
+        finalizing = self._approvals.begin_finalization(
+            session, intent_id, outcome=outcome
+        )
+        try:
+            receipt = self._receipts.append(
+                session,
+                intent_id=intent_id,
+                policy_decision=policy,
+                started_at=started_at,
+                finished_at=finalizing["finished_at"],
+                exit_code=0 if outcome == "success" else 1,
+                resource_usage=usage,
+                evidence_refs=evidence_refs,
+            )
+        except Exception as exc:
+            return {
+                "intent_id": intent_id, "status": "finalizing", "outcome": outcome,
+                "runner_result": result, "receipt": None, "receipt_pending": True,
+                "error": "execution_receipt_commit_failed",
+                "receipt_error": type(exc).__name__,
+            }
+
+        terminal = self._approvals.complete_finalization(session, intent_id)
+        return {
+            "intent_id": intent_id, "status": terminal["status"],
+            "outcome": outcome, "runner_result": result, "receipt": receipt,
+            "receipt_pending": False,
+        }
 
         terminal = self._approvals.finish(session, intent_id, outcome=outcome)
         finished_at = terminal["finished_at"]
