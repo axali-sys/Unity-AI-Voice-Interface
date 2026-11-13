@@ -14,6 +14,7 @@ class ExecutionRecoverySupervisor:
         enabled: bool = False, batch_limit: int = 25,
         interval_seconds: float = 30.0,
         on_error: Callable[[str], None] | None = None,
+        health_store: Any | None = None,
     ):
         if enabled is not True and enabled is not False:
             raise ValueError("recovery_enable_flag_must_be_boolean")
@@ -24,6 +25,9 @@ class ExecutionRecoverySupervisor:
             raise TypeError("trusted_execution_host_services_required")
         self._enabled = enabled
         self._on_error = on_error
+        if health_store is not None and not all(callable(getattr(health_store, name, None)) for name in ('load_state', 'record_success', 'record_failure')):
+            raise TypeError('recovery_health_store_adapter_required')
+        self._health_store = health_store
         self._service = ExecutionRecoveryService(
             worker=build_worker(), session_provider=session_provider,
             batch_limit=batch_limit, interval_seconds=interval_seconds,
@@ -39,6 +43,24 @@ class ExecutionRecoverySupervisor:
         self._consecutive_failures = 0
         self._total_failures = 0
         self._total_recovered = 0
+        self._health_store_error_type: str | None = None
+        if self._health_store is not None:
+            try:
+                state = self._health_store.load_state()
+                if not isinstance(state, dict):
+                    raise TypeError('invalid_recovery_health_state')
+                self._last_cycle_at = state.get('last_cycle_at')
+                self._last_success_at = state.get('last_success_at')
+                self._last_error = state.get('last_error_type')
+                self._consecutive_failures = state.get('consecutive_failures', 0)
+                self._total_failures = state.get('total_failures', 0)
+                self._total_recovered = state.get('total_recovered', 0)
+                self._last_result = state.get('last_result')
+                for number in (self._consecutive_failures, self._total_failures, self._total_recovered):
+                    if not isinstance(number, int) or isinstance(number, bool) or number < 0:
+                        raise ValueError('invalid_recovery_health_state')
+            except Exception as exc:
+                self._health_store_error_type = type(exc).__name__
 
     @staticmethod
     def _timestamp() -> str:
@@ -51,6 +73,12 @@ class ExecutionRecoverySupervisor:
             self._last_error = error_type
             self._consecutive_failures += 1
             self._total_failures += 1
+        if self._health_store is not None:
+            try:
+                self._health_store.record_failure(recorded_at=self._last_cycle_at, error_type=error_type)
+                self._health_store_error_type = None
+            except Exception as store_exc:
+                self._health_store_error_type = type(store_exc).__name__
         # Callback receives only a fixed exception class, never message or token.
         if self._on_error is not None:
             try:
@@ -70,6 +98,12 @@ class ExecutionRecoverySupervisor:
                 "pending": result["pending"],
             }
             self._total_recovered += result["recovered"]
+        if self._health_store is not None:
+            try:
+                self._health_store.record_success(recorded_at=self._last_cycle_at, scanned=result["scanned"], recovered=result["recovered"], pending=result["pending"])
+                self._health_store_error_type = None
+            except Exception as store_exc:
+                self._health_store_error_type = type(store_exc).__name__
 
     def start(self) -> dict[str, Any]:
         """Start only when explicitly enabled; repeated start is idempotent."""
@@ -125,4 +159,5 @@ class ExecutionRecoverySupervisor:
                 "total_failures": self._total_failures,
                 "total_recovered": self._total_recovered,
                 "last_result": dict(self._last_result) if self._last_result else None,
+                "health_store_error_type": self._health_store_error_type,
             }
