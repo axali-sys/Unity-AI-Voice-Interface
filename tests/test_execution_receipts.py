@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -58,7 +59,7 @@ class ExecutionReceiptTests(unittest.TestCase):
 
     def append(self):
         return self.ledger.append(
-            "worker", intent_id="job:abc123",
+            "worker", intent_id=self.job["intent_id"],
             policy_decision={"allowed": True, "grant_id": "grant:one", "evidence_run_id": "vrun:one"},
             started_at=self.job["started_at"], finished_at=self.job["finished_at"],
             exit_code=0,
@@ -79,6 +80,8 @@ class ExecutionReceiptTests(unittest.TestCase):
         result = self.append()
         self.assertNotEqual(result["previous_hash"], "0" * 64)
         self.assertEqual(self.ledger.verify_chain("worker")["verified_count"], 2)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.append()
 
     def test_running_job_cannot_receive_terminal_receipt(self):
         self.job["status"] = "running"
