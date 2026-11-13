@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xparallel.invalid/schemas/entity-message/1.0",
+  "title": "XParallel Signed Entity Message Envelope 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "message_id",
+    "workspace_id",
+    "sender_entity_id",
+    "sender_key_id",
+    "recipient_entity_id",
+    "message_type",
+    "issued_at",
+    "expires_at",
+    "body",
+    "body_sha256",
+    "signature"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "workspace_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "sender_entity_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "sender_key_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "recipient_entity_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "message_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "body": {},
+    "body_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
