@@ -84,14 +84,30 @@ class ApprovedExecutionWorker:
             result = {"status": "failed", "error": "worker_adapter_failure", "detail": type(exc).__name__}
             outcome = "failure"
 
+        # Prepare all trusted evidence before committing a successful terminal state.
+        # If any adapter fails, close the job as failure rather than falsely recording
+        # successful execution without the required measurements and evidence.
+        try:
+            policy = self._resolve_policy(intent)
+            if not isinstance(policy, dict) or policy.get("allowed") is not True:
+                raise PermissionError("trusted_policy_evidence_unavailable_for_receipt")
+            usage = self._measure(result, intent)
+            evidence_refs = self._store_evidence(result, intent)
+            if not isinstance(evidence_refs, list) or not evidence_refs:
+                raise ValueError("execution_evidence_storage_required")
+        except Exception as exc:
+            failed = self._approvals.finish(session, intent_id, outcome="failure")
+            return {
+                "intent_id": intent_id,
+                "status": failed["status"],
+                "outcome": "failure",
+                "runner_result": result,
+                "receipt": None,
+                "error": "execution_evidence_pipeline_failed",
+                "evidence_error": type(exc).__name__,
+            }
+
         terminal = self._approvals.finish(session, intent_id, outcome=outcome)
-        policy = self._resolve_policy(intent)
-        if not isinstance(policy, dict) or policy.get("allowed") is not True:
-            raise PermissionError("trusted_policy_evidence_unavailable_for_receipt")
-        usage = self._measure(result, intent)
-        evidence_refs = self._store_evidence(result, intent)
-        if not isinstance(evidence_refs, list) or not evidence_refs:
-            raise ValueError("execution_evidence_storage_required")
         finished_at = terminal["finished_at"]
         exit_code = 0 if outcome == "success" else 1
         receipt = self._receipts.append(
