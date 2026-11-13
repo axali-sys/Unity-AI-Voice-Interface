@@ -85,3 +85,13 @@ method is an application API, not yet exposed as an authenticated HTTP route or
 scheduled recovery service. A raw registry must be configured with a trusted
 receipt verifier before it can complete any finalization; the default is deny. The SQLite database still requires a persistent
 host volume and backup/recovery controls.
+
+
+## Bounded pending-receipt recovery batches
+
+The registry exposes a bounded listing of pending finalizations scoped to the
+authenticated executor and workspace. The worker can process this list in
+batches of 1–100 jobs. Each item is recovered independently, so one failed
+receipt does not prevent later jobs from being attempted. This batch API is
+suitable for a future authenticated host scheduler, but no scheduler, HTTP
+endpoint, background process, or automatic startup recovery is enabled.
