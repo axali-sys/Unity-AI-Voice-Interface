@@ -12,6 +12,7 @@ class FakeApprovals:
 
 
 class FakeReceipts:
+    def get_by_intent(self, *args, **kwargs): return None
     def append(self, *args, **kwargs): return {}
 
 
