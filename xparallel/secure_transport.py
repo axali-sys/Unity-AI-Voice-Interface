@@ -80,7 +80,7 @@ class EncryptedEnvelopeCodec:
 class ReliableDeliveryOutbox:
     """Local outbox. send, verify_ack and authorize_delivery are trusted host adapters."""
     def __init__(self, *, send: Callable[[dict[str,Any]],dict[str,Any]],
-        verify_ack: Callable[[dict[str,Any],str],bool], authorize_delivery: Callable[[str],bool],
+        verify_ack: Callable[[dict[str,Any],str],bool], authorize_delivery: Callable[[str,str],bool],
         db_path: str = ".xparallel/transport_outbox.sqlite3", max_attempts: int = 5,
         max_pending: int = 1000, rate_limit: int = 60, rate_window_seconds: int = 60):
         if not all(callable(x) for x in (send,verify_ack,authorize_delivery)):
@@ -111,9 +111,9 @@ class ReliableDeliveryOutbox:
         with _LOCK,self._db:
             existing=self._db.execute("SELECT status FROM transport_outbox WHERE workspace_id=? AND message_id=?",(workspace,message)).fetchone()
             if existing: return {"queued":False,"duplicate":True,"status":existing["status"]}
-            pending=self._db.execute("SELECT COUNT(*) FROM transport_outbox WHERE status IN ('pending','retrying')").fetchone()[0]
+            pending=self._db.execute("SELECT COUNT(*) FROM transport_outbox WHERE workspace_id=? AND sender_entity_id=? AND status IN ('pending','retrying')",(workspace,sender)).fetchone()[0]
             if pending >= self._max_pending: raise ValueError("outbox_quota_exceeded")
-            self._db.execute("INSERT INTO transport_outbox VALUES (?,?,?,?,'pending',0,?,NULL,?,?,?)",
+            self._db.execute("INSERT INTO transport_outbox VALUES (?,?,?,?,'pending',0,?,NULL,?,?)",
                 (workspace,message,sender,encoded,0,now,now))
         return {"queued":True,"duplicate":False,"status":"pending"}
 
@@ -128,7 +128,7 @@ class ReliableDeliveryOutbox:
             recent=self._db.execute("SELECT COUNT(*) FROM transport_attempts WHERE workspace_id=? AND sender_entity_id=? AND attempted_at>?",
                 (workspace,row["sender_entity_id"],now_epoch-self._rate_window)).fetchone()[0]
             if recent >= self._rate_limit: return {"status":row["status"],"attempts":row["attempts"],"rate_limited":True}
-        if not self._authorize(message):
+        if not self._authorize(workspace,message):
             with _LOCK,self._db:
                 self._db.execute("UPDATE transport_outbox SET status='revoked',last_error='authorization_revoked',updated_at=? WHERE workspace_id=? AND message_id=?",
                     (datetime.now(timezone.utc).isoformat(),workspace,message))
