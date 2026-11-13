@@ -61,7 +61,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no trusted HTTP route integration, production identity provider, durable deployed database, PostgreSQL adapter/migrations integration in this branch, per-space membership ACLs, lifecycle update/delete, scheduler/worker leases, multi-node persistence, or unified conversation/entity-memory transactions. Tasks are records, not executing jobs. The PR #44 remains separate and unmerged.
 
 ### M3.6 — Interoperability and developer conformance kit
-Publish versioned SDKs, reference clients, test vectors, protocol compatibility rules, sandboxed sample entities, conformance tests and migration policy. Demonstrate that an independently authored entity can register, communicate and collaborate under the same governance rules.
+**Partial implementation:** Added `xparallel/sdk.py` reference client for signed/encrypted entity messages, `xparallel/protocol_compat.py` deterministic version negotiation, a versioned message JSON Schema, an independent-entity manifest example and executable conformance tests. Tests demonstrate two independently keyed entities exchanging an encrypted signed message, recipient binding, replay rejection and protocol negotiation. See `examples/xparallel/conformance/README.md`.
+
+**Not operational:** SDK is in-process and performs no network delivery. No published package/SDK release, external developer documentation, sandbox distribution, migration tooling, cross-organization conformance, trusted key exchange, live federation, or end-to-end collaboration through production governance is demonstrated.
 
 ### M4.1 — Evolution and learning laboratory
 Add evaluation datasets, reproducible experiments, versioned proposals, human review, staged rollout, rollback, regression detection and provenance. No autonomous self-modification or silent capability promotion.
