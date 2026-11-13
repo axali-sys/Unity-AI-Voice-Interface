@@ -11,6 +11,7 @@ class FakeApprovals:
         self.finished = None
         self.finalizing = None
         self.finalization_data = None
+        self.status = None
 
     def start(self, session, ticket):
         if ticket != "one-use-ticket":
@@ -23,6 +24,7 @@ class FakeApprovals:
     def begin_finalization(self, session, intent_id, *, outcome, receipt_data=None):
         self.finalizing = outcome
         self.finalization_data = receipt_data
+        self.status = "finalizing"
         return {
             "intent_id": intent_id, "status": "finalizing", "outcome": outcome,
             "started_at": "2026-11-13T10:00:00+00:00",
@@ -30,12 +32,13 @@ class FakeApprovals:
         }
 
     def get_finalization_for_recovery(self, session, intent_id):
-        return {"intent_id": intent_id, "status": "finalizing", "outcome": self.finalizing,
+        return {"intent_id": intent_id, "status": self.status or "finalizing", "outcome": self.finalizing,
                 "finished_at": "2026-11-13T10:00:02+00:00",
                 "finalization_data": self.finalization_data}
 
     def complete_finalization(self, session, intent_id, *, receipt_hash):
         self.finished = self.finalizing
+        self.status = "completed" if self.finished == "success" else "failed"
         return {"intent_id": intent_id,
                 "status": "completed" if self.finished == "success" else "failed"}
 
@@ -160,10 +163,12 @@ class ApprovedExecutionWorkerTests(unittest.TestCase):
         self.assertEqual(recovered["status"], "completed")
         self.assertEqual(len(self.runner_calls), 1)
         self.assertEqual(self.receipts.record["intent_id"], "job:123")
+        retried = self.worker.recover_finalization("worker-session", "job:123")
+        self.assertEqual(retried["status"], "completed")
+        self.assertEqual(len(self.runner_calls), 1)
 
     def test_recovery_after_receipt_commit_does_not_append_duplicate(self):
         self.worker.execute("worker-session", "one-use-ticket")
-        self.approvals.finished = None
         recovered = self.worker.recover_finalization("worker-session", "job:123")
         self.assertTrue(recovered["recovered"])
         self.assertEqual(recovered["status"], "completed")
