@@ -67,3 +67,20 @@ admin token can approve it, and a tampered token is rejected again at the
 registry boundary even when valid-looking claims are separately supplied.
 The test uses in-memory registries and a fake worker; it does not run Docker or
 establish a production identity-provider connection.
+
+
+## End-to-end signed execution lifecycle test
+
+`tests/test_execution_http_jwt_binding.py` now includes an integrated test
+that creates an intent with a signed owner session, obtains approval from a
+separate signed administrator session, and executes with a distinct signed
+operator session. It composes the actual approval registry, host-services
+adapter, approved worker, signed receipt ledger and evidence adapter. The test
+asserts the final job state, immutable evidence reference, signed receipt and
+receipt-chain verification.
+
+The runner, policy evidence, resource measurement, evidence persistence and
+receipt signing are deterministic test adapters. This validates the complete
+software lifecycle and adapter wiring; it does not prove Docker isolation,
+real host resource metering, external durable storage, or production identity
+infrastructure.
