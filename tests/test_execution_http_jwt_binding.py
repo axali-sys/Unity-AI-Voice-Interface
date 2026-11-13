@@ -5,6 +5,9 @@ import json
 import unittest
 
 from xparallel.execution_http_api import ExecutionHTTPAPI
+from xparallel.execution_host_services import ExecutionHostServices
+from xparallel.execution_receipts import ExecutionReceiptLedger
+from xparallel.execution_worker import _canonical_digest
 from xparallel.session_jwt import HS256SessionVerifier
 from xparallel.trusted_execution import TrustedExecutionControlPlane
 
@@ -131,6 +134,84 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         )
         self.assertEqual(approved["approval"]["intent"]["status"], "approved")
         self.assertTrue(approved["approval"]["one_time_ticket"])
+
+
+    def test_full_jwt_approval_execution_evidence_and_signed_receipt_lifecycle(self):
+        payload = {"files": {"main.py": "cHJpbnQoJ29rJyk="}, "test_profile": "python-unittest"}
+        artifact_digest = hashlib.sha256(b"artifact-v1").hexdigest()
+        image_digest = hashlib.sha256(b"runner-image-v1").hexdigest()
+        worker_token = self._signed("worker:1", "operator")
+        worker_claims = self.verifier(worker_token)
+        receipt_key = b"receipt-test-key"
+
+        approvals = self.control.approvals
+        receipts = ExecutionReceiptLedger(
+            authenticate=self.verifier,
+            authorize_writer=lambda principal, job: principal["subject"] == "worker:1",
+            resolve_job=lambda workspace, intent_id: approvals.get(worker_token, intent_id),
+            sign_digest=lambda digest: hmac.new(receipt_key, digest, hashlib.sha256).hexdigest(),
+            verify_signature=lambda digest, signature: hmac.compare_digest(
+                hmac.new(receipt_key, digest, hashlib.sha256).hexdigest(), signature
+            ),
+            db_path=":memory:",
+        )
+        host_services = ExecutionHostServices(
+            approvals=approvals,
+            runner=lambda payload, **kwargs: {
+                "status": "success", "output_bytes": 12, "exit_code": 0,
+            },
+            load_payload=lambda intent: payload,
+            resolve_artifact_digest=lambda intent: artifact_digest,
+            resolve_policy_evidence=lambda intent: {
+                "allowed": True, "grant_id": "grant-1", "evidence_run_id": "verification-1",
+            },
+            measure_resources=lambda result, intent: {
+                "wall_ms": 100, "cpu_ms": 10, "memory_peak_mb": 32,
+                "output_bytes": 12, "pids_peak": 1,
+            },
+            store_evidence=lambda result, intent: {
+                "durable": True, "references": ["xpevidence://workspace-a/job/evidence-digest"],
+            },
+            receipts=receipts,
+        )
+        api = ExecutionHTTPAPI(control_plane=self.control, host_services=host_services)
+        limits = {
+            "timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000,
+            "pids": 32, "output_bytes": 100000,
+        }
+        body = {
+            "entity_id": "entity-a", "key_id": "key-a",
+            "capability_id": "capability.read", "action": "read",
+            "resource_scope": "document:7",
+            "payload_digest": _canonical_digest(payload),
+            "artifact_digest": artifact_digest,
+            "runner_image_digest": image_digest,
+            "limits": limits,
+        }
+        requested = api.request_intent(
+            self.owner_claims, body, session_token=self.owner_token
+        )
+        intent_id = requested["intent"]["intent_id"]
+        approved = api.approve_intent(
+            self.admin_claims,
+            {"intent_id": intent_id, "reason": "Independent test approval"},
+            session_token=self.admin_token,
+        )
+        result = api.execute_ticket(
+            worker_claims,
+            {"one_time_ticket": approved["approval"]["one_time_ticket"]},
+            session_token=worker_token,
+        )
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["outcome"], "success")
+        self.assertFalse(result["receipt_pending"])
+        self.assertEqual(result["receipt"]["receipt"]["intent_id"], intent_id)
+        self.assertEqual(result["receipt"]["receipt"]["evidence_refs"], [
+            "xpevidence://workspace-a/job/evidence-digest"
+        ])
+        self.assertTrue(receipts.verify_chain(worker_token)["valid"])
+        self.assertEqual(approvals.get(worker_token, intent_id)["status"], "completed")
+        receipts.close()
 
     def test_tampered_token_is_rejected_by_registry_even_with_claims_argument(self):
         parts = self.owner_token.split(".")
