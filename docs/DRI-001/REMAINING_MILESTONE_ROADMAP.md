@@ -56,7 +56,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no durable scheduler/queue, worker leases, resume/recovery, connection to existing planners/Parallel Intelligence/execution-ticket/receipt stores, real approval UI/provider, configured executor, timeout/cancellation, concurrency, observability or production integration exists. Host adapters must enforce the verified action gate; the orchestrator is not itself a trust authority.
 
 ### M3.5 — Parallel Verse persistent environments
-Integrate workspace-scoped spaces, entities, conversations, tasks and event histories with durable storage, access control, lifecycle management and multi-entity isolation. The existing SQLite/optional PostgreSQL prototype is not yet a deployed persistent universe.
+**Partial implementation:** Reused the existing unmerged PR #44 SQLite world store and tests on this isolated branch. Added `xparallel/parallel_verse_service.py`, which derives workspace identity from an injected authenticated session and applies per-action ACL checks; client-supplied workspace selection is not accepted. Agent, space, task and event records retain workspace isolation and restart persistence tests. See `docs/DRI-001/PARALLEL_VERSE_PERSISTENT_ENVIRONMENT.md`.
+
+**Not operational:** no trusted HTTP route integration, production identity provider, durable deployed database, PostgreSQL adapter/migrations integration in this branch, per-space membership ACLs, lifecycle update/delete, scheduler/worker leases, multi-node persistence, or unified conversation/entity-memory transactions. Tasks are records, not executing jobs. The PR #44 remains separate and unmerged.
 
 ### M3.6 — Interoperability and developer conformance kit
 Publish versioned SDKs, reference clients, test vectors, protocol compatibility rules, sandboxed sample entities, conformance tests and migration policy. Demonstrate that an independently authored entity can register, communicate and collaborate under the same governance rules.
