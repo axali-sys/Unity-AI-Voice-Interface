@@ -167,6 +167,31 @@ class ApprovedExecutionWorkerTests(unittest.TestCase):
         self.assertEqual(retried["status"], "completed")
         self.assertEqual(len(self.runner_calls), 1)
 
+    def test_batch_recovery_processes_pending_jobs_without_rerunning(self):
+        self.receipts.fail = True
+        self.worker.execute("worker-session", "one-use-ticket")
+        self.receipts.fail = False
+        self.approvals.list_pending_finalizations = lambda session, limit=50: [
+            {"intent_id": "job:123"}
+        ]
+        summary = self.worker.recover_pending_finalizations("worker-session")
+        self.assertEqual(summary["scanned"], 1)
+        self.assertEqual(summary["recovered"], 1)
+        self.assertEqual(summary["pending"], 0)
+        self.assertEqual(len(self.runner_calls), 1)
+
+    def test_batch_recovery_is_bounded_and_reports_individual_failures(self):
+        self.approvals.list_pending_finalizations = lambda session, limit=50: [
+            {"intent_id": "job:missing"}
+        ]
+        self.worker.recover_finalization = lambda session, intent_id: (_ for _ in ()).throw(OSError("offline"))
+        summary = self.worker.recover_pending_finalizations("worker-session", limit=3)
+        self.assertEqual(summary["scanned"], 1)
+        self.assertEqual(summary["pending"], 1)
+        self.assertEqual(summary["results"][0]["error"], "execution_receipt_recovery_failed")
+        with self.assertRaises(ValueError):
+            self.worker.recover_pending_finalizations("worker-session", limit=101)
+
     def test_recovery_after_receipt_commit_does_not_append_duplicate(self):
         self.worker.execute("worker-session", "one-use-ticket")
         recovered = self.worker.recover_finalization("worker-session", "job:123")
