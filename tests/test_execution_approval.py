@@ -122,6 +122,7 @@ class ExecutionApprovalTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             self.registry.get_finalization_for_recovery("requester", running["intent_id"])
         self.assertEqual(self.registry.get("requester", running["intent_id"])["status"], "finalizing")
+        self.assertNotIn("finalization_data", self.registry.get("requester", running["intent_id"]))
         completed = self.registry.complete_finalization("executor", running["intent_id"])
         self.assertEqual(completed["status"], "completed")
         with self.assertRaises(ValueError):
