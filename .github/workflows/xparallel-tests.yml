@@ -61,3 +61,5 @@ jobs:
         run: python -m unittest discover -s tests -p "test_entity_authorization.py" -v
       - name: Test signed entity messaging and replay protection
         run: python -m unittest discover -s tests -p "test_entity_messaging.py" -v
+      - name: Test secure entity communication gateway
+        run: python -m unittest discover -s tests -p "test_entity_gateway.py" -v
