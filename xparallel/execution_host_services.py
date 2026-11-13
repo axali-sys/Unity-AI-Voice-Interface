@@ -53,7 +53,7 @@ class ExecutionHostServices:
         for method in ("start", "check_running", "begin_finalization", "complete_finalization"):
             if not callable(getattr(approvals, method, None)):
                 raise TypeError("execution_approval_registry_incomplete")
-        if not callable(getattr(receipts, "append", None)):
+        if not callable(getattr(receipts, "append", None)) or not callable(getattr(receipts, "verify_committed_receipt", None)):
             raise TypeError("signed_execution_receipt_ledger_required")
         self.approvals = approvals
         self.runner = runner
@@ -63,6 +63,12 @@ class ExecutionHostServices:
         self._measure = measure_resources
         self._store = store_evidence
         self.receipts = receipts
+        if not callable(getattr(approvals, "set_receipt_commit_verifier", None)):
+            raise TypeError("receipt_verification_hook_required")
+        approvals.set_receipt_commit_verifier(
+            lambda session, principal, intent_id, receipt_hash:
+                receipts.verify_committed_receipt(session, intent_id, receipt_hash)
+        )
 
     def load_payload(self, intent: dict[str, Any]) -> dict[str, Any]:
         payload = self._load_payload(intent)
