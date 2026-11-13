@@ -9,7 +9,8 @@ class FakeApprovals:
         self.intent = intent
         self.checkpoint_allowed = checkpoint
         self.finished = None
-        self.finalizing = None\n        self.finalization_data = None
+        self.finalizing = None
+        self.finalization_data = None
 
     def start(self, session, ticket):
         if ticket != "one-use-ticket":
