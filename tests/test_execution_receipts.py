@@ -21,7 +21,7 @@ class ExecutionReceiptTests(unittest.TestCase):
         self.public = self.private.public_key()
         self.job = {
             "workspace_id": "ws-a", "intent_id": "job:abc123",
-            "intent_digest": sha("intent"), "status": "completed",
+            "intent_digest": sha("intent"), "status": "finalizing",
             "approver_subject": "reviewer:1", "decided_at": "2026-01-01T00:00:00+00:00",
             "started_at": "2026-01-01T00:01:00+00:00",
             "finished_at": "2026-01-01T00:01:10+00:00", "outcome": "success",
@@ -83,7 +83,7 @@ class ExecutionReceiptTests(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.append()
 
-    def test_running_job_cannot_receive_terminal_receipt(self):
+    def test_running_job_cannot_receive_receipt_before_finalization(self):
         self.job["status"] = "running"
         with self.assertRaises(ValueError):
             self.append()
