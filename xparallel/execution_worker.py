@@ -105,9 +105,20 @@ class ApprovedExecutionWorker:
                 "evidence_error": type(exc).__name__,
             }
 
-        finalizing = self._approvals.begin_finalization(
-            session, intent_id, outcome=outcome
-        )
+        try:
+            finalizing = self._approvals.begin_finalization(
+                session, intent_id, outcome=outcome
+            )
+        except PermissionError:
+            # A revocation racing with successful completion must downgrade
+            # the recorded outcome, never leave a false success or running job.
+            if outcome != "success":
+                raise
+            outcome = "blocked"
+            result = {"status": "blocked", "error": "execution_revoked_or_stale_at_completion"}
+            finalizing = self._approvals.begin_finalization(
+                session, intent_id, outcome=outcome
+            )
         try:
             receipt = self._receipts.append(
                 session,
