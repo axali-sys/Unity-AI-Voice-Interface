@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xparallel.invalid/schemas/digital-dna/0.1.0",
+  "title": "XParallel Digital DNA Manifest",
+  "description": "Draft portable entity declaration. Validation does not establish trust, ownership or capability truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "entity_id",
+    "entity_type",
+    "display_name",
+    "issuer",
+    "status",
+    "created_at",
+    "updated_at",
+    "owner",
+    "protocols",
+    "capabilities",
+    "permission_requests",
+    "data_handling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "entity_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]+$"
+    },
+    "entity_type": {
+      "enum": [
+        "agent",
+        "service",
+        "tool",
+        "model",
+        "device",
+        "organization",
+        "composite"
+      ]
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "active",
+        "suspended",
+        "revoked",
+        "retired"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "controller": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "proof_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "transfer_policy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        }
+      }
+    },
+    "protocols": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\\\.[0-9]+\\\\.[0-9]+$"
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "version",
+          "direction",
+          "contract_ref"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "transport": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "direction": {
+            "enum": [
+              "inbound",
+              "outbound",
+              "bidirectional"
+            ]
+          },
+          "contract_ref": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "adapters": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "maxLength": 120
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "version",
+          "purpose",
+          "status",
+          "evidence_refs",
+          "required_scopes"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "purpose": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "input_contract_ref": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "output_contract_ref": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "declared",
+              "under_review",
+              "verified",
+              "suspended",
+              "revoked"
+            ]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "verifier": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "verified_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "expires_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "required_scopes": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "string",
+              "maxLength": 160
+            }
+          }
+        }
+      }
+    },
+    "permission_requests": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "resource_scope"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "resource_scope": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "data_handling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_classes",
+        "retention_policy"
+      ],
+      "properties": {
+        "memory_classes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "retention_policy": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "export_supported": {
+          "type": "boolean"
+        },
+        "deletion_supported": {
+          "type": "boolean"
+        },
+        "encryption_claim": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "data_residency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "manifest_digest": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "previous_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "signing_key_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "signature_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "signed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
