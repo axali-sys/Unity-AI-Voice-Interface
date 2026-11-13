@@ -8,6 +8,8 @@ multi-tenant microVM or independent security review.
 import base64
 import binascii
 import os
+import re
+import math
 import shutil
 import subprocess
 import tempfile
@@ -15,10 +17,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 IMAGE = os.getenv("XP_RUNNER_IMAGE", "").strip()
-TIMEOUT = int(os.getenv("XP_RUNNER_TIMEOUT", "60"))
-MAX_FILES = int(os.getenv("XP_RUNNER_MAX_FILES", "200"))
-MAX_FILE_BYTES = int(os.getenv("XP_RUNNER_MAX_FILE_BYTES", str(256 * 1024)))
-MAX_TOTAL_BYTES = int(os.getenv("XP_RUNNER_MAX_TOTAL_BYTES", str(10 * 1024 * 1024)))
+def _int_env(name, default):
+    try:
+        return int(os.getenv(name, str(default)))
+    except (TypeError, ValueError):
+        return -1
+
+
+TIMEOUT = _int_env("XP_RUNNER_TIMEOUT", 60)
+MAX_FILES = _int_env("XP_RUNNER_MAX_FILES", 200)
+MAX_FILE_BYTES = _int_env("XP_RUNNER_MAX_FILE_BYTES", 256 * 1024)
+MAX_TOTAL_BYTES = _int_env("XP_RUNNER_MAX_TOTAL_BYTES", 10 * 1024 * 1024)
 MEMORY = os.getenv("XP_RUNNER_MEMORY", "512m")
 CPUS = os.getenv("XP_RUNNER_CPUS", "1.0")
 PIDS = os.getenv("XP_RUNNER_PIDS", "128")
@@ -27,15 +36,21 @@ NONROOT_GID = 65532
 
 
 def _valid_limits():
+    memory_match = re.fullmatch(r"([1-9][0-9]{0,3})(m|g)", MEMORY.lower()) if isinstance(MEMORY, str) else None
+    try:
+        memory_mib = int(memory_match.group(1)) * (1024 if memory_match.group(2) == "g" else 1) if memory_match else 0
+        cpu_count = float(CPUS)
+        pids = int(PIDS)
+    except (TypeError, ValueError, OverflowError):
+        return False
     return (
         1 <= TIMEOUT <= 600
         and 1 <= MAX_FILES <= 1000
         and 1 <= MAX_FILE_BYTES <= 2 * 1024 * 1024
         and 1 <= MAX_TOTAL_BYTES <= 50 * 1024 * 1024
-        and MEMORY.endswith(("m", "g"))
-        and CPUS.replace(".", "", 1).isdigit()
-        and PIDS.isdigit()
-        and 1 <= int(PIDS) <= 1024
+        and 64 <= memory_mib <= 2048
+        and math.isfinite(cpu_count) and 0.1 <= cpu_count <= 4.0
+        and 1 <= pids <= 1024
     )
 
 
@@ -93,7 +108,7 @@ def _write_workspace(root, files):
 
 def _docker_command(root, test_command):
     return [
-        "docker", "run", "--rm",
+        "docker", "run", "--rm", "--pull=never", "--init",
         "--network=none",
         "--read-only",
         "--cap-drop=ALL",
