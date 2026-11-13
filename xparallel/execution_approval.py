@@ -99,6 +99,7 @@ class ExecutionApprovalRegistry:
         authorize_cancel: Callable[[dict[str, str], dict[str, Any]], bool],
         authorize_executor: Callable[[dict[str, str], dict[str, Any]], bool],
         validate_current_state: Callable[[dict[str, str], dict[str, Any], str], bool],
+        verify_receipt_commit: Callable[[dict[str, str], str, str], bool] | None = None,
         db_path: str = ".xparallel/execution_approvals.sqlite3",
     ):
         adapters = (authenticate, authorize_request, authorize_approval,
@@ -110,7 +111,8 @@ class ExecutionApprovalRegistry:
         self._authorize_approval = authorize_approval
         self._authorize_cancel = authorize_cancel
         self._authorize_executor = authorize_executor
-        self._validate_current = validate_current_state\n        self._verify_receipt_commit = verify_receipt_commit or (lambda principal, intent_id, receipt_hash: False)
+        self._validate_current = validate_current_state
+        self._verify_receipt_commit = verify_receipt_commit or (lambda principal, intent_id, receipt_hash: False)
         if db_path != ":memory:":
             Path(db_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
@@ -453,9 +455,11 @@ class ExecutionApprovalRegistry:
         return record
 
     def complete_finalization(self, session: Any, intent_id: str, *, receipt_hash: str) -> dict[str, Any]:
-        """Mark terminal only after a receipt exists and has been committed by the caller."""
+        """Mark terminal only after the host verifies the signed receipt ledger entry."""
         principal = self._get_principal(session)
         key = _id(intent_id, "intent_id")
+        if not isinstance(receipt_hash, str) or len(receipt_hash) != 64 or any(ch not in "0123456789abcdef" for ch in receipt_hash):
+            raise ValueError("invalid_receipt_hash")
         with _LOCK, self._db:
             row = self._db.execute(
                 "SELECT * FROM execution_intents WHERE workspace_id=? AND intent_id=?",
@@ -465,6 +469,8 @@ class ExecutionApprovalRegistry:
                 raise ValueError("execution_not_finalizing")
             if row["executor_subject"] != principal["subject"]:
                 raise PermissionError("execution_executor_mismatch")
+            if self._verify_receipt_commit(principal, key, receipt_hash) is not True:
+                raise PermissionError("signed_execution_receipt_not_verified")
             outcome = row["outcome"]
             if outcome not in {"success", "failure", "blocked"} or not row["finished_at"]:
                 raise ValueError("execution_finalization_record_incomplete")
