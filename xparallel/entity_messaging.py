@@ -125,7 +125,7 @@ class EntityMessageService:
         now = _now()
         envelope = {
             "schema_version": "1.0",
-            "message_id": secrets.token_urlsafe(24),
+            "message_id": secrets.token_hex(24),
             "workspace_id": workspace,
             "sender_entity_id": sender,
             "sender_key_id": key_id,
