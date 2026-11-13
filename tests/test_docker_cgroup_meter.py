@@ -14,9 +14,9 @@ class DockerCgroupV2MeterTests(unittest.TestCase):
         self.proc = Path(self.tmp.name) / "proc"
         (self.proc / "123").mkdir(parents=True)
         (self.proc / "123" / "cgroup").write_text(
-            "0::/docker/" + "a" * 64 + "\\n", encoding="ascii"
+            "0::/docker/" + "a" * 64 + "\n", encoding="ascii"
         )
-        (self.group / "cpu.stat").write_text("usage_usec 250000\\nuser_usec 100000\\n")
+        (self.group / "cpu.stat").write_text("usage_usec 250000\nuser_usec 100000\n")
         for name, value in {
             "memory.current": "1048576", "memory.peak": "2097152",
             "pids.current": "2", "pids.peak": "4",
@@ -51,12 +51,12 @@ class DockerCgroupV2MeterTests(unittest.TestCase):
             self.meter.sample("../escape")
 
     def test_rejects_cgroup_path_escape(self):
-        (self.proc / "123" / "cgroup").write_text("0::/../../etc\\n")
+        (self.proc / "123" / "cgroup").write_text("0::/../../etc\n")
         with self.assertRaisesRegex(RuntimeError, "outside_host_root"):
             self.meter.sample("a" * 64)
 
     def test_requires_unified_cgroup_v2(self):
-        (self.proc / "123" / "cgroup").write_text("2:cpu:/docker\\n")
+        (self.proc / "123" / "cgroup").write_text("2:cpu:/docker\n")
         with self.assertRaisesRegex(RuntimeError, "unified_hierarchy_required"):
             self.meter.sample("a" * 64)
 
