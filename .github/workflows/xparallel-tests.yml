@@ -14,6 +14,7 @@ on:
       - ".env.example"
       - "public/xparallel.html"
       - ".github/workflows/xparallel-tests.yml"
+      - ".github/workflows/mainnet-deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -37,6 +38,8 @@ jobs:
           node-version: "20"
       - name: Test public application URL configuration
         run: npm run test:public-url
+      - name: Test Render deployment hook cannot silently skip
+        run: python -m unittest discover -s tests -p "test_deploy_workflow.py" -v
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
       - name: Check Axaliai and XParallel JavaScript syntax
