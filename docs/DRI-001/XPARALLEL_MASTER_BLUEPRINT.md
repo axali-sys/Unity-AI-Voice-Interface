@@ -177,3 +177,12 @@ Use these labels in all status reporting:
 ## 11. Milestone acceptance gates
 
 M1 is complete only when the relevant repositories and authoritative component register have been inspected, the 113 components are reconciled without duplication, dependencies and evidence statuses are recorded, and the resulting plan is reviewed. This initial document is a baseline, not M1 completion.
+
+## 12. Component audit snapshot
+
+A first evidence-backed component audit snapshot is maintained separately at:
+
+- [DRI-001 113-Component Audit Snapshot](./COMPONENT_AUDIT_SNAPSHOT.md)
+
+It records the inspected subset, source paths, feature-branch/PR status, CI evidence, limitations and remaining acceptance gaps. It is explicitly partial; uninspected entries retain the original register's Unverified status. M1 is not complete.
+
