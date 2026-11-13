@@ -135,6 +135,24 @@ class ExecutionApprovalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.registry.complete_finalization("executor", running["intent_id"], receipt_hash="a" * 64)
 
+    def test_pending_finalization_listing_is_executor_and_workspace_scoped(self):
+        first = self.request()
+        approved = self.approve(first)
+        running = self.registry.start("executor", approved["one_time_ticket"])
+        self.registry.begin_finalization("executor", running["intent_id"], outcome="failure", receipt_data={
+            "policy_decision": {"allowed": True, "grant_id": "grant:1", "evidence_run_id": "run:1"},
+            "started_at": running["started_at"],
+            "resource_usage": {"wall_ms": 1, "cpu_ms": 1, "memory_peak_mb": 1, "output_bytes": 1, "pids_peak": 1},
+            "evidence_refs": ["evidence:one"],
+        })
+        self.assertEqual(
+            [item["intent_id"] for item in self.registry.list_pending_finalizations("executor")],
+            [running["intent_id"]],
+        )
+        self.assertEqual(self.registry.list_pending_finalizations("requester"), [])
+        with self.assertRaises(ValueError):
+            self.registry.list_pending_finalizations("executor", limit=101)
+
     def test_recovery_detects_finalization_package_tampering(self):
         intent = self.request()
         approved = self.approve(intent)
