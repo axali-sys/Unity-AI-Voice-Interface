@@ -197,7 +197,7 @@ This matrix accounts for all source IDs C001–C113 and P001–P015. It is a tra
 
 - Source entries parsed: 113 of 113 expected.
 - Preservation identities parsed: 15 of 15 expected.
-- Partial: 35 components and 8 identities (updated conservative evidence mapping; no component is Complete).
+- Partial: 33 components and 8 identities (updated conservative evidence mapping; no component is Complete).
 - Experimental: 5 components (C108, C110–C113).
 - Remaining entries are Unverified, not presumed absent.
 
