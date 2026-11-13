@@ -6,7 +6,8 @@ from xparallel import server
 
 class Handler:
     def __init__(self, claims=None):
-        self.identity_context = claims\n        self.headers = {"Authorization": "Bearer verified-token"}
+        self.identity_context = claims
+        self.headers = {"Authorization": "Bearer verified-token"}
         self.response = None
 
 
@@ -83,7 +84,8 @@ class ExecutionHTTPRouteTests(unittest.TestCase):
                 self.assertTrue(server.dispatch_execution_post(self.handler, path, body))
                 self.assertEqual(self.handler.response[0], status)
                 self.assertEqual(self.api.calls[-1][0], operation)
-                self.assertEqual(self.api.calls[-1][1]["workspace_id"], "workspace-a")\n                self.assertEqual(self.api.calls[-1][3], "verified-token")
+                self.assertEqual(self.api.calls[-1][1]["workspace_id"], "workspace-a")
+                self.assertEqual(self.api.calls[-1][3], "verified-token")
 
     def test_permission_and_validation_errors_are_mapped_safely(self):
         class DeniedAPI(FakeAPI):
