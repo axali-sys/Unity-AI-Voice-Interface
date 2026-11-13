@@ -15,9 +15,14 @@
 - The runner invokes a live authorization checkpoint while draining process
   output. If the checkpoint denies continuation, it kills the worker process
   group and returns a blocked result.
-- The worker finalizes the approval lifecycle and asks trusted host adapters
-  to provide policy evidence, measured resource usage, and persisted evidence
-  references before appending a signed receipt.
+- Before committing a successful terminal status, the worker now obtains
+  current policy evidence, measured resource usage, and persisted evidence
+  references. If any evidence adapter fails, the worker closes the job as a
+  failure and does not report success or append a receipt.
+- After evidence preparation succeeds, the worker commits the terminal status
+  and appends the signed receipt. A remaining crash window exists between
+  terminal-state commit and receipt append; a transactional outbox/finalizing
+  state is still required to eliminate it.
 
 ## Mandatory trusted adapters
 
@@ -48,6 +53,7 @@ resource metering.
 ## Test scope
 
 Unit tests verify ticket consumption, payload tamper rejection, artifact
-mismatch rejection, revocation denial, approved-limit forwarding, and
-process-group termination when a checkpoint is revoked. Tests use injected
-runners/adapters; no real Docker workload or live identity provider is invoked.
+mismatch rejection, revocation denial, approved-limit forwarding, and that
+measurement/storage failures prevent a success terminal status. Tests use
+injected runners/adapters; no real Docker workload or live identity provider
+is invoked.
