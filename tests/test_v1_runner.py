@@ -98,7 +98,7 @@ class HardenedRunnerTests(unittest.TestCase):
     def test_run_blocks_when_docker_is_unavailable(self):
         with patch.object(v1_runner, "IMAGE", "image@sha256:" + "a" * 64), \
              patch("xparallel.v1_runner.shutil.which", return_value=None):
-            result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
+            result = v1_runner.run_project({"files": {"main.py": self.encoded()}}, approved_limits={"timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000, "pids": 32, "output_bytes": 4096}, expected_image_digest="a" * 64)
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["error"], "docker_unavailable")
 
@@ -117,7 +117,7 @@ class HardenedRunnerTests(unittest.TestCase):
              patch.object(v1_runner.shutil, "which", return_value="/usr/bin/docker"), \
              patch.object(v1_runner, "available", return_value=True), \
              patch.object(v1_runner, "_run_bounded", return_value=completed) as run:
-            result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
+            result = v1_runner.run_project({"files": {"main.py": self.encoded()}}, approved_limits={"timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000, "pids": 32, "output_bytes": 4096}, expected_image_digest="a" * 64)
         self.assertEqual(result["status"], "success")
         self.assertEqual(len(result["stdout"]), 10000)
         self.assertTrue(result["output_truncated"]["stdout"])
