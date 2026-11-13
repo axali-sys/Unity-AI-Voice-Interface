@@ -50,7 +50,7 @@ class ExecutionHostServices:
                      resolve_policy_evidence, measure_resources, store_evidence)
         if not all(callable(item) for item in callbacks):
             raise TypeError("all_trusted_execution_host_adapters_required")
-        for method in ("start", "check_running", "finish"):
+        for method in ("start", "check_running", "begin_finalization", "complete_finalization"):
             if not callable(getattr(approvals, method, None)):
                 raise TypeError("execution_approval_registry_incomplete")
         if not callable(getattr(receipts, "append", None)):
