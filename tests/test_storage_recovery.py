@@ -82,7 +82,7 @@ class SQLiteStorageRecoveryTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             SQLiteStore(str(self.root / "bad.sqlite3"), authorize_restore=None)
         with self.assertRaises(ValueError):
-            Migration(0, ("CREATE TABLE x (id INTEGER)",))
+            self.store.apply_migrations([Migration(0, ("CREATE TABLE x (id INTEGER)",))])
 
 
 if __name__ == "__main__":
