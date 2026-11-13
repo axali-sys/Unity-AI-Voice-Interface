@@ -167,7 +167,6 @@ class ExecutionApprovalRegistry:
             "executor_subject": row["executor_subject"], "started_at": row["started_at"],
             "finished_at": row["finished_at"], "outcome": row["outcome"],
             "cancellation_reason": row["cancellation_reason"],
-            "finalization_data": json.loads(row["finalization_json"]) if row["finalization_json"] else None,
         }
 
     def request_intent(
@@ -449,7 +448,9 @@ class ExecutionApprovalRegistry:
             raise PermissionError("execution_executor_mismatch")
         if not row["finalization_json"]:
             raise ValueError("finalization_receipt_data_unavailable")
-        return self._record(row)
+        record = self._record(row)
+        record["finalization_data"] = json.loads(row["finalization_json"])
+        return record
 
     def complete_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
         """Mark terminal only after a receipt exists and has been committed by the caller."""
