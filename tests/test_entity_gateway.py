@@ -120,6 +120,25 @@ class EntityGatewayTests(unittest.TestCase):
         events = self.gateway.audit_events("sender-session", envelope["message_id"])
         self.assertEqual([e["event_type"] for e in events], ["queued", "delivered"])
 
+    def test_expired_queued_message_is_not_delivered(self):
+        import time
+        envelope = self.messages.create_message(
+            "ws-a", "entity-a", "key-a", "entity-b",
+            "entity.notice", {"message": "expires"}, self.private, ttl_seconds=1
+        )
+        self.gateway.submit("sender-session", envelope)
+        time.sleep(1.1)
+        self.assertEqual(self.gateway.receive("recipient-session")["count"], 0)
+        self.assertEqual(self.gateway.status("sender-session", envelope["message_id"])["expired_at"] is not None, True)
+        events = self.gateway.audit_events("sender-session", envelope["message_id"])
+        self.assertEqual([event["event_type"] for event in events], ["queued", "expired"])
+
+    def test_outsider_cannot_read_message_audit(self):
+        envelope = self.message()
+        self.gateway.submit("sender-session", envelope)
+        with self.assertRaisesRegex(PermissionError, "message_audit_forbidden"):
+            self.gateway.audit_events("outsider-session", envelope["message_id"])
+
     def test_injected_authorization_adapter_is_mandatory(self):
         with self.assertRaises(TypeError):
             EntityCommunicationGateway(self.messages, authenticate=lambda s: {}, authorize=None)
