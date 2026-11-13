@@ -93,6 +93,36 @@ class ApprovedExecutionWorker:
             "receipt_pending": False, "recovered": True,
         }
 
+    def recover_pending_finalizations(self, session: Any, *, limit: int = 50) -> dict[str, Any]:
+        """Recover a bounded batch of this executor's pending receipts without rerunning jobs."""
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
+            raise ValueError("pending_finalization_limit_out_of_range")
+        list_pending = getattr(self._approvals, "list_pending_finalizations", None)
+        if not callable(list_pending):
+            raise TypeError("pending_finalization_listing_required")
+        pending = list_pending(session, limit=limit)
+        results = []
+        for job in pending:
+            intent_id = job.get("intent_id") if isinstance(job, dict) else None
+            if not isinstance(intent_id, str):
+                continue
+            try:
+                results.append(self.recover_finalization(session, intent_id))
+            except Exception as exc:
+                # Keep the batch moving; return a stable error class, not adapter details.
+                results.append({
+                    "intent_id": intent_id, "status": "finalizing",
+                    "receipt_pending": True, "recovered": False,
+                    "error": "execution_receipt_recovery_failed",
+                    "failure_type": type(exc).__name__,
+                })
+        return {
+            "scanned": len(pending),
+            "recovered": sum(1 for item in results if item.get("receipt_pending") is False),
+            "pending": sum(1 for item in results if item.get("receipt_pending") is True),
+            "results": results,
+        }
+
     def execute(self, session: Any, one_time_ticket: str) -> dict[str, Any]:
         running = self._approvals.start(session, one_time_ticket)
         intent_id = running["intent_id"]
