@@ -310,6 +310,11 @@ class Handler(BaseHTTPRequestHandler):
             # tenant/actor fields must never select a private workspace.
             data["workspace_id"] = "public"
             data["actor"] = "anonymous"
+        elif self.path in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
+            # These routes validate the original exact request schema. Do not
+            # inject workspace/actor fields before the adapter's strict parser.
+            if dispatch_execution_post(self, self.path, data):
+                return
         elif AUTH_MODE == "jwt":
             try:
                 data = bind_request_identity(data, getattr(self, "identity_context", {}))
