@@ -154,7 +154,7 @@ class EntityGovernanceRegistry:
             raise ValueError("invalid_action")
         if not isinstance(resource_scope, str) or not resource_scope.strip() or len(resource_scope) > _MAX_SCOPE_LENGTH:
             raise ValueError("invalid_resource_scope")
-        if any(ch in resource_scope for ch in ("*", "\\n", "\\r")):
+        if any(ch in resource_scope for ch in ("*", "\n", "\r")):
             raise ValueError("wildcard_or_multiline_scope_not_allowed")
         if not isinstance(ttl_seconds, int) or isinstance(ttl_seconds, bool) or not 60 <= ttl_seconds <= _MAX_TTL_SECONDS:
             raise ValueError("grant_ttl_out_of_range")
