@@ -27,6 +27,7 @@ class ExecutionApprovalTests(unittest.TestCase):
             authorize_cancel=lambda principal, intent: principal["subject"] in {"owner:1", "reviewer:1"},
             authorize_executor=lambda principal, intent: principal["subject"] == "worker:1",
             validate_current_state=lambda principal, intent, stage: self.current_ok,
+            verify_receipt_commit=lambda session, principal, intent_id, receipt_hash: receipt_hash == "a" * 64,
             db_path=str(Path(self.temp.name) / "approvals.sqlite3"),
         )
         self.limits = {
