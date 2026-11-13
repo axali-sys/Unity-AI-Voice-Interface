@@ -39,7 +39,7 @@ def configure_execution_api(api):
     EXECUTION_API = api
 
 def dispatch_execution_post(handler, path, data):
-    """Fail-closed private execution route dispatcher; returns whether handled."""
+    """Fail-closed private execution dispatcher with independent host token validation."""
     if path not in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
         return False
     if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
@@ -50,8 +50,11 @@ def dispatch_execution_post(handler, path, data):
         return True
     try:
         claims = getattr(handler, "identity_context", None)
+        token = bearer_token(handler.headers.get("Authorization"))
+        if token is None:
+            raise PermissionError("trusted_session_token_required")
         if path == "/execution/intents":
-            result = EXECUTION_API.request_intent(claims, data)
+            result = EXECUTION_API.request_intent(claims, data, session_token=token)
             send_json(handler, 201, result)
         elif path == "/execution/approve":
             result = EXECUTION_API.approve_intent(claims, data, session_token=token)
