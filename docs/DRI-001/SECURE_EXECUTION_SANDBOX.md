@@ -36,3 +36,6 @@ This milestone hardens the existing local runner module only. It does not wire e
 ## Verification
 
 Unit tests inspect workspace validation and Docker command construction, including non-root identity, digest pinning, no network, read-only root, dropped capabilities, resource limits, and absence of host credential mounts. These tests verify configuration construction, not that a live Docker host enforces every control.
+
+
+CI note: the test suite includes explicit checks for digest pinning, workspace path and size limits, non-root ownership, Docker command hardening, and the blocked state when Docker is unavailable.
