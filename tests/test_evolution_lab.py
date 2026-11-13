@@ -23,7 +23,7 @@ class EvolutionLabTests(unittest.TestCase):
   self.assertEqual([x["event"] for x in self.lab.history("ok",proposal_id=proposal["proposal_id"])],
     ["proposed","staged","promoted"])
  def test_regressions_block_proposals(self):
-  self.lab._runner=lambda *a:{"metrics":{"score":0.1},"regressions":["accuracy"]}
+  self.lab._runner=lambda request,context:{"metrics":{"score":0.1},"regressions":["accuracy"]}
   exp=self.experiment()
   with self.assertRaises(ValueError):self.lab.propose("ok",experiment_id=exp["experiment_id"],artifact_digest="b"*64)
  def test_rollback_is_record_only_and_requires_reason(self):
