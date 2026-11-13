@@ -34,7 +34,7 @@ class FakeApprovals:
                 "finished_at": "2026-11-13T10:00:02+00:00",
                 "finalization_data": self.finalization_data}
 
-    def complete_finalization(self, session, intent_id):
+    def complete_finalization(self, session, intent_id, *, receipt_hash):
         self.finished = self.finalizing
         return {"intent_id": intent_id,
                 "status": "completed" if self.finished == "success" else "failed"}
