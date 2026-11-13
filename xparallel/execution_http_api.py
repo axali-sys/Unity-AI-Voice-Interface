@@ -9,7 +9,12 @@ from typing import Any
 
 
 class ExecutionHTTPAPI:
-    """Expose intent, approval, execution and recovery operations to JWT claims."""
+    """Expose execution operations using verified claims plus the original bearer token.
+
+The HTTP layer validates claims for route roles. The approval registry receives
+the original token so the configured trusted host authenticator independently
+revalidates identity and workspace instead of trusting a caller-built dict.
+"""
 
     def __init__(self, *, control_plane: Any, host_services: Any):
         approvals = getattr(control_plane, "approvals", None)
@@ -40,7 +45,7 @@ class ExecutionHTTPAPI:
             raise ValueError("execution_request_schema_mismatch")
         return data
 
-    def request_intent(self, claims: Any, data: Any) -> dict[str, Any]:
+    def request_intent(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"owner", "operator"})
         body = self._exact(data, {
             "entity_id", "key_id", "capability_id", "action", "resource_scope",
@@ -51,7 +56,7 @@ class ExecutionHTTPAPI:
         )
         return {"intent": result}
 
-    def approve_intent(self, claims: Any, data: Any) -> dict[str, Any]:
+    def approve_intent(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"owner", "admin"})
         body = self._exact(data, {"intent_id", "reason"})
         result = self._approvals.approve(
@@ -60,14 +65,14 @@ class ExecutionHTTPAPI:
         # The one-use ticket is returned only to the approving principal.
         return {"approval": result}
 
-    def execute_ticket(self, claims: Any, data: Any) -> dict[str, Any]:
+    def execute_ticket(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"operator"})
         body = self._exact(data, {"one_time_ticket"})
         if not isinstance(body["one_time_ticket"], str):
             raise ValueError("invalid_execution_ticket")
-        return self._worker.execute(principal, body["one_time_ticket"])
+        token = self._session_token(session_token)\n        return self._worker.execute(token, body["one_time_ticket"])
 
-    def recover_pending(self, claims: Any, data: Any) -> dict[str, Any]:
+    def recover_pending(self, claims: Any, data: Any, *, session_token: Any) -> dict[str, Any]:
         principal = self._principal(claims, {"operator"})
         body = self._exact(data, {"limit"})
-        return self._worker.recover_pending_finalizations(principal, limit=body["limit"])
+        token = self._session_token(session_token)\n        return self._worker.recover_pending_finalizations(token, limit=body["limit"])
