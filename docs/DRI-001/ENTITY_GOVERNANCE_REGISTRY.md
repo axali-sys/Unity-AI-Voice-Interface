@@ -29,6 +29,7 @@ The prototype does not implement a login system, organization membership, legal 
 - Deny by default; exact resource-scope matching only; no wildcards.
 - Workspace-scoped database keys and queries.
 - Grant records and event history are stored separately. Events are append-only through this API, but a privileged database operator can alter SQLite files.
+- Grant detail and audit reads are restricted to the entity owner or a governance principal with audit permission.
 - Grant expiry is enforced when active grants are read and by the existing policy evaluator.
 - This module does not verify entity status, signing-key status, or capability evidence itself. The caller must pass those trusted facts to the authorization policy.
 - No API routes or execution runtime are changed in this milestone.
