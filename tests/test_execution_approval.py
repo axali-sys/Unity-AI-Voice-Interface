@@ -105,6 +105,19 @@ class ExecutionApprovalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.registry.finish("executor", running["intent_id"], outcome="success")
 
+    def test_finalization_is_nonterminal_until_receipt_commit(self):
+        intent = self.request()
+        approved = self.approve(intent)
+        running = self.registry.start("executor", approved["one_time_ticket"])
+        pending = self.registry.begin_finalization("executor", running["intent_id"], outcome="success")
+        self.assertEqual(pending["status"], "finalizing")
+        self.assertIsNotNone(pending["finished_at"])
+        self.assertEqual(self.registry.get("requester", running["intent_id"])["status"], "finalizing")
+        completed = self.registry.complete_finalization("executor", running["intent_id"])
+        self.assertEqual(completed["status"], "completed")
+        with self.assertRaises(ValueError):
+            self.registry.complete_finalization("executor", running["intent_id"])
+
     def test_cancellation_invalidates_ticket_and_stops_running_state(self):
         intent = self.request()
         approved = self.approve(intent)
