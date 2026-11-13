@@ -139,6 +139,14 @@ class GovernanceRegistryTests(unittest.TestCase):
                 resource_scope="source:*"
             )
 
+    def test_multiline_scope_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "wildcard_or_multiline_scope_not_allowed"):
+            self.registry.request_grant(
+                "owner", entity_id="entity-a", key_id="key-a",
+                capability_id="research.read", action="read",
+                resource_scope="source:doc\\nother"
+            )
+
     def test_audit_history_is_append_only_and_scoped(self):
         approved = self.approved()
         self.registry.suspend("approver", approved["grant_id"], "review")
