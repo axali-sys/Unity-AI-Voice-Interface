@@ -41,7 +41,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no production key-management service, route/chat integration, semantic index, benchmark corpus, scheduled retention service, deletion verification across backups/replicas, cross-device sync or independent privacy/security review. Existing memory vaults have not been migrated. Host ingestion must prevent credentials from entering memory.
 
 ### M3.2 — Cognitive runtime and model gateway
-Create provider-neutral runtime adapters, tool contracts, context budgets, model selection, structured outputs, failure handling and evaluation harnesses. Provider credentials remain server-side and optional; zero-cost/local mode must remain viable.
+**Partial implementation:** `xparallel/cognitive_runtime.py` adds a provider-neutral gateway, explicit provider selection, local-first Ollama adapter restricted to loopback, context/output budgets, structured JSON schema checks, authorized tool proposals (never executed), and a deterministic evaluation harness. Tests cover provider selection, budgets, structured output, tool authorization, evaluation and loopback restrictions. See `docs/DRI-001/COGNITIVE_RUNTIME_AND_MODEL_GATEWAY.md`.
+
+**Not operational:** no live local model was queried; existing chat routes are not migrated; no streaming/cancellation, production model policy, token accounting, context management, verified execution integration, benchmark corpus or independent prompt-injection review exists. No paid provider is selected by default.
 
 ### M3.3 — Parallel Intelligence collaboration
 Implement bounded specialist delegation, attributable contributions, independent verification, disagreement resolution, synthesis, budgets and human approval. Measure task quality rather than treating agent count as intelligence.
