@@ -80,6 +80,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
       - name: Test transactional storage, migrations, backup and recovery
         run: python -m unittest discover -s tests -p "test_storage_recovery.py" -v
+      - name: Test Omni workflow authorization approval retries and receipts
+        run: python -m unittest discover -s tests -p "test_omni_orchestrator.py" -v
       - name: Test bounded Parallel Intelligence collaboration and verification
         run: python -m unittest discover -s tests -p "test_parallel_intelligence.py" -v
       - name: Test provider-neutral cognitive runtime and model gateway
