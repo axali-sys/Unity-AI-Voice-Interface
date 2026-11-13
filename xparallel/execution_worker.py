@@ -134,23 +134,3 @@ class ApprovedExecutionWorker:
             "receipt_pending": False,
         }
 
-        terminal = self._approvals.finish(session, intent_id, outcome=outcome)
-        finished_at = terminal["finished_at"]
-        exit_code = 0 if outcome == "success" else 1
-        receipt = self._receipts.append(
-            session,
-            intent_id=intent_id,
-            policy_decision=policy,
-            started_at=started_at,
-            finished_at=finished_at,
-            exit_code=exit_code,
-            resource_usage=usage,
-            evidence_refs=evidence_refs,
-        )
-        return {
-            "intent_id": intent_id,
-            "status": terminal["status"],
-            "outcome": outcome,
-            "runner_result": result,
-            "receipt": receipt,
-        }
