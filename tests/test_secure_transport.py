@@ -33,7 +33,7 @@ class EncryptedTransportTests(unittest.TestCase):
     def test_retry_dead_letter_revocation_and_quota(self):
         with tempfile.TemporaryDirectory() as root:
             box=ReliableDeliveryOutbox(send=lambda p: (_ for _ in ()).throw(OSError()),
-              verify_ack=lambda a,m: False,authorize_delivery=lambda m: True,
+              verify_ack=lambda a,m: False,authorize_delivery=lambda ws,m: True,
               db_path=f"{root}/outbox.sqlite3",max_attempts=1,max_pending=1)
             box.enqueue(workspace_id="ws-a",message_id="m-2",sender_entity_id="sender",encrypted_packet={"x":1})
             with self.assertRaises(ValueError):
@@ -41,7 +41,7 @@ class EncryptedTransportTests(unittest.TestCase):
             self.assertEqual(box.dispatch_one("ws-a","m-2")["status"],"dead_letter"); box.close()
         with tempfile.TemporaryDirectory() as root:
             box=ReliableDeliveryOutbox(send=lambda p: {"ok":True},verify_ack=lambda a,m: True,
-              authorize_delivery=lambda m: False,db_path=f"{root}/outbox.sqlite3")
+              authorize_delivery=lambda ws,m: False,db_path=f"{root}/outbox.sqlite3")
             box.enqueue(workspace_id="ws-a",message_id="m-4",sender_entity_id="sender",encrypted_packet={"x":1})
             self.assertEqual(box.dispatch_one("ws-a","m-4")["status"],"revoked"); box.close()
 if __name__=="__main__": unittest.main()
