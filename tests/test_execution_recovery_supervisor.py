@@ -1,4 +1,5 @@
 import threading
+import time
 import tempfile
 from pathlib import Path
 import unittest
@@ -67,7 +68,11 @@ class ExecutionRecoverySupervisorTests(unittest.TestCase):
         supervisor = ExecutionRecoverySupervisor(host_services=host, session_provider=lambda: 'secret-session-token', enabled=True, interval_seconds=5)
         supervisor.start()
         self.assertTrue(host.worker.called.wait(2))
+        deadline = time.monotonic() + 2
         health = supervisor.health()
+        while health['last_success_at'] is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+            health = supervisor.health()
         supervisor.stop(timeout_seconds=2)
         self.assertIsNotNone(health['last_success_at'])
         self.assertEqual(health['total_recovered'], 0)
