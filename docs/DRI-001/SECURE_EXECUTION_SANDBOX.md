@@ -14,7 +14,7 @@ Implemented as a hardened local Docker-runner configuration and unit-tested comm
 - /tmp is a bounded noexec/nosuid/nodev tmpfs.
 - Only a disposable temporary workspace is mounted; no host credentials, source checkout, Docker socket, or home directory is mounted.
 - Input files have per-file, total-size, count, path-traversal, and base64 validation limits.
-- Output is bounded before it is returned to callers.
+- Returned stdout/stderr strings are truncated to 10,000 characters after capture. This does not yet cap peak memory or pipe volume during capture; a production runner must implement streaming output quotas and process-tree cleanup.
 - The execution command remains an explicit test command supplied to the runner and is treated as untrusted code.
 
 ## Required configuration
@@ -39,3 +39,6 @@ Unit tests inspect workspace validation and Docker command construction, includi
 
 
 CI note: the test suite includes explicit checks for digest pinning, workspace path and size limits, non-root ownership, Docker command hardening, and the blocked state when Docker is unavailable.
+
+
+Open hardening item: current subprocess capture truncates the returned strings only after process completion; it is not a strict streaming output quota. Do not expose this runner to untrusted public workloads until bounded streaming capture, process-tree termination, and stronger isolation are implemented and tested.
