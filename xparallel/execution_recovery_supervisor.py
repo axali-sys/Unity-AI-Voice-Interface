@@ -1,11 +1,8 @@
-"""Explicit host lifecycle for the XParallel receipt-recovery service.
-
-Nothing starts at import time. A deployment host must construct this supervisor,
-supply a trusted executor-session provider, and call start() deliberately.
-"""
+"""Explicit host lifecycle and health reporting for receipt recovery."""
 from __future__ import annotations
 
 import threading
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from xparallel.execution_recovery_service import ExecutionRecoveryService
@@ -20,19 +17,59 @@ class ExecutionRecoverySupervisor:
     ):
         if enabled is not True and enabled is not False:
             raise ValueError("recovery_enable_flag_must_be_boolean")
+        if on_error is not None and not callable(on_error):
+            raise TypeError("recovery_error_callback_must_be_callable")
         build_worker = getattr(host_services, "build_worker", None)
         if not callable(build_worker):
             raise TypeError("trusted_execution_host_services_required")
+        self._enabled = enabled
+        self._on_error = on_error
         self._service = ExecutionRecoveryService(
             worker=build_worker(), session_provider=session_provider,
             batch_limit=batch_limit, interval_seconds=interval_seconds,
-            on_error=on_error,
         )
-        self._enabled = enabled
+        self._interval = float(interval_seconds)
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
         self._last_error: str | None = None
+        self._last_cycle_at: str | None = None
+        self._last_success_at: str | None = None
+        self._last_result: dict[str, int] | None = None
+        self._consecutive_failures = 0
+        self._total_failures = 0
+        self._total_recovered = 0
+
+    @staticmethod
+    def _timestamp() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    def _record_error(self, exc: Exception) -> None:
+        error_type = type(exc).__name__
+        with self._lock:
+            self._last_cycle_at = self._timestamp()
+            self._last_error = error_type
+            self._consecutive_failures += 1
+            self._total_failures += 1
+        # Callback receives only a fixed exception class, never message or token.
+        if self._on_error is not None:
+            try:
+                self._on_error(error_type)
+            except Exception:
+                pass
+
+    def _record_success(self, result: dict[str, Any]) -> None:
+        with self._lock:
+            self._last_cycle_at = self._timestamp()
+            self._last_success_at = self._last_cycle_at
+            self._last_error = None
+            self._consecutive_failures = 0
+            self._last_result = {
+                "scanned": result["scanned"],
+                "recovered": result["recovered"],
+                "pending": result["pending"],
+            }
+            self._total_recovered += result["recovered"]
 
     def start(self) -> dict[str, Any]:
         """Start only when explicitly enabled; repeated start is idempotent."""
@@ -49,12 +86,13 @@ class ExecutionRecoverySupervisor:
             return {"enabled": True, "running": True}
 
     def _run(self) -> None:
-        try:
-            self._service.run_forever(self._stop)
-        except Exception as exc:
-            # The thread boundary must not leak adapter details or credentials.
-            with self._lock:
-                self._last_error = type(exc).__name__
+        while not self._stop.is_set():
+            try:
+                self._record_success(self._service.run_once())
+            except Exception as exc:
+                self._record_error(exc)
+            if self._stop.wait(self._interval):
+                break
 
     def stop(self, timeout_seconds: float = 5.0) -> dict[str, Any]:
         if (not isinstance(timeout_seconds, (int, float))
@@ -74,10 +112,17 @@ class ExecutionRecoverySupervisor:
         return {"running": running, "stopped": not running}
 
     def health(self) -> dict[str, Any]:
+        """Return operational counters only; never expose sessions or adapter data."""
         with self._lock:
             running = self._thread is not None and self._thread.is_alive()
             return {
                 "enabled": self._enabled,
                 "running": running,
+                "last_cycle_at": self._last_cycle_at,
+                "last_success_at": self._last_success_at,
                 "last_error_type": self._last_error,
+                "consecutive_failures": self._consecutive_failures,
+                "total_failures": self._total_failures,
+                "total_recovered": self._total_recovered,
+                "last_result": dict(self._last_result) if self._last_result else None,
             }
