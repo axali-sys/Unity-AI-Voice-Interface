@@ -69,5 +69,7 @@ jobs:
         run: python -m unittest discover -s tests -p "test_capability_verification.py" -v
       - name: Test verified entity action gate composition
         run: python -m unittest discover -s tests -p "test_verified_action_gate.py" -v
+      - name: Test trusted host adapters and workspace enforcement boundary
+        run: python -m unittest discover -s tests -p "test_trusted_host_adapters.py" -v
       - name: Test restricted Docker execution boundary
         run: python -m unittest discover -s tests -p "test_v1_runner.py" -v
