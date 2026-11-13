@@ -127,14 +127,14 @@ class ExecutionApprovalTests(unittest.TestCase):
         completed = self.registry.complete_finalization("executor", running["intent_id"], receipt_hash="a" * 64)
         self.assertEqual(completed["status"], "completed")
         with self.assertRaises(ValueError):
-            self.registry.complete_finalization("executor", running["intent_id"])
+            self.registry.complete_finalization("executor", running["intent_id"], receipt_hash="a" * 64)
 
     def test_terminal_transition_fails_closed_without_verified_receipt(self):
         intent = self.request()
         approved = self.approve(intent)
         running = self.registry.start("executor", approved["one_time_ticket"])
         self.registry.begin_finalization("executor", running["intent_id"], outcome="failure")
-        self.registry._verify_receipt_commit = lambda principal, intent_id, receipt_hash: False
+        self.registry._verify_receipt_commit = lambda session, principal, intent_id, receipt_hash: False
         with self.assertRaises(PermissionError):
             self.registry.complete_finalization("executor", running["intent_id"], receipt_hash="a" * 64)
         self.assertEqual(self.registry.get("requester", running["intent_id"])["status"], "finalizing")
