@@ -103,6 +103,18 @@ class DigitalDNARegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid_protocol_version"):
             validate_manifest(invalid)
 
+    def test_registry_rejects_self_activated_entity(self):
+        invalid = manifest()
+        invalid["status"] = "active"
+        with self.assertRaisesRegex(ValueError, "registry_submission_must_be_pending"):
+            self.registry.register("alpha", invalid)
+
+    def test_registry_rejects_self_certified_capability(self):
+        invalid = manifest()
+        invalid["capabilities"][0]["status"] = "verified"
+        with self.assertRaisesRegex(ValueError, "capabilities_cannot_self_certify"):
+            self.registry.register("alpha", invalid)
+
     def test_rejects_secret_material_in_manifest(self):
         invalid = manifest()
         invalid["runtime"] = {"api_key": "must-not-be-here"}
