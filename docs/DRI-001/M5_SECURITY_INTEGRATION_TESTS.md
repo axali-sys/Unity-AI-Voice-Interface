@@ -31,3 +31,15 @@ All identity, governance-authority, trusted-plan and isolated-runner adapters ar
 - Independent security review, penetration testing, dependency/SBOM review and operational recovery tests.
 
 No merge or deployment is performed.
+
+
+## Extended execution-chain tests
+
+The same test module now also exercises a test-only end-to-end composition:
+- A real local verified action gate authorizes the exact entity, capability, artifact digest and resource scope.
+- The execution approval registry records the immutable intent, requires a different approver, issues a one-time ticket and binds the executor.
+- The worker checks the current authorization state at start and at a runtime checkpoint.
+- On successful completion, the receipt ledger resolves the authoritative terminal job record, signs a receipt and verifies the local hash chain.
+- A separate revocation test confirms that revoking the permission causes the running worker's next checkpoint to return `continue: false`.
+
+All host identities, authorities, artifact resolution, runner result, and signing keys remain test fixtures. No process is launched, no public/private HTTP route is connected, and this is not a production executor or production security assurance. The tests establish composition behavior only.
