@@ -76,6 +76,36 @@ A green CI workflow verifies only the tests run in that workflow; it does not es
 7. PR #44's Parallel Verse storage code warns that serverless `/tmp` is not durable; persistent deployment needs a durable volume or configured PostgreSQL.
 8. The standalone HTML prototype is only a browser-local UX prototype; its local memory is not encrypted and its simulated profile/RAM controls do not provide OS-level virtualization or device memory management.
 
+## Additional findings from PR #42 (`oneai-release-integration`)
+
+The PR #42 head is `9389397f1d24a52586b4ea4b69d705b9a0aa85f4`, open and unmerged against `main`. The correct branch name is `oneai-release-integration`.
+
+| ID | Component / identity | Additional evidence | Refined finding |
+|---|---|---|---|
+| C002 | Multi-Model Intelligence | `xparallel/mixer.py`, `tests/test_mixer.py`, `tests/test_chat_service_mixer.py`; the chat service can call the mixer and return provider-attributed calls and memory sources. | Partial — feature branch. Provider calls are configured through server environment; mocked tests do not prove live provider availability. |
+| C040 | XParallel Roaming | `xparallel/roaming_engine.py`, `tests/test_roaming_engine.py`. Configured workers require explicit host allowlisting and public-address checks; roaming operation is search-only and reports that execution was not performed. | Partial — feature branch. This is bounded retrieval fan-out, not general roaming execution or a persistent worker lifecycle. |
+| C073 | AI Guardian | `xparallel/infra_verify.py` provides read-only-by-default API smoke checks and redacts transport details. | Not equivalent to continuous threat detection, incident response or security monitoring; retain Not verified for the full component. |
+| C097 | Model Gateway | PR #42 connects chat to the multi-provider mixer. | Partial — feature branch, with provider-specific configuration and no evidence of a general managed gateway service. |
+| P002 | Omni | `xparallel/omni_unitai.py` defines layer roles and a system manifest. | Documented/configuration contract only; it is not proof of an operational independent Omni orchestration plane. |
+| P004 | Parallel Intelligence | Mixer integration supports multi-model comparison/synthesis. | Partial — feature branch; no full independent collective-intelligence runtime verified. |
+| P006 | UnitAI | `xparallel/omni_unitai.py` declares UnitAI as an operating/policy layer. The manifest explicitly reports GPS, biometrics and Ethereum audit as not configured unless integrations are set. | Documented/configuration contract only; not a verified device identity/security platform. |
+| P010 | UIDaaS | The manifest's unified identity field is configuration status, while main authorization is a role/action helper. | Partial authorization foundation only; full identity issuance/authentication remains unverified. |
+
+PR #42's `infra_verify.py` can optionally call live checks, but the existence of the script and mocked helper tests does not mean a live endpoint was checked during this audit. Its documentation also distinguishes optional live AI/roaming checks from read-only checks.
+
+## Additional Parallel Verse persistence findings
+
+PR #44 (`xparallel-parallel-verse-verify`) contains:
+- `xparallel/parallel_verse.py`: SQLite workspace-scoped agents, spaces, tasks and event records.
+- `xparallel/parallel_verse_postgres.py`: opt-in PostgreSQL adapter requiring `XP_VERSE_DATABASE_URL` and psycopg 3.
+- `xparallel/conversation_store_postgres.py`: opt-in PostgreSQL conversation history adapter.
+- `migrations/parallel_verse/0001_initial.sql`, `0002_workspace_integrity.sql`, and `0003_conversations.sql`.
+- `tests/test_parallel_verse.py`: SQLite persistence across reopening, workspace isolation, task/space/event history and declared-capability discovery.
+- `tests/test_parallel_verse_postgres.py`: integration tests are skipped unless a disposable PostgreSQL URL is configured; no live PostgreSQL integration result was established in this audit.
+- `tests/test_conversation_store_postgres.py`: PostgreSQL conversation adapter test coverage is part of the branch.
+
+This strengthens the finding that a useful Parallel Verse storage prototype exists on a feature branch. It does not establish deployed durability, production identity, multi-organization governance, real-time multi-node coordination, or an open external developer ecosystem.
+
 ## Uninspected register remainder
 
 The remaining components not named in the inspected subset retain the source register's **Unverified** status. This includes all other C001–C113 entries and P001–P015 not explicitly listed in the evidence matrix above. No component should be marked implemented based only on naming, roadmap text, branch title, UI mockup or green CI.
