@@ -25,10 +25,23 @@ from xparallel.conversation_store import save_conversation, get_conversation, li
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
+from xparallel.session_jwt import HS256SessionVerifier
+from xparallel.http_identity import bearer_token, bind_request_identity, IdentityBindingError
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
 TOKEN = os.getenv("XP_TOKEN")
+AUTH_MODE = os.getenv("XP_AUTH_MODE", "legacy").strip().lower()
+SESSION_VERIFIER = None
+if AUTH_MODE == "jwt":
+    try:
+        SESSION_VERIFIER = HS256SessionVerifier(
+            os.getenv("XP_SESSION_JWT_SECRET", ""),
+            issuer=os.getenv("XP_SESSION_JWT_ISSUER", ""),
+            audience=os.getenv("XP_SESSION_JWT_AUDIENCE", ""),
+        )
+    except ValueError:
+        SESSION_VERIFIER = None
 APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0")
@@ -88,7 +101,7 @@ def public_rate_ok(handler):
 
 def retrieve_memory_context(query, data):
     """Return a small, workspace-scoped memory context for authenticated AI workflows."""
-    workspace = workspace_context(data)["workspace_id"]
+    workspace = self.workspace_context(data)["workspace_id"]
     matches = search_memories(query, workspace, limit=3)
     return [
         {
@@ -104,10 +117,29 @@ def retrieve_memory_context(query, data):
 
 class Handler(BaseHTTPRequestHandler):
     def authorized(self):
-        return bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
+        if AUTH_MODE == "jwt":
+            if SESSION_VERIFIER is None:
+                return False
+            token = bearer_token(self.headers.get("Authorization"))
+            if token is None:
+                return False
+            try:
+                self.identity_context = SESSION_VERIFIER(token)
+                return True
+            except (PermissionError, ValueError):
+                self.identity_context = None
+                return False
+        return AUTH_MODE == "legacy" and bool(TOKEN) and self.headers.get("Authorization") == f"Bearer {TOKEN}"
 
     def role(self):
+        if AUTH_MODE == "jwt":
+            return getattr(self, "identity_context", {}).get("role", "viewer")
         return DEFAULT_ROLE if self.authorized() else "viewer"
+
+    def workspace_context(self, data):
+        if AUTH_MODE == "jwt":
+            data = bind_request_identity(data, getattr(self, "identity_context", {}))
+        return workspace_context(data)
 
     def require_role(self, action):
         return authorize(self.role(), action)
@@ -158,9 +190,16 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
         parsed = urlparse(self.path)
+        if AUTH_MODE == "jwt":
+            try:
+                params = bind_request_identity(parse_qs(parsed.query), self.identity_context)
+            except IdentityBindingError as exc:
+                return send_json(self, 403, {"error": str(exc)})
+        else:
+            params = parse_qs(parsed.query)
         if parsed.path == "/repair/jobs":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = self.workspace_context(params)["workspace_id"]
             try:
                 jobs = list_jobs(workspace, params.get("limit", ["50"])[0], params.get("status", [""])[0])
             except ValueError:
@@ -168,13 +207,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace, "jobs": jobs})
         if parsed.path.startswith("/repair/jobs/"):
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = self.workspace_context(params)["workspace_id"]
             job_id = parsed.path.rsplit("/", 1)[-1]
             job = get_job(job_id, workspace)
             return send_json(self, 200 if job else 404, job or {"error": "not_found"})
         if parsed.path == "/conversations":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = self.workspace_context(params)["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             try:
                 conversations = list_conversations(workspace, limit)
@@ -183,13 +222,13 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"workspace_id": workspace, "conversations": conversations})
         if parsed.path.startswith("/conversations/"):
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = self.workspace_context(params)["workspace_id"]
             conversation_id = parsed.path.rsplit("/", 1)[-1]
             conversation = get_conversation(conversation_id, workspace)
             return send_json(self, 200 if conversation else 404, conversation or {"error": "not_found"})
         if parsed.path == "/memory":
             params = parse_qs(parsed.query)
-            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            workspace = self.workspace_context(params)["workspace_id"]
             limit = params.get("limit", ["50"])[0]
             query = params.get("q", [""])[0]
             if query:
@@ -224,22 +263,28 @@ class Handler(BaseHTTPRequestHandler):
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
 
+        if not is_public and AUTH_MODE == "jwt":
+            try:
+                data = bind_request_identity(data, getattr(self, "identity_context", {}))
+            except IdentityBindingError as exc:
+                return send_json(self, 403, {"error": str(exc)})
+
         if self.path == "/conversations":
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             try:
                 result = save_conversation(data.get("conversation_id", ""), workspace, data.get("title", "New chat"), data.get("messages", []))
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
-            self.audit("conversation_saved", workspace, workspace_context(data)["actor"], {"conversation_id": result["conversation_id"], "message_count": result["message_count"]})
+            self.audit("conversation_saved", workspace, self.workspace_context(data)["actor"], {"conversation_id": result["conversation_id"], "message_count": result["message_count"]})
             return send_json(self, 200, result)
 
         if self.path == "/conversations/delete":
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             conversation_id = str(data.get("conversation_id", "")).strip()
             if not conversation_id:
                 return send_json(self, 400, {"error": "conversation_id_required"})
             deleted = delete_conversation(conversation_id, workspace)
-            self.audit("conversation_deleted", workspace, workspace_context(data)["actor"], {"conversation_id": conversation_id, "deleted": deleted})
+            self.audit("conversation_deleted", workspace, self.workspace_context(data)["actor"], {"conversation_id": conversation_id, "deleted": deleted})
             return send_json(self, 200 if deleted else 404, {"deleted": deleted})
 
         if self.path == "/repair/jobs":
@@ -253,7 +298,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "query_too_large"})
             if job_type not in {"diagnostic", "repair_plan"}:
                 return send_json(self, 400, {"error": "unsupported_job_type"})
-            workspace_data = workspace_context(data)
+            workspace_data = self.workspace_context(data)
             try:
                 try:
                     context = retrieve_memory_context(query, data)
@@ -302,7 +347,7 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, connector_result(url))
 
         if self.path == "/public/solutions":
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 50)), 100))
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "solutions": REPOSITORY.list(workspace, limit=limit)}, cors=True)
@@ -313,10 +358,10 @@ class Handler(BaseHTTPRequestHandler):
                 solution = create_solution(query)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)}, cors=is_public)
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             node = GRAPH.add(solution, status="candidate", tags=data.get("tags") or [])
             REPOSITORY.put(workspace, node)
-            audit = self.audit("solution_created", workspace, workspace_context(data)["actor"], {"node_id": node["node_id"]})
+            audit = self.audit("solution_created", workspace, self.workspace_context(data)["actor"], {"node_id": node["node_id"]})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "solution": solution, "node": node,
                 "billing": usage_event("solution_created", workspace)}, cors=is_public)
@@ -333,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
             if not query:
                 return send_json(self, 400, {"error": "query_required"}, cors=is_public)
             limit = int(data.get("limit", 10))
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             candidates = REPOSITORY.list(workspace, limit=200)
             terms = {term.lower() for term in query.split() if len(term) > 2}
             scored = []
@@ -351,14 +396,14 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 result = save_memory(
                     content=data.get("content", ""),
-                    workspace_id=workspace_context(data)["workspace_id"],
+                    workspace_id=self.workspace_context(data)["workspace_id"],
                     summary=str(data.get("summary", "")),
                     tags=data.get("tags") if isinstance(data.get("tags"), list) else [],
                 )
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
-            workspace = workspace_context(data)["workspace_id"]
-            self.audit("memory_saved", workspace, workspace_context(data)["actor"], {
+            workspace = self.workspace_context(data)["workspace_id"]
+            self.audit("memory_saved", workspace, self.workspace_context(data)["actor"], {
                 "memory_id": result["id"], "created": result["created"],
             })
             return send_json(self, 201 if result["created"] else 200, result)
@@ -367,17 +412,17 @@ class Handler(BaseHTTPRequestHandler):
             memory_query = str(data.get("query", "")).strip()
             if not memory_query:
                 return send_json(self, 400, {"error": "query_required"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 10)), 50))
             memories = search_memories(memory_query, workspace, limit)
-            self.audit("memory_searched", workspace, workspace_context(data)["actor"], {
+            self.audit("memory_searched", workspace, self.workspace_context(data)["actor"], {
                 "result_count": len(memories), "query_length": len(memory_query),
             })
             return send_json(self, 200, {"memories": memories})
 
         if self.path == "/chat":
             messages = data.get("messages")
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             use_memory = data.get("use_memory", True) is not False
             try:
                 result = chat_with_ai(messages, workspace, use_memory)
@@ -387,7 +432,7 @@ class Handler(BaseHTTPRequestHandler):
                 error = str(exc)
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
-            self.audit("axaliai_chat", workspace, workspace_context(data)["actor"], {
+            self.audit("axaliai_chat", workspace, self.workspace_context(data)["actor"], {
                 "model": result.get("model", "unknown"),
                 "message_count": len(messages) if isinstance(messages, list) else 0,
             })
@@ -397,7 +442,7 @@ class Handler(BaseHTTPRequestHandler):
             memory_query = str(data.get("query", "")).strip()
             if not memory_query:
                 return send_json(self, 400, {"error": "query_required"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             limit = max(1, min(int(data.get("limit", 5)), 10))
             try:
                 result = summarize_memories(memory_query, workspace, limit)
@@ -407,7 +452,7 @@ class Handler(BaseHTTPRequestHandler):
                 error = str(exc)
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
-            self.audit("memory_summarized", workspace, workspace_context(data)["actor"], {
+            self.audit("memory_summarized", workspace, self.workspace_context(data)["actor"], {
                 "provider": result.get("provider", "unknown"),
                 "source_count": len(result.get("memories", [])),
                 "query_length": len(memory_query),
@@ -420,7 +465,7 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 400, {"error": "query_required"})
             if len(query) > 4000:
                 return send_json(self, 400, {"error": "query_too_large"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             try:
                 result = create_parallel_plan(query, workspace)
             except ValueError as exc:
@@ -430,7 +475,7 @@ class Handler(BaseHTTPRequestHandler):
                 status = 503 if error in {"ai_provider_not_configured", "ai_provider_url_must_use_https"} else 502
                 return send_json(self, status, {"error": error})
             plan_data = result.get("plan", {})
-            self.audit("parallel_world_plan_created", workspace, workspace_context(data)["actor"], {
+            self.audit("parallel_world_plan_created", workspace, self.workspace_context(data)["actor"], {
                 "provider": plan_data.get("provider", "unknown"),
                 "memory_source_count": len(plan_data.get("memory_sources", [])),
             })
@@ -440,9 +485,9 @@ class Handler(BaseHTTPRequestHandler):
             memory_id = str(data.get("id", "")).strip()
             if not memory_id:
                 return send_json(self, 400, {"error": "id_required"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             deleted = forget_memory(memory_id, workspace)
-            self.audit("memory_forgotten", workspace, workspace_context(data)["actor"], {
+            self.audit("memory_forgotten", workspace, self.workspace_context(data)["actor"], {
                 "memory_id": memory_id, "deleted": deleted,
             })
             return send_json(self, 200 if deleted else 404, {"deleted": deleted})
@@ -475,7 +520,7 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, result)
 
         if self.path == "/graph":
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             if not self.require_role("read"):
                 return send_json(self, 403, {"error":"forbidden"})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
@@ -484,7 +529,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/graph/promote":
             if not self.require_role("verify"):
                 return send_json(self, 403, {"error":"forbidden"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             node_id = str(data.get("node_id", "")).strip()
             if not node_id:
                 return send_json(self, 400, {"error": "node_id_required"})
@@ -495,16 +540,16 @@ class Handler(BaseHTTPRequestHandler):
                 GRAPH.add(node["solution"], status=node["status"], tags=node["tags"])
             promoted = GRAPH.promote(node_id)
             REPOSITORY.put(workspace, promoted)
-            audit = self.audit("verification", workspace, workspace_context(data)["actor"], {"node_id": node_id})
+            audit = self.audit("verification", workspace, self.workspace_context(data)["actor"], {"node_id": node_id})
             return send_json(self, 200, {"network": NETWORK, "workspace_id": workspace,
                 "node": promoted, "billing": usage_event("verification", workspace), "audit": audit})
 
         if self.path == "/billing/preview":
             if not self.require_role("billing"):
                 return send_json(self, 403, {"error":"forbidden"})
-            workspace = workspace_context(data)["workspace_id"]
+            workspace = self.workspace_context(data)["workspace_id"]
             events = data.get("events") if isinstance(data.get("events"), list) else []
-            audit = self.audit("billing_preview", workspace, workspace_context(data)["actor"])
+            audit = self.audit("billing_preview", workspace, self.workspace_context(data)["actor"])
             return send_json(self, 200, {"network": NETWORK, **invoice_preview(workspace, events), "audit": audit})
 
         if self.path == "/agent/plan":
