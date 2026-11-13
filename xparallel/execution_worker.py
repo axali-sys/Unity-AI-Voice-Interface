@@ -52,20 +52,41 @@ class ApprovedExecutionWorker:
         existing = self._receipts.get_by_intent(session, intent_id)
         if existing is not None:
             receipt = existing
+            if pending["status"] in {"completed", "failed"}:
+                expected_status = "completed" if pending.get("outcome") == "success" else "failed"
+                if pending["status"] != expected_status:
+                    raise ValueError("terminal_execution_outcome_mismatch")
+                return {
+                    "intent_id": intent_id, "status": pending["status"],
+                    "outcome": pending["outcome"], "receipt": receipt,
+                    "receipt_pending": False, "recovered": True,
+                }
         else:
+            if pending["status"] != "finalizing":
+                raise ValueError("terminal_execution_receipt_missing")
             outcome = pending.get("outcome")
             if outcome not in {"success", "failure", "blocked"}:
                 raise ValueError("invalid_pending_execution_outcome")
-            receipt = self._receipts.append(
-                session, intent_id=intent_id,
-                policy_decision=data["policy_decision"],
-                started_at=data["started_at"],
-                finished_at=pending["finished_at"],
-                exit_code=0 if outcome == "success" else 1,
-                resource_usage=data["resource_usage"],
-                evidence_refs=data["evidence_refs"],
-            )
-        terminal = self._approvals.complete_finalization(session, intent_id, receipt_hash=receipt["receipt_hash"])
+            try:
+                receipt = self._receipts.append(
+                    session, intent_id=intent_id,
+                    policy_decision=data["policy_decision"],
+                    started_at=data["started_at"],
+                    finished_at=pending["finished_at"],
+                    exit_code=0 if outcome == "success" else 1,
+                    resource_usage=data["resource_usage"],
+                    evidence_refs=data["evidence_refs"],
+                )
+            except Exception:
+                # A competing recovery attempt may have committed the unique
+                # receipt between lookup and append. Accept only the verified
+                # ledger entry, never a raw duplicate/constraint error.
+                receipt = self._receipts.get_by_intent(session, intent_id)
+                if receipt is None:
+                    raise
+        terminal = self._approvals.complete_finalization(
+            session, intent_id, receipt_hash=receipt["receipt_hash"]
+        )
         return {
             "intent_id": intent_id, "status": terminal["status"],
             "outcome": pending["outcome"], "receipt": receipt,
