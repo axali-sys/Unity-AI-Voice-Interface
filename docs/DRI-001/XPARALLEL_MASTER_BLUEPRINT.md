@@ -186,3 +186,14 @@ A first evidence-backed component audit snapshot is maintained separately at:
 
 It records the inspected subset, source paths, feature-branch/PR status, CI evidence, limitations and remaining acceptance gaps. It is explicitly partial; uninspected entries retain the original register's Unverified status. M1 is not complete.
 
+
+## 13. Full register coverage matrix
+
+The full traceability matrix now includes all **113 source components** and all **15 preservation identities**, with conservative evidence statuses and gaps:
+
+- [Full Register Coverage Matrix](./FULL_REGISTER_COVERAGE_MATRIX.md)
+- 26 components and 8 preservation identities have a **Partial** evidence finding.
+- 6 components retain **Experimental** status.
+- All remaining entries are **Unverified**, not presumed absent.
+
+This confirms coverage of the source register IDs, not completion of the engineering audit. The matrix is a first-pass triage based on inspected code/branches and must be refined through further source, test, security, and runtime verification.
