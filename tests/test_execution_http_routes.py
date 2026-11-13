@@ -6,7 +6,7 @@ from xparallel import server
 
 class Handler:
     def __init__(self, claims=None):
-        self.identity_context = claims
+        self.identity_context = claims\n        self.headers = {"Authorization": "Bearer verified-token"}
         self.response = None
 
 
@@ -18,19 +18,19 @@ class FakeAPI:
     def __init__(self):
         self.calls = []
 
-    def request_intent(self, claims, data):
+    def request_intent(self, claims, data, *, session_token):
         self.calls.append(("request", claims, data))
         return {"intent": {"status": "requested"}}
 
-    def approve_intent(self, claims, data):
+    def approve_intent(self, claims, data, *, session_token):
         self.calls.append(("approve", claims, data))
         return {"approval": {"status": "approved"}}
 
-    def execute_ticket(self, claims, data):
+    def execute_ticket(self, claims, data, *, session_token):
         self.calls.append(("execute", claims, data))
         return {"status": "completed"}
 
-    def recover_pending(self, claims, data):
+    def recover_pending(self, claims, data, *, session_token):
         self.calls.append(("recover", claims, data))
         return {"pending": 0}
 
@@ -83,11 +83,11 @@ class ExecutionHTTPRouteTests(unittest.TestCase):
                 self.assertTrue(server.dispatch_execution_post(self.handler, path, body))
                 self.assertEqual(self.handler.response[0], status)
                 self.assertEqual(self.api.calls[-1][0], operation)
-                self.assertEqual(self.api.calls[-1][1]["workspace_id"], "workspace-a")
+                self.assertEqual(self.api.calls[-1][1]["workspace_id"], "workspace-a")\n                self.assertEqual(self.api.calls[-1][3], "verified-token")
 
     def test_permission_and_validation_errors_are_mapped_safely(self):
         class DeniedAPI(FakeAPI):
-            def execute_ticket(self, claims, data):
+            def execute_ticket(self, claims, data, *, session_token):
                 raise PermissionError("execution_role_not_authorized")
         with patch.object(server, "AUTH_MODE", "jwt"), \
              patch.object(server, "SESSION_VERIFIER", object()), \
