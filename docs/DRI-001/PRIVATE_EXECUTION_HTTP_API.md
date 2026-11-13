@@ -44,13 +44,26 @@ or production host integration.
 ## Independent host-session revalidation
 
 The HTTP layer verifies the bearer token to obtain issuer-signed role claims.
-The private execution adapter now forwards the original bearer token—not a
+The private execution adapter forwards the original bearer token—not a
 caller-constructed principal dictionary—to the approval registry and worker.
 The registry's configured host authenticator must independently validate that
-token and return the authoritative subject and workspace. This prevents the
+token and return the authoritative subject and workspace. The host can use
+the same `HS256SessionVerifier` instance (or an equivalent verifier configured
+with the same issuer, audience, key and clock policy) as its authenticator. This prevents the
 execution control plane from treating an ordinary claims dictionary as a
 session credential.
 
 This is still a host integration contract: the host must configure its
 authenticator to validate the same issuer, audience, expiry and signing key.
 No identity provider or live host authenticator is configured by this branch.
+
+
+## Signed-session integration test
+
+`tests/test_execution_http_jwt_binding.py` composes the actual HS256 verifier,
+trusted execution control plane, approval registry and HTTP API adapter. It
+proves that a signed owner token can request an intent, a separately signed
+admin token can approve it, and a tampered token is rejected again at the
+registry boundary even when valid-looking claims are separately supplied.
+The test uses in-memory registries and a fake worker; it does not run Docker or
+establish a production identity-provider connection.
