@@ -97,7 +97,10 @@ class ExecutionHostServices:
         limits = intent.get("limits")
         if not isinstance(limits, dict):
             raise ValueError("approved_execution_limits_missing")
-        if (usage["wall_ms"] > limits.get("timeout_seconds", 0) * 1000
+        wall_limit_ms = limits.get("timeout_seconds", 0) * 1000
+        cpu_limit_ms = (usage["wall_ms"] * limits.get("cpu_millis", 0)) // 1000
+        if (usage["wall_ms"] > wall_limit_ms
+                or usage["cpu_ms"] > cpu_limit_ms
                 or usage["memory_peak_mb"] > limits.get("memory_mb", 0)
                 or usage["output_bytes"] > limits.get("output_bytes", 0)
                 or usage["pids_peak"] > limits.get("pids", 0)):
