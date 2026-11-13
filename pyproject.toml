@@ -3,7 +3,9 @@ name = "axaliai-xparallel"
 version = "0.1.0"
 description = "Axaliai XParallel API"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "cryptography>=42",
+]
 
 [tool.vercel]
 entrypoint = "xparallel.server:Handler"
