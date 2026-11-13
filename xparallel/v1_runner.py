@@ -34,6 +34,10 @@ MAX_TOTAL_BYTES = _int_env("XP_RUNNER_MAX_TOTAL_BYTES", 10 * 1024 * 1024)
 MEMORY = os.getenv("XP_RUNNER_MEMORY", "512m")
 CPUS = os.getenv("XP_RUNNER_CPUS", "1.0")
 PIDS = os.getenv("XP_RUNNER_PIDS", "128")
+
+
+class ExecutionRevoked(RuntimeError):
+    """Raised when the trusted execution checkpoint denies continuation."""
 NONROOT_UID = 65532
 NONROOT_GID = 65532
 
@@ -134,7 +138,7 @@ def _docker_command(root, test_command):
 
 
 
-def _run_bounded(command, *, timeout, env, output_limit=10000):
+def _run_bounded(command, *, timeout, env, output_limit=10000, should_continue=None):
     """Drain both pipes without retaining unbounded output; kill the process group on timeout."""
     process = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -154,6 +158,8 @@ def _run_bounded(command, *, timeout, env, output_limit=10000):
     deadline = time.monotonic() + timeout
     try:
         while selector.get_map():
+            if should_continue is not None and should_continue() is not True:
+                raise ExecutionRevoked("execution_revoked_or_stale")
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise subprocess.TimeoutExpired(command, timeout)
@@ -190,7 +196,7 @@ def _run_bounded(command, *, timeout, env, output_limit=10000):
         "output_truncated": truncated,
     }
 
-def run_project(intent):
+def run_project(intent, *, approved_limits=None, expected_image_digest=None, should_continue=None):
     started = datetime.now(timezone.utc).isoformat()
     if not isinstance(intent, dict):
         return {"environment": "docker", "status": "failed", "error": "invalid_intent"}
@@ -199,6 +205,27 @@ def run_project(intent):
         return {"environment": "docker", "status": "failed", "error": "invalid_test_command"}
     if not _valid_limits():
         return {"environment": "docker", "status": "blocked", "error": "invalid_sandbox_limits"}
+    if not isinstance(approved_limits, dict) or set(approved_limits) != {
+        "timeout_seconds", "memory_mb", "cpu_millis", "pids", "output_bytes"
+    }:
+        return {"environment": "docker", "status": "blocked", "error": "approved_limits_required"}
+    if not isinstance(expected_image_digest, str) or not _image_is_pinned(IMAGE) or IMAGE.rsplit("@sha256:", 1)[-1] != expected_image_digest:
+        return {"environment": "docker", "status": "blocked", "error": "runner_image_digest_mismatch"}
+    try:
+        if any(not isinstance(approved_limits[k], int) or isinstance(approved_limits[k], bool) for k in approved_limits):
+            raise ValueError
+        if not (1 <= approved_limits["timeout_seconds"] <= 600
+                and 64 <= approved_limits["memory_mb"] <= 2048
+                and 100 <= approved_limits["cpu_millis"] <= 4000
+                and 1 <= approved_limits["pids"] <= 1024
+                and 1024 <= approved_limits["output_bytes"] <= 10_000_000):
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        return {"environment": "docker", "status": "blocked", "error": "invalid_approved_limits"}
+    configured_memory = int(re.fullmatch(r"([1-9][0-9]{0,3})(m|g)", MEMORY.lower()).group(1)) * (1024 if MEMORY.lower().endswith("g") else 1)
+    if (TIMEOUT > approved_limits["timeout_seconds"] or configured_memory > approved_limits["memory_mb"]
+            or float(CPUS) * 1000 > approved_limits["cpu_millis"] or int(PIDS) > approved_limits["pids"]):
+        return {"environment": "docker", "status": "blocked", "error": "runner_limits_exceed_approval"}
     if not _image_is_pinned(IMAGE):
         return {"environment": "docker", "status": "blocked", "error": "runner_image_digest_not_pinned"}
     if shutil.which("docker") is None:
@@ -214,11 +241,15 @@ def run_project(intent):
         try:
             completed = _run_bounded(
                 _docker_command(root, test_command),
-                timeout=TIMEOUT,
+                timeout=min(TIMEOUT, approved_limits["timeout_seconds"]),
                 env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
+                output_limit=approved_limits["output_bytes"],
+                should_continue=should_continue,
             )
+        except ExecutionRevoked:
+            return {"environment": "docker", "status": "blocked", "error": "execution_revoked_or_stale"}
         except subprocess.TimeoutExpired:
-            return {"environment": "docker", "status": "failed", "error": "test_timeout", "timeout_seconds": TIMEOUT}
+            return {"environment": "docker", "status": "failed", "error": "test_timeout", "timeout_seconds": min(TIMEOUT, approved_limits["timeout_seconds"])}
         except OSError:
             return {"environment": "docker", "status": "failed", "error": "docker_execution_failed"}
         return {
@@ -231,6 +262,8 @@ def run_project(intent):
             "stderr": completed["stderr"],
             "output_truncated": completed["output_truncated"],
             "test_command": test_command,
+            "approved_limits": dict(approved_limits),
+            "output_bytes": len(completed["stdout"].encode("utf-8")) + len(completed["stderr"].encode("utf-8")),
             "isolation": {
                 "network": "none", "root_filesystem": "read-only",
                 "capabilities": "dropped-all", "non_root_uid": NONROOT_UID,
