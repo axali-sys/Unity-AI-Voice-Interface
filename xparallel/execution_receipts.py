@@ -266,6 +266,18 @@ class ExecutionReceiptLedger:
             "signature": row["signature"], "recorded_at": row["recorded_at"],
         }
 
+    def verify_committed_receipt(self, session: Any, intent_id: str, receipt_hash: str) -> bool:
+        """Verify the signed chain and exact receipt hash for terminal-state gating."""
+        if not isinstance(receipt_hash, str) or len(receipt_hash) != 64:
+            return False
+        if any(ch not in "0123456789abcdef" for ch in receipt_hash):
+            return False
+        try:
+            record = self.get_by_intent(session, intent_id)
+            return isinstance(record, dict) and record.get("receipt_hash") == receipt_hash
+        except Exception:
+            return False
+
     def verify_chain(self, session: Any) -> dict[str, Any]:
         principal = self._principal(session)
         with _LOCK:
