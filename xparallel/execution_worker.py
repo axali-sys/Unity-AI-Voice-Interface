@@ -30,9 +30,9 @@ class ApprovedExecutionWorker:
                     resolve_policy_evidence, measure_resources, store_evidence)
         if not all(callable(x) for x in adapters):
             raise TypeError("trusted_worker_adapters_required")
-        if not callable(getattr(approvals, "start", None)) or not callable(getattr(approvals, "check_running", None)) or not callable(getattr(approvals, "begin_finalization", None)) or not callable(getattr(approvals, "complete_finalization", None)):
+        if not callable(getattr(approvals, "start", None)) or not callable(getattr(approvals, "check_running", None)) or not callable(getattr(approvals, "begin_finalization", None)) or not callable(getattr(approvals, "complete_finalization", None)) or not callable(getattr(approvals, "get_finalization_for_recovery", None)):
             raise TypeError("execution_approval_registry_required")
-        if not callable(getattr(receipts, "append", None)):
+        if not callable(getattr(receipts, "append", None)) or not callable(getattr(receipts, "get_by_intent", None)):
             raise TypeError("execution_receipt_ledger_required")
         self._approvals = approvals
         self._runner = runner
@@ -42,6 +42,35 @@ class ApprovedExecutionWorker:
         self._measure = measure_resources
         self._store_evidence = store_evidence
         self._receipts = receipts
+
+    def recover_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
+        """Retry receipt commit from persisted evidence; never re-run the workload."""
+        pending = self._approvals.get_finalization_for_recovery(session, intent_id)
+        data = pending.get("finalization_data")
+        if not isinstance(data, dict):
+            raise ValueError("finalization_receipt_data_unavailable")
+        existing = self._receipts.get_by_intent(session, intent_id)
+        if existing is not None:
+            receipt = existing
+        else:
+            outcome = pending.get("outcome")
+            if outcome not in {"success", "failure", "blocked"}:
+                raise ValueError("invalid_pending_execution_outcome")
+            receipt = self._receipts.append(
+                session, intent_id=intent_id,
+                policy_decision=data["policy_decision"],
+                started_at=data["started_at"],
+                finished_at=pending["finished_at"],
+                exit_code=0 if outcome == "success" else 1,
+                resource_usage=data["resource_usage"],
+                evidence_refs=data["evidence_refs"],
+            )
+        terminal = self._approvals.complete_finalization(session, intent_id)
+        return {
+            "intent_id": intent_id, "status": terminal["status"],
+            "outcome": terminal["outcome"], "receipt": receipt,
+            "receipt_pending": False, "recovered": True,
+        }
 
     def execute(self, session: Any, one_time_ticket: str) -> dict[str, Any]:
         running = self._approvals.start(session, one_time_ticket)
@@ -107,7 +136,11 @@ class ApprovedExecutionWorker:
 
         try:
             finalizing = self._approvals.begin_finalization(
-                session, intent_id, outcome=outcome
+                session, intent_id, outcome=outcome,
+                receipt_data={
+                    "policy_decision": policy, "started_at": started_at,
+                    "resource_usage": usage, "evidence_refs": evidence_refs,
+                },
             )
         except PermissionError:
             # A revocation racing with successful completion must downgrade
