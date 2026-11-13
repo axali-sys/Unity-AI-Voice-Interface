@@ -1,5 +1,4 @@
 import threading
-import time
 import unittest
 
 from xparallel.execution_recovery_supervisor import ExecutionRecoverySupervisor
@@ -58,6 +57,42 @@ class ExecutionRecoverySupervisorTests(unittest.TestCase):
         self.assertFalse(supervisor.health()["enabled"])
         self.assertEqual(supervisor.start()["running"], False)
         self.assertEqual(host.worker.calls, 0)
+
+
+    def test_health_reports_success_counters_without_credentials(self):
+        host = FakeHostServices()
+        supervisor = ExecutionRecoverySupervisor(host_services=host, session_provider=lambda: 'secret-session-token', enabled=True, interval_seconds=5)
+        supervisor.start()
+        self.assertTrue(host.worker.called.wait(2))
+        health = supervisor.health()
+        supervisor.stop(timeout_seconds=2)
+        self.assertIsNotNone(health['last_success_at'])
+        self.assertEqual(health['total_recovered'], 0)
+        self.assertEqual(health['last_result'], {'scanned': 0, 'recovered': 0, 'pending': 0})
+        self.assertNotIn('secret-session-token', repr(health))
+
+    def test_failure_is_counted_and_alert_callback_gets_no_exception_message(self):
+        class FailingWorker(FakeWorker):
+            def recover_pending_finalizations(self, session, *, limit):
+                raise RuntimeError('sensitive adapter detail and token=secret')
+        class FailingHost:
+            def __init__(self):
+                self.worker = FailingWorker()
+            def build_worker(self):
+                return self.worker
+        reported = threading.Event()
+        alerts = []
+        supervisor = ExecutionRecoverySupervisor(host_services=FailingHost(), session_provider=lambda: 'secret-session-token', enabled=True, interval_seconds=5, on_error=lambda error_type: (alerts.append(error_type), reported.set()))
+        supervisor.start()
+        self.assertTrue(reported.wait(2))
+        health = supervisor.health()
+        supervisor.stop(timeout_seconds=2)
+        self.assertEqual(health['last_error_type'], 'RuntimeError')
+        self.assertEqual(health['total_failures'], 1)
+        self.assertEqual(health['consecutive_failures'], 1)
+        self.assertEqual(alerts, ['RuntimeError'])
+        self.assertNotIn('sensitive adapter detail', repr(health))
+        self.assertNotIn('secret-session-token', repr(health))
 
     def test_invalid_stop_timeout_is_rejected(self):
         supervisor = ExecutionRecoverySupervisor(
