@@ -158,7 +158,16 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         revoke_during_run = {"enabled": False}
         def controlled_runner(payload, **kwargs):
             if revoke_during_run["enabled"]:
+                # Simulate revocation while the runner is active, then invoke
+                # the same live checkpoint the Docker runner polls while
+                # draining output. A revoked worker must not report success.
                 self.host.allowed = False
+                if kwargs["should_continue"]() is not True:
+                    return {
+                        "status": "blocked",
+                        "error": "execution_revoked_or_stale",
+                        "output_bytes": 0,
+                    }
             return {"status": "success", "output_bytes": 12, "exit_code": 0}
 
         host_services = ExecutionHostServices(
@@ -238,7 +247,7 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         self.assertEqual(revoked_result["outcome"], "blocked")
         self.assertEqual(
             revoked_result["runner_result"]["error"],
-            "execution_revoked_or_stale_at_completion",
+            "execution_revoked_or_stale",
         )
         self.assertFalse(revoked_result["receipt_pending"])
         self.assertEqual(approvals.get(worker_token, second_id)["status"], "failed")
