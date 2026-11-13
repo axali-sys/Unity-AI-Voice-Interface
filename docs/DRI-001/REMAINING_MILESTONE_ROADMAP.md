@@ -7,12 +7,12 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 - M1: architecture baseline, repository/prototype audit, 113-component and 15-preservation-identity coverage snapshot.
 - M2.1–M2.8: Digital DNA schema/registry prototype, Ed25519 identity and key lifecycle, deny-by-default action policy, signed message envelopes, local policy-gated message gateway, governance/permission registry, capability verification laboratory.
 - M2.9: verified entity action gate composing trusted identity context, exact artifact-bound capability evidence, and approved exact-scope grants. The gate decides only; it does not execute.
-- M2.10: restricted Docker execution-boundary hardening is implemented in the isolated branch. Final CI rerun after the last test-fixture correction remains pending; no live Docker hostile-code test has been performed.
+- M2.10: restricted Docker execution-boundary hardening, strict resource-setting validation, local digest-only image use, bounded concurrent stdout/stderr capture, and runner process-group timeout cleanup are implemented in the isolated branch. Unit/CI verification is required on the latest head; no live Docker hostile-code test or daemon-side container cleanup test has been performed.
 
 ## Remaining milestones and acceptance gates
 
 ### M2.11 — Trusted host adapters and enforcement boundary
-Implement concrete adapters for authentication, entity/key/capability lookup, governance grants, evidence store and policy decisions. Ensure all identity/workspace values come from server-side verification, not request-body claims. Add route-level integration tests. Do not enable consequential execution until each adapter is independently reviewed.
+Implement concrete adapters for authentication, entity/key/capability lookup, governance grants, evidence store and policy decisions. Ensure all identity/workspace values come from server-side verification, not request-body claims. Add route-level integration tests. Do not enable consequential execution until each adapter is independently reviewed. **Hard gate:** current shared bearer-token/client-workspace HTTP model is not sufficient to activate this path.
 
 ### M2.12 — Execution approval, job lifecycle and revocation
 Add immutable job intents, explicit human approval bound to exact artifact/action/resource/limits, one-time execution tickets, expiry, cancellation, revocation checks immediately before start and during execution, and terminal outcomes. Approval must not be transferable to a different payload.
