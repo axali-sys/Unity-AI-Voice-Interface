@@ -48,12 +48,28 @@ class HardenedRunnerTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 args = v1_runner._docker_command(Path(tmp), "python -m unittest")
         joined = " ".join(args)
-        for expected in ("--network=none", "--read-only", "--cap-drop=ALL",
+        for expected in ("--pull=never", "--init", "--network=none", "--read-only", "--cap-drop=ALL",
                          "--security-opt=no-new-privileges", "--security-opt=seccomp=default",
                          "--user 65532:65532", "--ipc=private", "--pids-limit 128",
                          "--memory-swap 512m", "--workdir /workspace"):
             self.assertIn(expected, joined)
         self.assertNotIn("/var/run/docker.sock", joined)
+
+    def test_resource_limits_reject_unbounded_or_malformed_values(self):
+        invalid = [
+            {"MEMORY": "999999g"}, {"MEMORY": "0m"}, {"MEMORY": "64mb"},
+            {"CPUS": "999"}, {"CPUS": "nan"}, {"CPUS": "0"},
+            {"PIDS": "0"}, {"PIDS": "many"}, {"TIMEOUT": 601},
+            {"MAX_TOTAL_BYTES": 0},
+        ]
+        for values in invalid:
+            with self.subTest(values=values):
+                with patch.multiple(v1_runner, **values):
+                    self.assertFalse(v1_runner._valid_limits())
+
+    def test_malformed_integer_environment_does_not_crash_module_configuration(self):
+        with patch.object(v1_runner, "TIMEOUT", -1):
+            self.assertFalse(v1_runner._valid_limits())
 
     def test_run_blocks_when_image_is_not_digest_pinned(self):
         with patch.object(v1_runner, "IMAGE", "python:3.12-alpine"):
