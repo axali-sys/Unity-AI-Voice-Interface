@@ -103,7 +103,7 @@ class TrustedHostAdapterTests(unittest.TestCase):
     def test_untrusted_or_incomplete_authentication_fails_closed(self):
         self.assertEqual(self.adapters.authenticate("invalid"), {"authenticated": False})
         with self.assertRaises(PermissionError):
-            self.adapters.authenticate({"subject": "owner:1", "workspace_id": "ws-a"})
+            self.adapters.authenticate({"authenticated": True, "subject": "owner:1"})
 
     def test_workspace_and_entity_key_lookup_are_scoped(self):
         principal = {"authenticated": True, "subject": "owner:1", "workspace_id": "ws-other"}
