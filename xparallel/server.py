@@ -28,15 +28,79 @@ from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.session_jwt import HS256SessionVerifier
 from xparallel.http_identity import bearer_token, bind_request_identity, IdentityBindingError
 from xparallel.execution_http_api import ExecutionHTTPAPI
+from xparallel.entity_governance import EntityGovernanceRegistry
 
 # Explicit host bootstrap only. No default adapters or routes are activated.
 EXECUTION_API = None
+ENTITY_GOVERNANCE = None
 
 def configure_execution_api(api):
     global EXECUTION_API
     if not isinstance(api, ExecutionHTTPAPI):
         raise TypeError('trusted_execution_http_api_required')
     EXECUTION_API = api
+
+def configure_entity_governance_registry(registry):
+    """Install a registry backed by trusted authentication, ownership and governance adapters."""
+    global ENTITY_GOVERNANCE
+    if not isinstance(registry, EntityGovernanceRegistry):
+        raise TypeError("trusted_entity_governance_registry_required")
+    ENTITY_GOVERNANCE = registry
+
+
+def dispatch_governance_get(handler, path):
+    prefix = "/governance/grants/"
+    if not path.startswith(prefix):
+        return False
+    if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
+        send_json(handler, 503, {"error": "trusted_governance_identity_unavailable"})
+        return True
+    if ENTITY_GOVERNANCE is None:
+        send_json(handler, 503, {"error": "trusted_governance_adapters_not_configured"})
+        return True
+    grant_id = path[len(prefix):].strip()
+    if not grant_id or "/" in grant_id:
+        send_json(handler, 400, {"error": "invalid_grant_id"})
+        return True
+    token = bearer_token(handler.headers.get("Authorization"))
+    try:
+        record = ENTITY_GOVERNANCE.get(token, grant_id)
+        if record is None:
+            send_json(handler, 404, {"error": "grant_not_found"})
+        else:
+            send_json(handler, 200, {"grant": record})
+    except PermissionError as exc:
+        send_json(handler, 403, {"error": str(exc)})
+    except ValueError as exc:
+        send_json(handler, 400, {"error": str(exc)})
+    except Exception:
+        send_json(handler, 503, {"error": "governance_service_failure"})
+    return True
+
+
+def dispatch_governance_post(handler, path, data):
+    if path != "/governance/grants/revoke":
+        return False
+    if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
+        send_json(handler, 503, {"error": "trusted_governance_identity_unavailable"})
+        return True
+    if ENTITY_GOVERNANCE is None:
+        send_json(handler, 503, {"error": "trusted_governance_adapters_not_configured"})
+        return True
+    if not isinstance(data, dict) or set(data) != {"grant_id", "reason"}:
+        send_json(handler, 400, {"error": "governance_request_schema_mismatch"})
+        return True
+    token = bearer_token(handler.headers.get("Authorization"))
+    try:
+        grant = ENTITY_GOVERNANCE.revoke(token, data["grant_id"], data["reason"])
+        send_json(handler, 200, {"grant": grant, "revoked": grant.get("status") == "revoked"})
+    except PermissionError as exc:
+        send_json(handler, 403, {"error": str(exc)})
+    except ValueError as exc:
+        send_json(handler, 400, {"error": str(exc)})
+    except Exception:
+        send_json(handler, 503, {"error": "governance_service_failure"})
+    return True
 
 def dispatch_execution_get(handler, path):
     """Expose only sanitized recovery health to authenticated JWT operators."""
@@ -259,6 +323,8 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 401, {"error": "unauthorized"})
         if dispatch_execution_get(self, self.path):
             return
+        if dispatch_governance_get(self, urlparse(self.path).path):
+            return
         parsed = urlparse(self.path)
         if AUTH_MODE == "jwt":
             try:
@@ -327,6 +393,9 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
+
+        if not is_public and dispatch_governance_post(self, self.path, data):
+            return
 
         if is_public:
             # Public endpoints use a fixed public namespace; caller-supplied
