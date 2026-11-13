@@ -31,7 +31,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational / hard gates:** no secure key agreement or distribution, TLS peer authentication, cryptographically implemented acknowledgement verifier, distributed queue/leases, cross-node revocation propagation, complete schema negotiation, gateway/API integration or multi-node conformance tests. SQLite outbox is local state, not a distributed message fabric. No live network delivery is enabled.
 
 ### M2.16 — Entity discovery and federation
-Implement public/private discovery, signed registry records, capability query and compatibility negotiation, owner-controlled visibility, federation trust policies, anti-enumeration controls and independent registry conformance tests.
+**Partial implementation:** `xparallel/entity_federation.py` adds owner-authorized Ed25519-signed local registry records, active-key verification, public/allowlist/private visibility, injected peer-trust policy, protocol major-version compatibility, exact declared-capability filtering, bounded results, query rate limiting, expiry and owner-authorized revocation. Capability declarations are explicitly not verification. Tests cover signatures, visibility, owner binding, compatibility, revocation, wrong-key rejection and rate limits. See `docs/DRI-001/ENTITY_DISCOVERY_AND_FEDERATION.md`.
+
+**Not operational:** no network registry, cross-organization replication, trust-authority hierarchy, transparency log, distributed anti-enumeration controls, revocation propagation, route integration or independent registry conformance suite exists.
 
 ### M3.1 — Entity memory and knowledge provenance
 Build permission-aware memory scopes, provenance, retention, export/deletion, encrypted storage design, retrieval evaluation and workspace/entity isolation. Do not store credentials in model memory.
