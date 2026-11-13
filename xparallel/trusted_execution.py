@@ -21,7 +21,7 @@ class TrustedExecutionControlPlane:
         authorize_approval: Callable[[dict[str, str], dict[str, Any]], bool],
         authorize_cancel: Callable[[dict[str, str], dict[str, Any]], bool],
         authorize_executor: Callable[[dict[str, str], dict[str, Any]], bool],
-        verify_receipt_commit: Callable[[dict[str, str], str, str], bool] | None = None,
+        verify_receipt_commit: Callable[[Any, dict[str, str], str, str], bool] | None = None,
         db_path: str = ".xparallel/execution_approvals.sqlite3",
     ):
         for name, adapter in (
