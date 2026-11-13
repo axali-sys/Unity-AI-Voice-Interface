@@ -80,5 +80,7 @@ jobs:
         run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
       - name: Test transactional storage, migrations, backup and recovery
         run: python -m unittest discover -s tests -p "test_storage_recovery.py" -v
+      - name: Test encrypted transport and reliable delivery outbox
+        run: python -m unittest discover -s tests -p "test_secure_transport.py" -v
       - name: Test restricted Docker execution boundary
         run: python -m unittest discover -s tests -p "test_v1_runner.py" -v
