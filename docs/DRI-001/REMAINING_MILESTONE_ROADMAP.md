@@ -12,7 +12,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 ## Remaining milestones and acceptance gates
 
 ### M2.11 — Trusted host adapters and enforcement boundary
-Implement concrete adapters for authentication, entity/key/capability lookup, governance grants, evidence store and policy decisions. Ensure all identity/workspace values come from server-side verification, not request-body claims. Add route-level integration tests. Do not enable consequential execution until each adapter is independently reviewed. **Hard gate:** current shared bearer-token/client-workspace HTTP model is not sufficient to activate this path.
+**Partial implementation:** `xparallel/trusted_host_adapters.py` now composes the existing Digital DNA, Ed25519 key, governance grant, capability-evidence and decision-gate repositories. Authentication and immutable artifact provenance are mandatory injected host trust roots. The adapter derives workspace/entity/key/owner state from scoped server-side repositories and never trusts a manifest capability status or client-supplied artifact digest. Local tests cover registry-backed resolution, proof-of-possession key activation, invalid authentication, workspace isolation and missing trusted artifact metadata. CI now includes this test module.
+
+**Not complete / hard gate:** no real authentication provider or authoritative artifact store is configured; the adapter is not connected to HTTP routes; route-level integration tests against a trusted host remain outstanding. The current shared bearer-token/client-workspace HTTP model is not sufficient to activate this path. Consequential execution remains disabled.
 
 ### M2.12 — Execution approval, job lifecycle and revocation
 Add immutable job intents, explicit human approval bound to exact artifact/action/resource/limits, one-time execution tickets, expiry, cancellation, revocation checks immediately before start and during execution, and terminal outcomes. Approval must not be transferable to a different payload.
