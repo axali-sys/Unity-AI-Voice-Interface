@@ -35,6 +35,11 @@ MEMORY = os.getenv("XP_RUNNER_MEMORY", "512m")
 CPUS = os.getenv("XP_RUNNER_CPUS", "1.0")
 PIDS = os.getenv("XP_RUNNER_PIDS", "128")
 
+# Commands are fixed by profile; request payloads cannot supply shell fragments.
+TEST_PROFILES = {
+    "python-unittest": ("python", "-m", "unittest", "discover", "-v"),
+}
+
 
 class ExecutionRevoked(RuntimeError):
     """Raised when the trusted execution checkpoint denies continuation."""
@@ -113,7 +118,7 @@ def _write_workspace(root, files):
         os.chmod(directory, 0o777)
 
 
-def _docker_command(root, test_command):
+def _docker_command(root, test_argv):
     return [
         "docker", "run", "--rm", "--pull=never", "--init",
         "--network=none",
@@ -133,7 +138,7 @@ def _docker_command(root, test_command):
         "--env", "HOME=/tmp",
         "--mount", f"type=bind,src={root},dst=/workspace,rw",
         "--workdir", "/workspace",
-        IMAGE, "sh", "-lc", test_command,
+        IMAGE, *test_argv,
     ]
 
 
@@ -200,9 +205,10 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
     started = datetime.now(timezone.utc).isoformat()
     if not isinstance(intent, dict):
         return {"environment": "docker", "status": "failed", "error": "invalid_intent"}
-    test_command = intent.get("test_command", "python -m unittest discover -v")
-    if not isinstance(test_command, str) or not test_command.strip() or len(test_command) > 1000:
-        return {"environment": "docker", "status": "failed", "error": "invalid_test_command"}
+    profile = intent.get("test_profile", "python-unittest")
+    if "test_command" in intent or not isinstance(profile, str) or profile not in TEST_PROFILES:
+        return {"environment": "docker", "status": "blocked", "error": "invalid_or_unsupported_test_profile"}
+    test_argv = TEST_PROFILES[profile]
     if not _valid_limits():
         return {"environment": "docker", "status": "blocked", "error": "invalid_sandbox_limits"}
     if not _image_is_pinned(IMAGE):
@@ -242,7 +248,7 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
             return {"environment": "docker", "status": "failed", "error": str(exc)}
         try:
             completed = _run_bounded(
-                _docker_command(root, test_command),
+                _docker_command(root, test_argv),
                 timeout=min(TIMEOUT, approved_limits["timeout_seconds"]),
                 env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
                 # _run_bounded applies its cap independently to stdout and stderr;
@@ -265,7 +271,7 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
             "stdout": completed["stdout"],
             "stderr": completed["stderr"],
             "output_truncated": completed["output_truncated"],
-            "test_command": test_command,
+            "test_profile": profile,
             "approved_limits": dict(approved_limits),
             "output_bytes": len(completed["stdout"].encode("utf-8")) + len(completed["stderr"].encode("utf-8")),
             "isolation": {
