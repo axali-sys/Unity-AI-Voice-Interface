@@ -39,7 +39,7 @@ class ExecutionReceiptTests(unittest.TestCase):
             authenticate=lambda s: {"authenticated": True, "subject": "worker:1", "workspace_id": "ws-a"}
             if s == "worker" else {"authenticated": True, "subject": "other:1", "workspace_id": "ws-b"},
             authorize_writer=lambda p, job: p["subject"] == "worker:1",
-            resolve_job=lambda ws, jid: self.job if (ws, jid) == ("ws-a", "job:abc123") else None,
+            resolve_job=lambda ws, jid: self.job if ws == "ws-a" and jid == self.job["intent_id"] else None,
             sign_digest=lambda digest: base64.b64encode(self.private.sign(digest)).decode(),
             verify_signature=lambda digest, sig: self._verify(digest, sig),
             db_path=str(Path(self.temp.name) / "receipts.sqlite3"),
