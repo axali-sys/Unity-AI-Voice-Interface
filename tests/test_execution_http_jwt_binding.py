@@ -155,11 +155,15 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
             ),
             db_path=":memory:",
         )
+        revoke_during_run = {"enabled": False}
+        def controlled_runner(payload, **kwargs):
+            if revoke_during_run["enabled"]:
+                self.host.allowed = False
+            return {"status": "success", "output_bytes": 12, "exit_code": 0}
+
         host_services = ExecutionHostServices(
             approvals=approvals,
-            runner=lambda payload, **kwargs: {
-                "status": "success", "output_bytes": 12, "exit_code": 0,
-            },
+            runner=controlled_runner,
             load_payload=lambda intent: payload,
             resolve_artifact_digest=lambda intent: artifact_digest,
             resolve_policy_evidence=lambda intent: {
@@ -211,6 +215,34 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         ])
         self.assertTrue(receipts.verify_chain(worker_token)["valid"])
         self.assertEqual(approvals.get(worker_token, intent_id)["status"], "completed")
+
+        # A permission revocation during the runner's work must downgrade a
+        # nominally successful process result before terminal receipt commit.
+        self.host.allowed = True
+        revoke_during_run["enabled"] = True
+        requested_again = api.request_intent(
+            self.owner_claims, body, session_token=self.owner_token
+        )
+        second_id = requested_again["intent"]["intent_id"]
+        approved_again = api.approve_intent(
+            self.admin_claims,
+            {"intent_id": second_id, "reason": "Second independent approval"},
+            session_token=self.admin_token,
+        )
+        revoked_result = api.execute_ticket(
+            worker_claims,
+            {"one_time_ticket": approved_again["approval"]["one_time_ticket"]},
+            session_token=worker_token,
+        )
+        self.assertEqual(revoked_result["status"], "failed")
+        self.assertEqual(revoked_result["outcome"], "blocked")
+        self.assertEqual(
+            revoked_result["runner_result"]["error"],
+            "execution_revoked_or_stale_at_completion",
+        )
+        self.assertFalse(revoked_result["receipt_pending"])
+        self.assertEqual(approvals.get(worker_token, second_id)["status"], "failed")
+        self.assertTrue(receipts.verify_chain(worker_token)["valid"])
         receipts.close()
 
     def test_tampered_token_is_rejected_by_registry_even_with_claims_argument(self):
