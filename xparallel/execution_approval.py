@@ -145,6 +145,12 @@ class ExecutionApprovalRegistry:
             self._db.execute("ALTER TABLE execution_intents ADD COLUMN finalization_json TEXT")
         self._db.commit()
 
+    def set_receipt_commit_verifier(self, verifier: Callable[[Any, dict[str, str], str, str], bool]) -> None:
+        """Install the trusted ledger verifier before any worker is constructed."""
+        if not callable(verifier):
+            raise TypeError("receipt_commit_verifier_required")
+        self._verify_receipt_commit = verifier
+
     def _get_principal(self, session: Any) -> dict[str, str]:
         return _principal(self._authenticate(session))
 
@@ -469,7 +475,7 @@ class ExecutionApprovalRegistry:
                 raise ValueError("execution_not_finalizing")
             if row["executor_subject"] != principal["subject"]:
                 raise PermissionError("execution_executor_mismatch")
-            if self._verify_receipt_commit(principal, key, receipt_hash) is not True:
+            if self._verify_receipt_commit(session, principal, key, receipt_hash) is not True:
                 raise PermissionError("signed_execution_receipt_not_verified")
             outcome = row["outcome"]
             if outcome not in {"success", "failure", "blocked"} or not row["finished_at"]:
