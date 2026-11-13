@@ -96,6 +96,25 @@ class ApprovedExecutionWorkerTests(unittest.TestCase):
         self.assertEqual(result["outcome"], "blocked")
         self.assertEqual(self.runner_calls, [])
 
+    def test_evidence_failure_prevents_success_terminal_status(self):
+        self.worker._store_evidence = lambda result, intent: (_ for _ in ()).throw(OSError("storage offline"))
+        result = self.worker.execute("worker-session", "one-use-ticket")
+        self.assertEqual(result["outcome"], "failure")
+        self.assertEqual(result["status"], "failed")
+        self.assertIsNone(result["receipt"])
+        self.assertEqual(result["error"], "execution_evidence_pipeline_failed")
+        self.assertEqual(self.approvals.finished, "failure")
+        self.assertIsNone(self.receipts.record)
+
+    def test_measurement_failure_prevents_success_terminal_status(self):
+        self.worker._measure = lambda result, intent: (_ for _ in ()).throw(RuntimeError("meter unavailable"))
+        result = self.worker.execute("worker-session", "one-use-ticket")
+        self.assertEqual(result["outcome"], "failure")
+        self.assertEqual(result["status"], "failed")
+        self.assertIsNone(result["receipt"])
+        self.assertEqual(self.approvals.finished, "failure")
+        self.assertIsNone(self.receipts.record)
+
     def test_invalid_ticket_never_launches_runner(self):
         with self.assertRaisesRegex(PermissionError, "invalid_execution_ticket"):
             self.worker.execute("worker-session", "wrong-ticket")
