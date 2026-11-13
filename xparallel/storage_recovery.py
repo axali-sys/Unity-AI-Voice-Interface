@@ -258,7 +258,7 @@ class SQLiteJSONRepository:
         return {"workspace_id": workspace_id, "key": key, "updated_at": now}
 
     def get(self, workspace_id: str, key: str) -> Any | None:
-        with self._store._db_lock if False else _LOCK:
+        with _LOCK:
             row = self._store._db.execute(
                 f"SELECT value_json FROM {self._table} WHERE workspace_id=? AND record_key=?",
                 (workspace_id, key),
