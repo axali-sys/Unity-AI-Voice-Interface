@@ -543,6 +543,20 @@ class ExecutionApprovalRegistry:
             ).fetchone()
         return self._record(updated)
 
+    def list_pending_finalizations(self, session: Any, limit: int = 50) -> list[dict[str, Any]]:
+        """List only this authenticated executor's pending jobs in its workspace."""
+        principal = self._get_principal(session)
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
+            raise ValueError("pending_finalization_limit_out_of_range")
+        with _LOCK:
+            rows = self._db.execute(
+                """SELECT * FROM execution_intents
+                   WHERE workspace_id=? AND executor_subject=? AND status='finalizing'
+                   ORDER BY finished_at, intent_id LIMIT ?""",
+                (principal["workspace_id"], principal["subject"], limit),
+            ).fetchall()
+        return [self._record(row) for row in rows]
+
     def get(self, session: Any, intent_id: str) -> dict[str, Any] | None:
         principal = self._get_principal(session)
         key = _id(intent_id, "intent_id")
