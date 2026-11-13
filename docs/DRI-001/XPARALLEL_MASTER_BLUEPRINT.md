@@ -209,3 +209,14 @@ Draft contract, JSON Schema and illustrative manifest have been added on this is
 These files define a portable declaration for entity identity, ownership references, protocol compatibility, capability claims, permission requests, data handling and provenance. The example is explicitly pending and unverified. A manifest is not proof of capability or authorization; registry verification and policy enforcement remain separate services.
 
 **M2 status:** contract design drafted; schema/example files parse as JSON and required top-level fields are present. No registry, cryptographic identity service, runtime enforcement or production capability is claimed as implemented. Next: implement deterministic schema validation and a local SQLite registry prototype with revision history and workspace isolation, then add signature, challenge-response, permission and revocation tests.
+
+## 15. M2.2 — Local Digital DNA registry prototype
+
+A standard-library SQLite prototype and ten focused unit tests have been added on the isolated branch:
+
+- `xparallel/digital_dna.py` — manifest validation, workspace-scoped registration, SHA-256 manifest digests, append-only revisions, optimistic revision checks, and scoped lookup/list operations.
+- `tests/test_digital_dna.py` — registration/retrieval, duplicate rejection, workspace isolation, revision history/conflict, owner-transfer boundary, schema/version checks, secret-field rejection, and anti-self-certification checks.
+
+**Security boundary:** submitted records must remain pending; capability claims must remain declared/under review. A submitting entity cannot activate itself or certify its own capabilities. This prototype does not yet authenticate owner control, verify cryptographic signatures, authorize runtime actions, or expose API routes.
+
+**Verification:** the module and tests are committed; ten test cases are present. The JSON Schema and example parse as JSON, and the semantic-version pattern was checked. The Python unit suite has not yet been executed in this session; CI verification is pending.
