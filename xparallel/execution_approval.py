@@ -166,7 +166,8 @@ class ExecutionApprovalRegistry:
             "ticket_id": row["ticket_id"], "ticket_expires_at": row["ticket_expires_at"],
             "executor_subject": row["executor_subject"], "started_at": row["started_at"],
             "finished_at": row["finished_at"], "outcome": row["outcome"],
-            "cancellation_reason": row["cancellation_reason"],\n            "finalization_data": json.loads(row["finalization_json"]) if row["finalization_json"] else None,
+            "cancellation_reason": row["cancellation_reason"],
+            "finalization_data": json.loads(row["finalization_json"]) if row["finalization_json"] else None,
         }
 
     def request_intent(
