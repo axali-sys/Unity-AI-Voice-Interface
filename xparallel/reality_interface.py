@@ -40,7 +40,7 @@ class RealityInterface:
         p=self._principal(session);self._allow(p,"connector","register")
         for value in (connector_id,connector_type,consent_ref):
             if not isinstance(value,str) or not value.strip() or len(value)>120:raise ValueError("invalid_connector_metadata")
-        if not isinstance(scopes,list) or not scopes or len(scopes)>20 or any(not isinstance(s,str) or not s.strip() or len(s)>160 for s in scopes):
+        if not isinstance(scopes,list) or not scopes or len(scopes)>20 or any(not isinstance(s,str) or not s.strip() or len(s)>160 or s.strip() in {"*","**"} or "*" in s for s in scopes):
             raise ValueError("explicit_connector_scopes_required")
         if len(set(scopes))!=len(scopes):raise ValueError("duplicate_connector_scope")
         if not isinstance(expires_in_seconds,int) or isinstance(expires_in_seconds,bool) or not 60<=expires_in_seconds<=86400:
