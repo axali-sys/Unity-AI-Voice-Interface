@@ -6,7 +6,8 @@ from xparallel.execution_host_services import ExecutionHostServices
 class FakeApprovals:
     def start(self, session, ticket): return {}
     def check_running(self, session, intent_id): return {"continue": True}
-    def finish(self, session, intent_id, *, outcome): return {}
+    def begin_finalization(self, session, intent_id, *, outcome): return {"status": "finalizing"}
+    def complete_finalization(self, session, intent_id): return {"status": "completed"}
 
 
 class FakeReceipts:
