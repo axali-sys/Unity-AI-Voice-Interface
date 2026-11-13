@@ -85,6 +85,14 @@ class ExecutionApprovalTests(unittest.TestCase):
         self.assertFalse(check["continue"])
         self.assertEqual(check["reason"], "execution_revoked_or_stale")
 
+    def test_revocation_blocks_successful_completion(self):
+        intent = self.request()
+        approved = self.approve(intent)
+        running = self.registry.start("executor", approved["one_time_ticket"])
+        self.current_ok = False
+        with self.assertRaises(PermissionError):
+            self.registry.finish("executor", running["intent_id"], outcome="success")
+
     def test_executor_identity_is_bound_and_finish_is_terminal(self):
         intent = self.request()
         approved = self.approve(intent)
