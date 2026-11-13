@@ -8,10 +8,12 @@ class FakeApprovals:
     def check_running(self, session, intent_id): return {"continue": True}
     def begin_finalization(self, session, intent_id, *, outcome): return {"status": "finalizing"}
     def complete_finalization(self, session, intent_id): return {"status": "completed"}
+    def set_receipt_commit_verifier(self, verifier): self.receipt_verifier = verifier
     def get_finalization_for_recovery(self, session, intent_id): return {"status": "finalizing", "finalization_data": {}}
 
 
 class FakeReceipts:
+    def verify_committed_receipt(self, *args, **kwargs): return True
     def get_by_intent(self, *args, **kwargs): return None
     def append(self, *args, **kwargs): return {}
 
