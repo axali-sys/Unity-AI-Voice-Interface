@@ -68,7 +68,7 @@ class ApprovedExecutionWorker:
         terminal = self._approvals.complete_finalization(session, intent_id)
         return {
             "intent_id": intent_id, "status": terminal["status"],
-            "outcome": terminal["outcome"], "receipt": receipt,
+            "outcome": pending["outcome"], "receipt": receipt,
             "receipt_pending": False, "recovered": True,
         }
 
