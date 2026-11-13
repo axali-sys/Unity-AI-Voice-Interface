@@ -38,7 +38,7 @@ class FakeReceipts:
 
 class ApprovedExecutionWorkerTests(unittest.TestCase):
     def setUp(self):
-        self.payload = {"files": {"main.py": "cHJpbnQoJ29rJyk="}, "test_command": "python main.py"}
+        self.payload = {"files": {"main.py": "cHJpbnQoJ29rJyk="}, "test_profile": "python-unittest"}
         self.intent = {
             "payload_digest": _canonical_digest(self.payload),
             "artifact_digest": hashlib.sha256(b"artifact").hexdigest(),
