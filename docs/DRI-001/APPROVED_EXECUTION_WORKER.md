@@ -68,7 +68,7 @@ The approval registry now persists the exact receipt package (policy decision,
 start time, measured resource usage and immutable evidence references) in the
 same SQLite transaction that changes a job to `finalizing`. The package is
 workspace-scoped and can be read for recovery only by the executor identity
-bound to that job.
+bound to that job. It is stored with a SHA-256 integrity digest and protected by a SQLite trigger against modification after finalization; recovery rechecks the digest before use.
 
 `ApprovedExecutionWorker.recover_finalization(session, intent_id)` first
 checks the signed receipt ledger for an already committed receipt. If one is
