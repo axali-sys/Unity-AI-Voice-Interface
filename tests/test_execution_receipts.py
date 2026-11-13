@@ -73,6 +73,8 @@ class ExecutionReceiptTests(unittest.TestCase):
         self.assertEqual(result["receipt"]["artifact_digest"], sha("artifact"))
         self.assertTrue(self.ledger.verify_chain("worker")["valid"])
         self.assertIsNotNone(self.ledger.get_by_intent("worker", self.job["intent_id"]))
+        self.assertTrue(self.ledger.verify_committed_receipt("worker", self.job["intent_id"], result["receipt_hash"]))
+        self.assertFalse(self.ledger.verify_committed_receipt("worker", self.job["intent_id"], "0" * 64))
 
     def test_chain_links_multiple_receipts_and_prevents_duplicate_job(self):
         self.append()
