@@ -22,6 +22,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install project and test dependencies
+        run: python -m pip install -e . cryptography
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
       - name: Check Axaliai and XParallel JavaScript syntax
@@ -51,3 +53,7 @@ jobs:
         run: python -m unittest discover -s tests -p "test_parallel_world.py" -v
       - name: Test persistent Axaliai conversation storage
         run: python -m unittest discover -s tests -p "test_conversation_store.py" -v
+      - name: Test Digital DNA registry
+        run: python -m unittest discover -s tests -p "test_digital_dna.py" -v
+      - name: Test entity identity and key trust
+        run: python -m unittest discover -s tests -p "test_identity_trust.py" -v
