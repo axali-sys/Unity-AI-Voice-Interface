@@ -27,6 +27,16 @@ from xparallel.parallel_world import create_parallel_plan
 from xparallel.repair_jobs import create_job, get_job, list_jobs
 from xparallel.session_jwt import HS256SessionVerifier
 from xparallel.http_identity import bearer_token, bind_request_identity, IdentityBindingError
+from xparallel.execution_http_api import ExecutionHTTPAPI
+
+# Explicit host bootstrap only. No default adapters or routes are activated.
+EXECUTION_API = None
+
+def configure_execution_api(api):
+    global EXECUTION_API
+    if not isinstance(api, ExecutionHTTPAPI):
+        raise TypeError('trusted_execution_http_api_required')
+    EXECUTION_API = api
 
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
@@ -268,6 +278,34 @@ class Handler(BaseHTTPRequestHandler):
                 data = bind_request_identity(data, getattr(self, "identity_context", {}))
             except IdentityBindingError as exc:
                 return send_json(self, 403, {"error": str(exc)})
+
+        if self.path in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
+            # Execution is private and requires per-user host-issued JWT identity.
+            # Shared XP_TOKEN compatibility mode is deliberately insufficient.
+            if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
+                return send_json(self, 503, {"error": "trusted_execution_identity_unavailable"})
+            if EXECUTION_API is None:
+                return send_json(self, 503, {"error": "trusted_execution_host_not_configured"})
+            try:
+                if self.path == "/execution/intents":
+                    result = EXECUTION_API.request_intent(self.identity_context, data)
+                    return send_json(self, 201, result)
+                if self.path == "/execution/approve":
+                    result = EXECUTION_API.approve_intent(self.identity_context, data)
+                    return send_json(self, 200, result)
+                if self.path == "/execution/run":
+                    result = EXECUTION_API.execute_ticket(self.identity_context, data)
+                    return send_json(self, 200, result)
+                result = EXECUTION_API.recover_pending(self.identity_context, data)
+                return send_json(self, 200, result)
+            except PermissionError as exc:
+                return send_json(self, 403, {"error": str(exc)})
+            except LookupError as exc:
+                return send_json(self, 404, {"error": str(exc)})
+            except (ValueError, TypeError) as exc:
+                return send_json(self, 400, {"error": str(exc)})
+            except Exception:
+                return send_json(self, 503, {"error": "trusted_execution_service_failure"})
 
         if self.path == "/conversations":
             workspace = self.workspace_context(data)["workspace_id"]
