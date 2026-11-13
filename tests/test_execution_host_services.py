@@ -7,7 +7,7 @@ class FakeApprovals:
     def start(self, session, ticket): return {}
     def check_running(self, session, intent_id): return {"continue": True}
     def begin_finalization(self, session, intent_id, *, outcome): return {"status": "finalizing"}
-    def complete_finalization(self, session, intent_id): return {"status": "completed"}
+    def complete_finalization(self, session, intent_id): return {"status": "completed"}\n    def get_finalization_for_recovery(self, session, intent_id): return {"status": "finalizing", "finalization_data": {}}
 
 
 class FakeReceipts:
