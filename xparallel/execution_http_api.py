@@ -16,7 +16,7 @@ the original token so the configured trusted host authenticator independently
 revalidates identity and workspace instead of trusting a caller-built dict.
 """
 
-    def __init__(self, *, control_plane: Any, host_services: Any):
+    def __init__(self, *, control_plane: Any, host_services: Any, recovery_supervisor: Any | None = None):
         approvals = getattr(control_plane, "approvals", None)
         if approvals is None or getattr(host_services, "approvals", None) is not approvals:
             raise TypeError("execution_control_plane_and_host_services_must_share_approval_registry")
@@ -25,6 +25,9 @@ revalidates identity and workspace instead of trusting a caller-built dict.
             raise TypeError("trusted_execution_host_services_required")
         self._approvals = approvals
         self._worker = build_worker()
+        if recovery_supervisor is not None and not callable(getattr(recovery_supervisor, 'health', None)):
+            raise TypeError('recovery_supervisor_health_adapter_required')
+        self._recovery_supervisor = recovery_supervisor
 
     @staticmethod
     def _principal(claims: Any, roles: set[str]) -> dict[str, str]:
@@ -82,3 +85,13 @@ revalidates identity and workspace instead of trusting a caller-built dict.
         body = self._exact(data, {"limit"})
         token = self._session_token(session_token)
         return self._worker.recover_pending_finalizations(token, limit=body["limit"])
+
+    def recovery_health(self, claims: Any) -> dict[str, Any]:
+        """Return sanitized recovery health to an authenticated operator."""
+        self._principal(claims, {"owner", "admin", "operator"})
+        if self._recovery_supervisor is None:
+            raise LookupError("execution_recovery_supervisor_not_configured")
+        snapshot = self._recovery_supervisor.health()
+        if not isinstance(snapshot, dict):
+            raise RuntimeError("invalid_execution_recovery_health")
+        return {"recovery": snapshot}
