@@ -199,8 +199,8 @@ class DriSecurityIntegrationTests(unittest.TestCase):
             running = approvals.start("worker", approval["one_time_ticket"])
             self.assertEqual(running["status"], "running")
             self.assertTrue(approvals.check_running("worker", intent["intent_id"])["continue"])
-            terminal = approvals.finish("worker", intent["intent_id"], outcome="success")
-            self.assertEqual(terminal["status"], "completed")
+            finalizing = approvals.begin_finalization("worker", intent["intent_id"], outcome="success")
+            self.assertEqual(finalizing["status"], "finalizing")
             ledger = ExecutionReceiptLedger(
                 authenticate=lambda session: self.sessions.get(session, {"authenticated": False}),
                 authorize_writer=lambda principal, job: principal["subject"] == "worker:1",
@@ -215,13 +215,15 @@ class DriSecurityIntegrationTests(unittest.TestCase):
                     "allowed": True, "grant_id": approved_grant["grant_id"],
                     "evidence_run_id": decision["capability_evidence"]["run_id"],
                 },
-                started_at=terminal["started_at"], finished_at=terminal["finished_at"],
+                started_at=finalizing["started_at"], finished_at=finalizing["finished_at"],
                 exit_code=0,
                 resource_usage={"wall_ms": 10000, "cpu_ms": 100, "memory_peak_mb": 64,
                                 "output_bytes": 100, "pids_peak": 1},
                 evidence_refs=["test-evidence:execution-output"],
             )
             self.assertEqual(receipt["receipt"]["intent_id"], intent["intent_id"])
+            terminal = approvals.complete_finalization("worker", intent["intent_id"])
+            self.assertEqual(terminal["status"], "completed")
             self.assertTrue(ledger.verify_chain("worker")["valid"])
         finally:
             if ledger is not None:
