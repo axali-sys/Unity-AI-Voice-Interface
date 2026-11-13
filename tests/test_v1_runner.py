@@ -63,7 +63,7 @@ class HardenedRunnerTests(unittest.TestCase):
 
     def test_run_blocks_when_docker_is_unavailable(self):
         with patch.object(v1_runner, "IMAGE", "image@sha256:" + "a" * 64), \
-             patch.object(v1_runner, "shutil.which", return_value=None):
+             patch("xparallel.v1_runner.shutil.which", return_value=None):
             result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["error"], "docker_unavailable")
