@@ -29,7 +29,9 @@ are derived from the verified claims.
 The default remains `XP_AUTH_MODE=legacy` to avoid silently breaking existing
 deployments. Legacy mode still uses the shared `XP_TOKEN` and is not equivalent
 to per-user authentication. Unknown auth-mode values fail closed for private
-routes. Public routes retain their separate origin/rate-limit behavior.
+routes. Public routes retain their separate origin/rate-limit behavior and any public
+write is confined to the fixed `public` namespace with actor `anonymous`;
+caller-supplied tenant fields are ignored.
 
 ## Evidence and limitations
 
