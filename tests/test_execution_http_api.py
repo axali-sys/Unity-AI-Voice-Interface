@@ -16,6 +16,9 @@ class FakeApprovals:
         return {"intent_id": intent_id, "one_time_ticket": "secret-ticket"}
 
 class FakeWorker:
+    def __init__(self):
+        self.calls = []
+
     def execute(self, session, ticket):
         self.calls.append(("execute", session, ticket))
         return {"status": "completed"}
