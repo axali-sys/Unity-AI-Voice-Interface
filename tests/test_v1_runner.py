@@ -89,6 +89,14 @@ class HardenedRunnerTests(unittest.TestCase):
                 timeout=0.1, env=os.environ.copy(), output_limit=1024,
             )
 
+    def test_bounded_runner_stops_when_live_checkpoint_is_revoked(self):
+        with self.assertRaises(v1_runner.ExecutionRevoked):
+            v1_runner._run_bounded(
+                [sys.executable, "-c", "import time; time.sleep(5)"],
+                timeout=10, env=os.environ.copy(), output_limit=1024,
+                should_continue=lambda: False,
+            )
+
     def test_run_blocks_when_image_is_not_digest_pinned(self):
         with patch.object(v1_runner, "IMAGE", "python:3.12-alpine"):
             result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
