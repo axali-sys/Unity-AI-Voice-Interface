@@ -29,6 +29,7 @@ from xparallel.session_jwt import HS256SessionVerifier
 from xparallel.http_identity import bearer_token, bind_request_identity, IdentityBindingError
 from xparallel.execution_http_api import ExecutionHTTPAPI
 from xparallel.entity_governance import EntityGovernanceRegistry
+from xparallel.governance_bootstrap import build_entity_governance
 
 # Explicit host bootstrap only. No default adapters or routes are activated.
 EXECUTION_API = None
@@ -174,6 +175,18 @@ if AUTH_MODE == "jwt":
         )
     except ValueError:
         SESSION_VERIFIER = None
+
+# Governance stays disabled unless the host explicitly opts in and supplies
+# verified JWT identity plus absolute durable database paths.
+if AUTH_MODE == "jwt" and SESSION_VERIFIER is not None:
+    try:
+        _governance_registry = build_entity_governance(SESSION_VERIFIER)
+        if _governance_registry is not None:
+            configure_entity_governance_registry(_governance_registry)
+    except (OSError, ValueError):
+        # Fail closed: private governance endpoints remain unavailable.
+        ENTITY_GOVERNANCE = None
+
 APPROVAL_TOKEN = os.getenv("XP_EXECUTION_APPROVAL_TOKEN")
 NETWORK = os.getenv("XP_NETWORK", "xparallel-mainnet")
 VERSION = os.getenv("XP_VERSION", "1.0.0")
