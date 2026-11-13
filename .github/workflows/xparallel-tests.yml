@@ -76,5 +76,7 @@ jobs:
         run: python -m unittest discover -s tests -p "test_trusted_host_adapters.py" -v
       - name: Test human-approved execution tickets and lifecycle
         run: python -m unittest discover -s tests -p "test_execution_approval.py" -v
+      - name: Test signed execution receipts and provenance chain
+        run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
       - name: Test restricted Docker execution boundary
         run: python -m unittest discover -s tests -p "test_v1_runner.py" -v
