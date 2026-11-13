@@ -1,4 +1,5 @@
 import hashlib
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -120,6 +121,11 @@ class ExecutionApprovalTests(unittest.TestCase):
         self.assertIsNotNone(pending["finished_at"])
         recovered = self.registry.get_finalization_for_recovery("executor", running["intent_id"])
         self.assertEqual(recovered["finalization_data"]["evidence_refs"], ["evidence:one"])
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.registry._db.execute(
+                "UPDATE execution_intents SET finalization_json=? WHERE workspace_id=? AND intent_id=?",
+                ("{}", "ws-a", running["intent_id"]),
+            )
         with self.assertRaises(PermissionError):
             self.registry.get_finalization_for_recovery("requester", running["intent_id"])
         self.assertEqual(self.registry.get("requester", running["intent_id"])["status"], "finalizing")
@@ -128,6 +134,24 @@ class ExecutionApprovalTests(unittest.TestCase):
         self.assertEqual(completed["status"], "completed")
         with self.assertRaises(ValueError):
             self.registry.complete_finalization("executor", running["intent_id"], receipt_hash="a" * 64)
+
+    def test_recovery_detects_finalization_package_tampering(self):
+        intent = self.request()
+        approved = self.approve(intent)
+        running = self.registry.start("executor", approved["one_time_ticket"])
+        self.registry.begin_finalization("executor", running["intent_id"], outcome="failure", receipt_data={
+            "policy_decision": {"allowed": True, "grant_id": "grant:1", "evidence_run_id": "run:1"},
+            "started_at": running["started_at"],
+            "resource_usage": {"wall_ms": 1, "cpu_ms": 1, "memory_peak_mb": 1, "output_bytes": 1, "pids_peak": 1},
+            "evidence_refs": ["evidence:one"],
+        })
+        self.registry._db.execute("DROP TRIGGER immutable_finalization_package")
+        self.registry._db.execute(
+            "UPDATE execution_intents SET finalization_json=? WHERE workspace_id=? AND intent_id=?",
+            ("{}", "ws-a", running["intent_id"]),
+        )
+        with self.assertRaisesRegex(ValueError, "integrity_failed"):
+            self.registry.get_finalization_for_recovery("executor", running["intent_id"])
 
     def test_terminal_transition_fails_closed_without_verified_receipt(self):
         intent = self.request()
