@@ -54,29 +54,29 @@ class ExecutionHTTPAPITests(unittest.TestCase):
             "runner_image_digest": "c" * 64,
             "limits": {"timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000, "pids": 32, "output_bytes": 4096},
         }
-        result = self.api.request_intent(self.owner, body)
+        result = self.api.request_intent(self.owner, body, session_token='signed-owner-token')
         self.assertEqual(result["intent"]["status"], "requested")
-        self.assertEqual(self.approvals.calls[0][1]["workspace_id"], "ws-a")
+        self.assertEqual(self.approvals.calls[0][1], "signed-owner-token")
 
     def test_rejects_body_identity_overrides_and_unknown_fields(self):
         body = {"workspace_id": "other", "actor": "attacker"}
         with self.assertRaisesRegex(ValueError, "schema_mismatch"):
-            self.api.request_intent(self.owner, body)
+            self.api.request_intent(self.owner, body, session_token='signed-owner-token')
 
     def test_viewer_cannot_request_execution(self):
         viewer = {**self.owner, "role": "viewer"}
         with self.assertRaisesRegex(PermissionError, "role_not_authorized"):
-            self.api.request_intent(viewer, {})
+            self.api.request_intent(viewer, {}, session_token='bad')
 
     def test_approver_receives_ticket_but_requester_cannot_self_approve_in_registry(self):
-        result = self.api.approve_intent(self.admin, {"intent_id": "job:1", "reason": "reviewed"})
+        result = self.api.approve_intent(self.admin, {"intent_id": "job:1", "reason": "reviewed"}, session_token='signed-admin-token')
         self.assertEqual(result["approval"]["one_time_ticket"], "secret-ticket")
 
     def test_only_operator_can_execute_and_recover(self):
         with self.assertRaisesRegex(PermissionError, "role_not_authorized"):
-            self.api.execute_ticket(self.owner, {"one_time_ticket": "x"})
-        self.assertEqual(self.api.execute_ticket(self.operator, {"one_time_ticket": "x"})["status"], "completed")
-        self.assertEqual(self.api.recover_pending(self.operator, {"limit": 10})["scanned"], 0)
+            self.api.execute_ticket(self.owner, {"one_time_ticket": "x"}, session_token='bad')
+        self.assertEqual(self.api.execute_ticket(self.operator, {"one_time_ticket": "x"}, session_token='signed-operator-token')["status"], "completed")
+        self.assertEqual(self.api.recover_pending(self.operator, {"limit": 10}, session_token='signed-operator-token')["scanned"], 0)
 
     def test_host_components_must_share_approval_registry(self):
         with self.assertRaisesRegex(TypeError, "share_approval_registry"):
