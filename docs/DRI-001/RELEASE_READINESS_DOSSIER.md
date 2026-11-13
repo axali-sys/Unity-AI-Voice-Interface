@@ -18,6 +18,7 @@ Status: **draft / not release-ready**. This dossier is an evidence index and blo
 - Remaining roadmap: `docs/DRI-001/REMAINING_MILESTONE_ROADMAP.md`
 - Threat model: `docs/DRI-001/SECURITY_THREAT_MODEL.md`
 - Integration acceptance: `docs/DRI-001/INTEGRATION_ACCEPTANCE_MATRIX.md`
+- M5 integration test evidence: `docs/DRI-001/M5_SECURITY_INTEGRATION_TESTS.md`
 
 ## 3. Evidence classification
 Use the following labels:
@@ -31,7 +32,7 @@ Use the following labels:
 
 | Area | Evidence status | Key release limitation |
 |---|---|---|
-| M1 architecture and component audit | Documented / partial | 113 component register is a first-pass coverage snapshot, not a complete code audit |
+| M1 architecture and component audit | Documented / partial | All 113 source IDs are mapped; 33 are Partial, 5 Experimental and 75 Unverified. The 15 preservation identities are separately tracked (8 Partial, 7 Unverified); full source-to-code acceptance audit remains incomplete |
 | M2.1–M2.10 identity, trust, authorization, runner | Partial / local CI-tested | No production identity provider; Docker hostile-code isolation not independently validated |
 | M2.11 trusted host adapters | Partial | No real auth provider, authoritative artifact store or route integration |
 | M2.12–M2.14 approval, receipts, storage | Local foundations / CI-tested | No connected worker, external tamper anchor or full subsystem migration |
@@ -39,16 +40,17 @@ Use the following labels:
 | M3.1–M3.6 memory, runtime, collaboration, Omni, Verse, SDK | Partial / CI-tested foundations | No production wiring, durable distributed workers or end-to-end trust chain |
 | M4.1 evolution lab | Partial / CI-tested | Proposal lifecycle is record-only; no model mutation, canary or live rollback |
 | M4.2 reality interface | Partial / CI-tested | Simulation only; no external service/device or physical-world action |
-| M5 integration and security validation | Documented foundation | Independent penetration test and system integration not completed |
+| M5 integration and security validation | Partial / local CI-tested composition | Governance, capability verification and action-gate modules now have a cross-module test using explicit test-double trust adapters; no production identity, route enforcement or independent security review |
 | M6 release dossier | Draft | Operational runbooks and independent evidence remain outstanding |
 
 ## 5. Verified CI evidence
-The latest observed branch-head CI at dossier preparation must be refreshed before any release review. Record each run's exact commit SHA, workflow name, conclusion and link. Earlier milestone runs are historical evidence only; they do not prove the current head.
+Latest observed branch-head CI at this dossier update:
 
-- XParallel Integration Tests (DRI-001): run 43468186966, head `fae63221978152ff0cdee54d8e5b1d3fe4167a5c`, passed.
-- Verify Axaliai V1: run 43468186343, same head, passed.
-- M4.1 evolution and M4.2 reality interface tests were included in the passing XParallel integration workflow.
-- A corrected adapter invocation was required after an earlier failing CI run; the failure and correction are part of the development history and should not be concealed.
+- XParallel Integration Tests (DRI-001): run 43469234695, head `f19907ef67afbe2c539309b49770b0ced9b5f854`, passed.
+- Verify Axaliai V1: run 43469242487, same head, passed.
+- The XParallel workflow includes the new cross-module governance/verification/action-gate test; its named test step completed successfully.
+- M4.1 evolution and M4.2 reality interface tests are included in the integration workflow.
+- An earlier adapter invocation failed and was corrected before later passing CI; this development history is retained.
 
 ## 6. Mandatory release blockers
 1. Real authentication, immutable workspace/tenant derivation and route-level authorization.
