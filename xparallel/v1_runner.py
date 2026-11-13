@@ -245,7 +245,9 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
                 _docker_command(root, test_command),
                 timeout=min(TIMEOUT, approved_limits["timeout_seconds"]),
                 env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
-                output_limit=approved_limits["output_bytes"],
+                # _run_bounded applies its cap independently to stdout and stderr;
+                # half the approved total on each stream keeps combined output bounded.
+                output_limit=max(1, approved_limits["output_bytes"] // 2),
                 should_continue=should_continue,
             )
         except ExecutionRevoked:
