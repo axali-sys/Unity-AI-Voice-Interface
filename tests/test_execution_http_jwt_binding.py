@@ -136,11 +136,21 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         parts = self.owner_token.split(".")
         signature = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]
         forged = ".".join((parts[0], parts[1], signature))
+        body = {
+            "entity_id": "entity-a", "key_id": "key-a",
+            "capability_id": "capability.read", "action": "read",
+            "resource_scope": "document:7",
+            "payload_digest": hashlib.sha256(b"payload").hexdigest(),
+            "artifact_digest": hashlib.sha256(b"artifact-v1").hexdigest(),
+            "runner_image_digest": hashlib.sha256(b"runner").hexdigest(),
+            "limits": {
+                "timeout_seconds": 30, "memory_mb": 256, "cpu_millis": 1000,
+                "pids": 32, "output_bytes": 100000,
+            },
+        }
         with self.assertRaises(PermissionError):
             self.api.request_intent(
-                self.owner_claims,
-                {"entity_id": "entity-a"},
-                session_token=forged,
+                self.owner_claims, body, session_token=forged,
             )
 
 
