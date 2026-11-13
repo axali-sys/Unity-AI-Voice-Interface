@@ -38,6 +38,27 @@ def configure_execution_api(api):
         raise TypeError('trusted_execution_http_api_required')
     EXECUTION_API = api
 
+def dispatch_execution_get(handler, path):
+    """Expose only sanitized recovery health to authenticated JWT operators."""
+    if path != "/execution/health":
+        return False
+    if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
+        send_json(handler, 503, {"error": "trusted_execution_identity_unavailable"})
+        return True
+    if EXECUTION_API is None:
+        send_json(handler, 503, {"error": "trusted_execution_host_not_configured"})
+        return True
+    try:
+        claims = getattr(handler, "identity_context", None)
+        send_json(handler, 200, EXECUTION_API.recovery_health(claims))
+    except PermissionError as exc:
+        send_json(handler, 403, {"error": str(exc)})
+    except LookupError:
+        send_json(handler, 503, {"error": "execution_recovery_health_unavailable"})
+    except Exception:
+        send_json(handler, 503, {"error": "execution_recovery_health_failure"})
+    return True
+
 def dispatch_execution_post(handler, path, data):
     """Fail-closed private execution dispatcher with independent host token validation."""
     if path not in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
@@ -236,6 +257,8 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 200, {"status": "ok", "network": NETWORK, "version": VERSION, "sandbox_available": available()}, cors=True)
         if not self.authorized():
             return send_json(self, 401, {"error": "unauthorized"})
+        if dispatch_execution_get(self, self.path):
+            return
         parsed = urlparse(self.path)
         if AUTH_MODE == "jwt":
             try:
