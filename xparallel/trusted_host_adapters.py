@@ -77,8 +77,11 @@ class TrustedHostAdapters:
         self._lab = verification_lab
         self._resolve_artifact = resolve_artifact
 
-    def authenticate(self, session: Any) -> dict[str, str]:
-        return _trusted_principal(self._authenticate(session))
+    def authenticate(self, session: Any) -> dict[str, Any]:
+        raw = self._authenticate(session)
+        if not isinstance(raw, dict) or raw.get("authenticated") is not True:
+            return {"authenticated": False}
+        return _trusted_principal(raw)
 
     def resolve_entity_context(
         self, principal: dict[str, str], entity_id: str, key_id: str, capability_id: str,
