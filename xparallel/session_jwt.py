@@ -105,8 +105,12 @@ class HS256SessionVerifier:
             r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", workspace
         ):
             raise PermissionError("trusted_workspace_invalid")
+        role = claims.get("role", "viewer")
+        if role not in {"owner", "admin", "operator", "viewer"}:
+            raise PermissionError("trusted_role_invalid")
         return {
             "authenticated": True,
             "subject": subject.strip(),
             "workspace_id": workspace,
+            "role": role,
         }
