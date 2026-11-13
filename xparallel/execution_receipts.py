@@ -147,8 +147,8 @@ class ExecutionReceiptLedger:
             raise LookupError("authoritative_execution_record_not_found")
         if job.get("workspace_id") != principal["workspace_id"] or job.get("intent_id") != intent_key:
             raise ValueError("authoritative_execution_record_scope_mismatch")
-        if job.get("status") not in {"completed", "failed"}:
-            raise ValueError("execution_must_be_terminal_before_receipt")
+        if job.get("status") != "finalizing":
+            raise ValueError("execution_must_be_finalizing_before_receipt")
         if not isinstance(job.get("intent"), dict):
             raise ValueError("authoritative_job_intent_missing")
         if self._authorize_writer(principal, job) is not True:
