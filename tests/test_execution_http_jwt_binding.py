@@ -254,6 +254,35 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         self.assertTrue(receipts.verify_chain(worker_token)["valid"])
         receipts.close()
 
+
+    def test_recovery_health_is_operator_scoped_and_requires_configured_supervisor(self):
+        api_without_supervisor = ExecutionHTTPAPI(
+            control_plane=self.control,
+            host_services=_HostServices(self.control.approvals),
+        )
+        with self.assertRaises(LookupError):
+            api_without_supervisor.recovery_health(self.owner_claims)
+
+        class Supervisor:
+            def health(self):
+                return {"enabled": True, "running": False, "total_failures": 2}
+
+        api = ExecutionHTTPAPI(
+            control_plane=self.control,
+            host_services=_HostServices(self.control.approvals),
+            recovery_supervisor=Supervisor(),
+        )
+        self.assertEqual(api.recovery_health(self.owner_claims), {
+            "recovery": {"enabled": True, "running": False, "total_failures": 2}
+        })
+        viewer_token = _token({
+            "iss": "https://identity.example", "aud": "xparallel-api",
+            "sub": "viewer:1", "workspace_id": "workspace-a", "role": "viewer",
+            "iat": self.now - 10, "nbf": self.now - 10, "exp": self.now + 300,
+        }, self.key)
+        with self.assertRaises(PermissionError):
+            api.recovery_health(self.verifier(viewer_token))
+
     def test_tampered_token_is_rejected_by_registry_even_with_claims_argument(self):
         parts = self.owner_token.split(".")
         signature = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]
