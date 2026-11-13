@@ -109,7 +109,12 @@ class ExecutionApprovalTests(unittest.TestCase):
         intent = self.request()
         approved = self.approve(intent)
         running = self.registry.start("executor", approved["one_time_ticket"])
-        pending = self.registry.begin_finalization("executor", running["intent_id"], outcome="success", receipt_data={\n            "policy_decision": {"allowed": True, "grant_id": "grant:1", "evidence_run_id": "run:1"},\n            "started_at": running["started_at"],\n            "resource_usage": {"wall_ms": 1, "cpu_ms": 1, "memory_peak_mb": 1, "output_bytes": 1, "pids_peak": 1},\n            "evidence_refs": ["evidence:one"],\n        })
+        pending = self.registry.begin_finalization("executor", running["intent_id"], outcome="success", receipt_data={
+            "policy_decision": {"allowed": True, "grant_id": "grant:1", "evidence_run_id": "run:1"},
+            "started_at": running["started_at"],
+            "resource_usage": {"wall_ms": 1, "cpu_ms": 1, "memory_peak_mb": 1, "output_bytes": 1, "pids_peak": 1},
+            "evidence_refs": ["evidence:one"],
+        })
         self.assertEqual(pending["status"], "finalizing")
         self.assertIsNotNone(pending["finished_at"])\n        recovered = self.registry.get_finalization_for_recovery("executor", running["intent_id"])\n        self.assertEqual(recovered["finalization_data"]["evidence_refs"], ["evidence:one"])\n        with self.assertRaises(PermissionError):\n            self.registry.get_finalization_for_recovery("requester", running["intent_id"])
         self.assertEqual(self.registry.get("requester", running["intent_id"])["status"], "finalizing")
