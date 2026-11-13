@@ -157,3 +157,7 @@ explicit start, stop/join and timeout validation. No live host service manager,
 identity provider, persistent volume or restart policy is configured by this
 development branch.
 
+### Recovery health and failure reporting
+
+The supervisor health snapshot now reports enabled/running state, last cycle and successful-cycle timestamps, last sanitized exception class, consecutive/total failures, total recovered receipts and the most recent bounded batch counts. The optional host alert callback receives only the exception class name; exception messages, tokens and adapter details are deliberately excluded. A failed cycle is counted and the loop remains available for a later retry. These are in-process counters, not durable monitoring: they reset when the host process restarts and must be exported by a separately configured host monitoring adapter if durable alerting is required. No HTTP health route or external alert destination is configured by this branch.
+
