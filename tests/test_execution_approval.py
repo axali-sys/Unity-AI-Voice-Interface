@@ -18,6 +18,7 @@ class ExecutionApprovalTests(unittest.TestCase):
             authenticate=lambda session: {
                 "requester": {"authenticated": True, "subject": "owner:1", "workspace_id": "ws-a"},
                 "approver": {"authenticated": True, "subject": "reviewer:1", "workspace_id": "ws-a"},
+                "reviewer": {"authenticated": True, "subject": "reviewer:1", "workspace_id": "ws-a"},
                 "executor": {"authenticated": True, "subject": "worker:1", "workspace_id": "ws-a"},
                 "outsider": {"authenticated": True, "subject": "outsider:1", "workspace_id": "ws-b"},
             }.get(session, {"authenticated": False}),
