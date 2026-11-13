@@ -108,7 +108,7 @@ class GovernanceRegistryTests(unittest.TestCase):
         approved = self.approved()
         self.registry.revoke("approver", approved["grant_id"], "owner requested revocation")
         self.assertEqual(self.registry.active_grants("ws-a", "entity-a"), [])
-        with self.assertRaisesRegex(ValueError, "grant_not_active"):
+        with self.assertRaisesRegex(ValueError, "grant_not_suspended"):
             self.registry.reinstate("approver", approved["grant_id"], "try again")
 
     def test_expired_approved_grant_is_not_returned(self):
