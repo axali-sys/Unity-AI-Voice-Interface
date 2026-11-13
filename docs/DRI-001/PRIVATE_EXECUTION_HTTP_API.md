@@ -84,3 +84,10 @@ receipt signing are deterministic test adapters. This validates the complete
 software lifecycle and adapter wiring; it does not prove Docker isolation,
 real host resource metering, external durable storage, or production identity
 infrastructure.
+
+
+The same end-to-end test also starts a second approved execution, revokes the
+entity's permission from inside the test runner, and verifies that the worker
+downgrades the nominally successful runner result to a blocked outcome before
+the terminal receipt is committed. The test confirms the receipt chain remains
+valid for both execution records.
