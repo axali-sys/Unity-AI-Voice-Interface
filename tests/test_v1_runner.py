@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -71,6 +72,23 @@ class HardenedRunnerTests(unittest.TestCase):
         with patch.object(v1_runner, "TIMEOUT", -1):
             self.assertFalse(v1_runner._valid_limits())
 
+    def test_bounded_runner_caps_stdout_and_stderr_while_draining(self):
+        script = "import sys; sys.stdout.write('A' * 500000); sys.stderr.write('B' * 500000)"
+        result = v1_runner._run_bounded(
+            [sys.executable, "-c", script], timeout=10, env=os.environ.copy(), output_limit=4096
+        )
+        self.assertEqual(len(result["stdout"]), 4096)
+        self.assertEqual(len(result["stderr"]), 4096)
+        self.assertTrue(result["output_truncated"]["stdout"])
+        self.assertTrue(result["output_truncated"]["stderr"])
+
+    def test_bounded_runner_kills_timed_out_process_group(self):
+        with self.assertRaises(v1_runner.subprocess.TimeoutExpired):
+            v1_runner._run_bounded(
+                [sys.executable, "-c", "import time; time.sleep(5)"],
+                timeout=0.1, env=os.environ.copy(), output_limit=1024,
+            )
+
     def test_run_blocks_when_image_is_not_digest_pinned(self):
         with patch.object(v1_runner, "IMAGE", "python:3.12-alpine"):
             result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
@@ -91,14 +109,18 @@ class HardenedRunnerTests(unittest.TestCase):
 
     def test_successful_execution_reports_controls_and_truncates_output(self):
         image = "image@sha256:" + "a" * 64
-        completed = Mock(returncode=0, stdout="x" * 12000, stderr="ok")
+        completed = {
+            "returncode": 0, "stdout": "x" * 10000, "stderr": "ok",
+            "output_truncated": {"stdout": True, "stderr": False},
+        }
         with patch.object(v1_runner, "IMAGE", image), \
              patch.object(v1_runner.shutil, "which", return_value="/usr/bin/docker"), \
              patch.object(v1_runner, "available", return_value=True), \
-             patch.object(v1_runner.subprocess, "run", return_value=completed) as run:
+             patch.object(v1_runner, "_run_bounded", return_value=completed) as run:
             result = v1_runner.run_project({"files": {"main.py": self.encoded()}})
         self.assertEqual(result["status"], "success")
         self.assertEqual(len(result["stdout"]), 10000)
+        self.assertTrue(result["output_truncated"]["stdout"])
         self.assertTrue(result["isolation"]["host_credentials_mounted"] is False)
         args = run.call_args.args[0]
         self.assertIn("--network=none", args)
