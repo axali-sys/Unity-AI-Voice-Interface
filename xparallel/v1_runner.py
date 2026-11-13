@@ -11,6 +11,9 @@ import os
 import re
 import math
 import shutil
+import selectors
+import signal
+import time
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -130,6 +133,63 @@ def _docker_command(root, test_command):
     ]
 
 
+
+def _run_bounded(command, *, timeout, env, output_limit=10000):
+    """Drain both pipes without retaining unbounded output; kill the process group on timeout."""
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=env, start_new_session=True,
+    )
+    selector = selectors.DefaultSelector()
+    streams = {
+        process.stdout: bytearray(),
+        process.stderr: bytearray(),
+    }
+    truncated = {"stdout": False, "stderr": False}
+    names = {process.stdout: "stdout", process.stderr: "stderr"}
+    for stream in streams:
+        os.set_blocking(stream.fileno(), False)
+        selector.register(stream, selectors.EVENT_READ)
+
+    deadline = time.monotonic() + timeout
+    try:
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(command, timeout)
+            for key, _ in selector.select(min(remaining, 0.25)):
+                chunk = os.read(key.fileobj.fileno(), 65536)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    key.fileobj.close()
+                    continue
+                buffer = streams[key.fileobj]
+                buffer.extend(chunk)
+                if len(buffer) > output_limit:
+                    del buffer[:-output_limit]
+                    truncated[names[key.fileobj]] = True
+        return_code = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+    except (subprocess.TimeoutExpired, BaseException):
+        if process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        raise
+    finally:
+        selector.close()
+        for stream in streams:
+            if not stream.closed:
+                stream.close()
+
+    return {
+        "returncode": return_code,
+        "stdout": streams[process.stdout].decode("utf-8", errors="replace"),
+        "stderr": streams[process.stderr].decode("utf-8", errors="replace"),
+        "output_truncated": truncated,
+    }
+
 def run_project(intent):
     started = datetime.now(timezone.utc).isoformat()
     if not isinstance(intent, dict):
@@ -152,9 +212,9 @@ def run_project(intent):
         except (ValueError, OSError) as exc:
             return {"environment": "docker", "status": "failed", "error": str(exc)}
         try:
-            completed = subprocess.run(
+            completed = _run_bounded(
                 _docker_command(root, test_command),
-                capture_output=True, text=True, timeout=TIMEOUT, check=False,
+                timeout=TIMEOUT,
                 env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
             )
         except subprocess.TimeoutExpired:
@@ -165,10 +225,11 @@ def run_project(intent):
             "environment": "docker",
             "image": IMAGE,
             "started_at": started,
-            "status": "success" if completed.returncode == 0 else "failed",
-            "exit_code": completed.returncode,
-            "stdout": completed.stdout[-10000:],
-            "stderr": completed.stderr[-10000:],
+            "status": "success" if completed["returncode"] == 0 else "failed",
+            "exit_code": completed["returncode"],
+            "stdout": completed["stdout"],
+            "stderr": completed["stderr"],
+            "output_truncated": completed["output_truncated"],
             "test_command": test_command,
             "isolation": {
                 "network": "none", "root_filesystem": "read-only",
