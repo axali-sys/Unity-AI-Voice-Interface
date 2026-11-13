@@ -133,7 +133,9 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
         self.assertTrue(approved["approval"]["one_time_ticket"])
 
     def test_tampered_token_is_rejected_by_registry_even_with_claims_argument(self):
-        forged = self.owner_token[:-1] + ("A" if self.owner_token[-1] != "A" else "B")
+        parts = self.owner_token.split(".")
+        signature = ("A" if parts[2][0] != "A" else "B") + parts[2][1:]
+        forged = ".".join((parts[0], parts[1], signature))
         with self.assertRaises(PermissionError):
             self.api.request_intent(
                 self.owner_claims,
