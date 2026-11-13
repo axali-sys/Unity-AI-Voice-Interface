@@ -450,7 +450,7 @@ class ExecutionApprovalRegistry:
             ).fetchone()
         if row is None:
             raise LookupError("execution_intent_not_found")
-        if row["status"] != "finalizing":
+        if row["status"] not in {"finalizing", "completed", "failed"}:
             raise ValueError("execution_not_pending_finalization")
         if row["executor_subject"] != principal["subject"]:
             raise PermissionError("execution_executor_mismatch")
