@@ -9,7 +9,7 @@ class FakeApprovals:
         self.intent = intent
         self.checkpoint_allowed = checkpoint
         self.finished = None
-        self.finalizing = None
+        self.finalizing = None\n        self.finalization_data = None
 
     def start(self, session, ticket):
         if ticket != "one-use-ticket":
@@ -27,6 +27,11 @@ class FakeApprovals:
             "finished_at": "2026-11-13T10:00:02+00:00",
         }
 
+    def get_finalization_for_recovery(self, session, intent_id):
+        return {"intent_id": intent_id, "status": "finalizing", "outcome": self.finalizing,
+                "finished_at": "2026-11-13T10:00:02+00:00",
+                "finalization_data": self.finalization_data}
+
     def complete_finalization(self, session, intent_id):
         self.finished = self.finalizing
         return {"intent_id": intent_id,
@@ -37,6 +42,11 @@ class FakeReceipts:
     def __init__(self):
         self.record = None
         self.fail = False
+
+    def get_by_intent(self, session, intent_id):
+        if self.record is not None and self.record.get("intent_id") == intent_id:
+            return {"receipt": {"intent_id": intent_id}, "receipt_hash": "a" * 64}
+        return None
 
     def append(self, session, **kwargs):
         if self.fail:
@@ -137,6 +147,25 @@ class ApprovedExecutionWorkerTests(unittest.TestCase):
         self.assertEqual(result["error"], "execution_receipt_commit_failed")
         self.assertEqual(self.approvals.finalizing, "success")
         self.assertIsNone(self.approvals.finished)
+
+    def test_receipt_failure_can_be_recovered_without_rerunning_code(self):
+        self.receipts.fail = True
+        pending = self.worker.execute("worker-session", "one-use-ticket")
+        self.assertEqual(pending["status"], "finalizing")
+        self.receipts.fail = False
+        recovered = self.worker.recover_finalization("worker-session", "job:123")
+        self.assertTrue(recovered["recovered"])
+        self.assertEqual(recovered["status"], "completed")
+        self.assertEqual(len(self.runner_calls), 1)
+        self.assertEqual(self.receipts.record["intent_id"], "job:123")
+
+    def test_recovery_after_receipt_commit_does_not_append_duplicate(self):
+        self.worker.execute("worker-session", "one-use-ticket")
+        self.approvals.finished = None
+        recovered = self.worker.recover_finalization("worker-session", "job:123")
+        self.assertTrue(recovered["recovered"])
+        self.assertEqual(recovered["status"], "completed")
+        self.assertEqual(len(self.runner_calls), 1)
 
     def test_invalid_ticket_never_launches_runner(self):
         with self.assertRaisesRegex(PermissionError, "invalid_execution_ticket"):
