@@ -18,3 +18,12 @@ This narrows command selection but does not make submitted project files
 trustworthy: the approved source code itself remains untrusted and must execute
 only inside the isolated sandbox. The current runner remains a development
 defense-in-depth boundary, not a hardened multi-tenant microVM.
+
+
+## Output accounting
+
+The bounded pipe-draining loop counts every byte read from stdout and stderr
+before trimming retained buffers to their configured limits. The reported
+`output_bytes` therefore reflects total captured stream bytes, including
+bytes discarded from the in-memory display buffers. This avoids under-reporting
+output usage when a test emits more text than the retained-output cap.
