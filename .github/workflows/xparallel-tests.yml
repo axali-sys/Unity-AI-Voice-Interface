@@ -80,6 +80,10 @@ jobs:
         run: python -m unittest discover -s tests -p "test_execution_receipts.py" -v
       - name: Test transactional storage, migrations, backup and recovery
         run: python -m unittest discover -s tests -p "test_storage_recovery.py" -v
+      - name: Test Parallel Verse SQLite persistence and workspace isolation
+        run: python -m unittest discover -s tests -p "test_parallel_verse.py" -v
+      - name: Test Parallel Verse authenticated service boundary
+        run: python -m unittest discover -s tests -p "test_parallel_verse_service.py" -v
       - name: Test Omni workflow authorization approval retries and receipts
         run: python -m unittest discover -s tests -p "test_omni_orchestrator.py" -v
       - name: Test bounded Parallel Intelligence collaboration and verification
