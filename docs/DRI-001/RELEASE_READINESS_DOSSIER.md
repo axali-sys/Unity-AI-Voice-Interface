@@ -94,3 +94,11 @@ This branch is suitable for continued isolated engineering review only. A releas
 - [ ] Cost and hosting analysis approved.
 - [ ] Runbooks, incident response, backup/restore and governance documentation approved.
 - [ ] Explicit authorization to merge and deploy obtained separately.
+
+## 10. Release workflow safety hardening — 2026-11-14
+
+- Updated `.github/workflows/mainnet-deploy.yml` on the isolated DRI branch so the deploy job runs only for a `push` event whose ref is exactly `refs/heads/main`.
+- A manual `workflow_dispatch` invocation and any feature-branch invocation now skip the deployment job. This prevents a manual run selected against the development branch from triggering the Render deploy hook.
+- This is a workflow guard, not a complete production release-approval system. A future production release still requires a separately approved main-branch change and the repository's deployment controls.
+- No deployment was triggered by this change. The isolated branch has not been merged to `main`; no production service was changed.
+- The workflow file was re-read from the branch after the update. The new commit still requires branch-head CI/check verification; the earlier green test runs apply to the prior commit, not automatically to this workflow-only commit.
