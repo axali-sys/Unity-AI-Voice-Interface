@@ -54,13 +54,13 @@ def dispatch_execution_post(handler, path, data):
             result = EXECUTION_API.request_intent(claims, data)
             send_json(handler, 201, result)
         elif path == "/execution/approve":
-            result = EXECUTION_API.approve_intent(claims, data)
+            result = EXECUTION_API.approve_intent(claims, data, session_token=token)
             send_json(handler, 200, result)
         elif path == "/execution/run":
-            result = EXECUTION_API.execute_ticket(claims, data)
+            result = EXECUTION_API.execute_ticket(claims, data, session_token=token)
             send_json(handler, 200, result)
         else:
-            result = EXECUTION_API.recover_pending(claims, data)
+            result = EXECUTION_API.recover_pending(claims, data, session_token=token)
             send_json(handler, 200, result)
     except PermissionError as exc:
         send_json(handler, 403, {"error": str(exc)})
