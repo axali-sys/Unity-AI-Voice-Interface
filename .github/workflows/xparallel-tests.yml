@@ -67,3 +67,5 @@ jobs:
         run: python -m unittest discover -s tests -p "test_entity_governance.py" -v
       - name: Test evidence-based capability verification laboratory
         run: python -m unittest discover -s tests -p "test_capability_verification.py" -v
+      - name: Test verified entity action gate composition
+        run: python -m unittest discover -s tests -p "test_verified_action_gate.py" -v
