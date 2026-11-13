@@ -60,3 +60,27 @@ mismatch rejection, revocation denial, approved-limit forwarding, and that
 measurement/storage failures prevent a success terminal status. Tests use
 injected runners/adapters; no real Docker workload or live identity provider
 is invoked.
+
+
+## Pending receipt recovery
+
+The approval registry now persists the exact receipt package (policy decision,
+start time, measured resource usage and immutable evidence references) in the
+same SQLite transaction that changes a job to `finalizing`. The package is
+workspace-scoped and can be read for recovery only by the executor identity
+bound to that job.
+
+`ApprovedExecutionWorker.recover_finalization(session, intent_id)` first
+checks the signed receipt ledger for an already committed receipt. If one is
+present and the chain verifies, it completes the pending job without appending
+a duplicate. If no receipt exists, it retries the append using the persisted
+package and then completes the job. It never re-launches the workload or
+re-measures resources.
+
+This closes the receipt-append/terminal-state crash window for jobs whose
+receipt package was persisted. Jobs that entered finalizing because policy,
+measurement or evidence storage itself failed have no complete receipt package;
+they remain pending and require separate operator remediation. The recovery
+method is an application API, not yet exposed as an authenticated HTTP route or
+scheduled recovery service. The SQLite database still requires a persistent
+host volume and backup/recovery controls.
