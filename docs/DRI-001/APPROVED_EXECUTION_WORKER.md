@@ -82,5 +82,6 @@ receipt package was persisted. Jobs that entered finalizing because policy,
 measurement or evidence storage itself failed have no complete receipt package;
 they remain pending and require separate operator remediation. The recovery
 method is an application API, not yet exposed as an authenticated HTTP route or
-scheduled recovery service. The SQLite database still requires a persistent
+scheduled recovery service. A raw registry must be configured with a trusted
+receipt verifier before it can complete any finalization; the default is deny. The SQLite database still requires a persistent
 host volume and backup/recovery controls.
