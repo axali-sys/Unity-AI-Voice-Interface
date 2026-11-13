@@ -150,7 +150,11 @@ class ApprovedExecutionWorker:
             outcome = "blocked"
             result = {"status": "blocked", "error": "execution_revoked_or_stale_at_completion"}
             finalizing = self._approvals.begin_finalization(
-                session, intent_id, outcome=outcome
+                session, intent_id, outcome=outcome,
+                receipt_data={
+                    "policy_decision": policy, "started_at": started_at,
+                    "resource_usage": usage, "evidence_refs": evidence_refs,
+                },
             )
         try:
             receipt = self._receipts.append(
