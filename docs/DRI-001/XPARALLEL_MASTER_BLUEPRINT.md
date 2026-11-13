@@ -157,7 +157,7 @@ This supports a finding of a real backend foundation in the repository, but not 
 
 - Inspect the full XParallel backend source and deployed service configuration using authorized repository/service access.
 - Inventory routes, authentication, authorization, data stores, queues, workers, observability, and tests.
-- Locate and reconcile the authoritative 113-component ecosystem register; do not invent missing component names.
+- Reconcile the located authoritative 113-component register against source code, tests, runtime evidence, and repository paths; do not infer implementation from names or branch presence.
 - Map each component to reuse, extend, create, or retire, with repository path and evidence.
 - Produce dependency graph, threat model, API contracts, and staged test plan.
 - Verify zero-cost feasibility and flag any feature that requires paid compute, hosting, or external APIs.
