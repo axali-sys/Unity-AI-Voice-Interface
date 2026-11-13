@@ -1,6 +1,9 @@
 name: XParallel Integration Tests (DRI-001)
 
 on:
+  push:
+    branches:
+      - "dri-001/xparallel-master-blueprint"
   pull_request:
     paths:
       - "xparallel/**"
