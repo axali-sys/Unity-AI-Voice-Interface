@@ -91,3 +91,7 @@ entity's permission from inside the test runner, and verifies that the worker
 downgrades the nominally successful runner result to a blocked outcome before
 the terminal receipt is committed. The test confirms the receipt chain remains
 valid for both execution records.
+
+## Authenticated recovery health endpoint
+
+The server exposes `GET /execution/health` only in JWT mode and only after an explicit `ExecutionHTTPAPI` host injection. The API adapter must also be constructed with an optional recovery supervisor to provide health; without it, the route returns a safe unavailable response. Only owner, admin and operator roles can read the sanitized snapshot; viewers are denied. The response contains supervisor health counters and no credentials, session tokens, execution payloads or exception messages. Route tests exercise the JWT-only fail-closed behavior, missing host bootstrap, role denial and successful operator response. This remains an in-process HTTP-dispatch test; no live listener, identity provider or production monitoring integration is configured.
