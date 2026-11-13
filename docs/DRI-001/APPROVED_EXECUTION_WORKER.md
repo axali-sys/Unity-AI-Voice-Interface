@@ -15,14 +15,17 @@
 - The runner invokes a live authorization checkpoint while draining process
   output. If the checkpoint denies continuation, it kills the worker process
   group and returns a blocked result.
-- Before committing a successful terminal status, the worker now obtains
-  current policy evidence, measured resource usage, and persisted evidence
-  references. If any evidence adapter fails, the worker closes the job as a
-  failure and does not report success or append a receipt.
-- After evidence preparation succeeds, the worker commits the terminal status
-  and appends the signed receipt. A remaining crash window exists between
-  terminal-state commit and receipt append; a transactional outbox/finalizing
-  state is still required to eliminate it.
+- The worker obtains current policy evidence, measured resource usage, and
+  persisted evidence references before finalization.
+- The lifecycle now transitions from `running` to nonterminal `finalizing`.
+  The signed receipt is appended against that authoritative finalizing record;
+  only after append succeeds does the registry transition to `completed` or
+  `failed`.
+- If evidence preparation or receipt append fails, the job remains
+  `finalizing` with `receipt_pending: true`; it is not falsely reported as
+  terminal. This is a durable pending marker, not yet an automated recovery
+  worker or transactional outbox. Operators still need a controlled recovery
+  path to reconstruct/retry pending receipt creation.
 
 ## Mandatory trusted adapters
 
