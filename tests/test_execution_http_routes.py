@@ -35,6 +35,10 @@ class FakeAPI:
         self.calls.append(("recover", claims, data, session_token))
         return {"pending": 0}
 
+    def recovery_health(self, claims):
+        self.calls.append(("health", claims))
+        return {"recovery": {"running": False, "total_failures": 0}}
+
 
 class ExecutionHTTPRouteTests(unittest.TestCase):
     def setUp(self):
@@ -86,6 +90,45 @@ class ExecutionHTTPRouteTests(unittest.TestCase):
                 self.assertEqual(self.api.calls[-1][0], operation)
                 self.assertEqual(self.api.calls[-1][1]["workspace_id"], "workspace-a")
                 self.assertEqual(self.api.calls[-1][3], "verified-token")
+
+
+    def test_health_route_requires_jwt_and_host_bootstrap(self):
+        with patch.object(server, "AUTH_MODE", "legacy"), \
+             patch.object(server, "SESSION_VERIFIER", None), \
+             patch.object(server, "EXECUTION_API", self.api), \
+             patch.object(server, "send_json", side_effect=capture):
+            self.assertTrue(server.dispatch_execution_get(self.handler, "/execution/health"))
+        self.assertEqual(self.handler.response[0], 503)
+        self.assertEqual(self.api.calls, [])
+
+        with patch.object(server, "AUTH_MODE", "jwt"), \
+             patch.object(server, "SESSION_VERIFIER", object()), \
+             patch.object(server, "EXECUTION_API", None), \
+             patch.object(server, "send_json", side_effect=capture):
+            server.dispatch_execution_get(self.handler, "/execution/health")
+        self.assertEqual(self.handler.response[0], 503)
+
+    def test_health_route_returns_sanitized_snapshot_to_operator(self):
+        with patch.object(server, "AUTH_MODE", "jwt"), \
+             patch.object(server, "SESSION_VERIFIER", object()), \
+             patch.object(server, "EXECUTION_API", self.api), \
+             patch.object(server, "send_json", side_effect=capture):
+            self.assertTrue(server.dispatch_execution_get(self.handler, "/execution/health"))
+        self.assertEqual(self.handler.response, (200, {"recovery": {"running": False, "total_failures": 0}}))
+        self.assertEqual(self.api.calls[-1], ("health", self.handler.identity_context))
+
+    def test_health_route_rejects_viewer_role(self):
+        class ViewerAPI(FakeAPI):
+            def recovery_health(self, claims):
+                from xparallel.execution_http_api import ExecutionHTTPAPI
+                ExecutionHTTPAPI._principal(claims, {"owner", "admin", "operator"})
+        self.handler.identity_context["role"] = "viewer"
+        with patch.object(server, "AUTH_MODE", "jwt"), \
+             patch.object(server, "SESSION_VERIFIER", object()), \
+             patch.object(server, "EXECUTION_API", ViewerAPI()), \
+             patch.object(server, "send_json", side_effect=capture):
+            server.dispatch_execution_get(self.handler, "/execution/health")
+        self.assertEqual(self.handler.response[0], 403)
 
     def test_permission_and_validation_errors_are_mapped_safely(self):
         class DeniedAPI(FakeAPI):
