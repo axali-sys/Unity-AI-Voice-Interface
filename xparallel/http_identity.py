@@ -31,10 +31,17 @@ def bind_request_identity(data: dict[str, Any], claims: dict[str, Any]) -> dict[
     if role not in {"owner", "admin", "operator", "viewer"}:
         raise IdentityBindingError("trusted_role_invalid")
 
-    requested_workspace = data.get("workspace_id")
+    def one(value):
+        if isinstance(value, list):
+            if len(value) != 1:
+                raise IdentityBindingError("ambiguous_identity_parameter")
+            return value[0]
+        return value
+
+    requested_workspace = one(data.get("workspace_id"))
     if requested_workspace not in (None, "") and requested_workspace != workspace:
         raise IdentityBindingError("workspace_claim_mismatch")
-    requested_actor = data.get("actor")
+    requested_actor = one(data.get("actor"))
     if requested_actor not in (None, "") and requested_actor != subject:
         raise IdentityBindingError("actor_claim_mismatch")
 
