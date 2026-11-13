@@ -115,6 +115,38 @@ class ExecutionReceiptTests(unittest.TestCase):
                 evidence_refs=["evidence:one"],
             )
 
+    def test_failure_receipt_explicitly_records_unavailable_evidence(self):
+        self.job["outcome"] = "failure"
+        result = self.ledger.append(
+            "worker", intent_id=self.job["intent_id"],
+            policy_decision={"allowed": False, "reason_code": "resource_meter_unavailable"},
+            started_at=self.job["started_at"], finished_at=self.job["finished_at"],
+            exit_code=1,
+            resource_usage={"wall_ms": None, "cpu_ms": None, "memory_peak_mb": None,
+                            "output_bytes": None, "pids_peak": None},
+            evidence_refs=[],
+        )
+        receipt = result["receipt"]
+        self.assertEqual(receipt["outcome"], "failure")
+        self.assertEqual(receipt["policy_decision"], {
+            "allowed": False, "reason_code": "resource_meter_unavailable",
+        })
+        self.assertTrue(all(value is None for value in receipt["resource_usage"].values()))
+        self.assertEqual(receipt["evidence_refs"], [])
+        self.assertTrue(self.ledger.verify_chain("worker")["valid"])
+
+    def test_success_receipt_cannot_omit_evidence_or_measurements(self):
+        with self.assertRaises(ValueError):
+            self.ledger.append(
+                "worker", intent_id=self.job["intent_id"],
+                policy_decision={"allowed": True, "grant_id": "grant:one", "evidence_run_id": "vrun:one"},
+                started_at=self.job["started_at"], finished_at=self.job["finished_at"],
+                exit_code=0,
+                resource_usage={"wall_ms": None, "cpu_ms": 1, "memory_peak_mb": 1,
+                                "output_bytes": 1, "pids_peak": 1},
+                evidence_refs=[],
+            )
+
     def test_workspace_and_writer_authority_are_enforced(self):
         with self.assertRaises(LookupError):
             self.ledger.append(
