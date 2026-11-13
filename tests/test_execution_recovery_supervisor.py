@@ -1,7 +1,10 @@
 import threading
+import tempfile
+from pathlib import Path
 import unittest
 
 from xparallel.execution_recovery_supervisor import ExecutionRecoverySupervisor
+from xparallel.execution_recovery_health_store import SQLiteExecutionRecoveryHealthStore
 
 
 class FakeWorker:
@@ -93,6 +96,27 @@ class ExecutionRecoverySupervisorTests(unittest.TestCase):
         self.assertEqual(alerts, ['RuntimeError'])
         self.assertNotIn('sensitive adapter detail', repr(health))
         self.assertNotIn('secret-session-token', repr(health))
+
+
+    def test_supervisor_restores_persisted_health_after_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = str(Path(directory) / 'recovery-health.sqlite3')
+            store = SQLiteExecutionRecoveryHealthStore(db_path=db_path)
+            first = ExecutionRecoverySupervisor(host_services=FakeHostServices(), session_provider=lambda: 'short-token', enabled=True, interval_seconds=5, health_store=store)
+            first.start()
+            self.assertTrue(first._service._worker.called.wait(2))
+            first.stop(timeout_seconds=2)
+            first_state = first.health()
+            store.close()
+
+            reopened_store = SQLiteExecutionRecoveryHealthStore(db_path=db_path)
+            restarted = ExecutionRecoverySupervisor(host_services=FakeHostServices(), session_provider=lambda: 'another-short-token', health_store=reopened_store)
+            restored = restarted.health()
+            reopened_store.close()
+            self.assertIsNotNone(first_state['last_success_at'])
+            self.assertEqual(restored['last_success_at'], first_state['last_success_at'])
+            self.assertEqual(restored['last_result'], {'scanned': 0, 'recovered': 0, 'pending': 0})
+            self.assertFalse(restored['running'])
 
     def test_invalid_stop_timeout_is_rejected(self):
         supervisor = ExecutionRecoverySupervisor(
