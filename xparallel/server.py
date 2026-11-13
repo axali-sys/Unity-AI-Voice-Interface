@@ -38,6 +38,40 @@ def configure_execution_api(api):
         raise TypeError('trusted_execution_http_api_required')
     EXECUTION_API = api
 
+def dispatch_execution_post(handler, path, data):
+    """Fail-closed private execution route dispatcher; returns whether handled."""
+    if path not in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
+        return False
+    if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
+        send_json(handler, 503, {"error": "trusted_execution_identity_unavailable"})
+        return True
+    if EXECUTION_API is None:
+        send_json(handler, 503, {"error": "trusted_execution_host_not_configured"})
+        return True
+    try:
+        claims = getattr(handler, "identity_context", None)
+        if path == "/execution/intents":
+            result = EXECUTION_API.request_intent(claims, data)
+            send_json(handler, 201, result)
+        elif path == "/execution/approve":
+            result = EXECUTION_API.approve_intent(claims, data)
+            send_json(handler, 200, result)
+        elif path == "/execution/run":
+            result = EXECUTION_API.execute_ticket(claims, data)
+            send_json(handler, 200, result)
+        else:
+            result = EXECUTION_API.recover_pending(claims, data)
+            send_json(handler, 200, result)
+    except PermissionError as exc:
+        send_json(handler, 403, {"error": str(exc)})
+    except LookupError as exc:
+        send_json(handler, 404, {"error": str(exc)})
+    except (ValueError, TypeError) as exc:
+        send_json(handler, 400, {"error": str(exc)})
+    except Exception:
+        send_json(handler, 503, {"error": "trusted_execution_service_failure"})
+    return True
+
 HOST = os.getenv("XP_HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("XP_PORT", "8787")))
 TOKEN = os.getenv("XP_TOKEN")
@@ -279,33 +313,8 @@ class Handler(BaseHTTPRequestHandler):
             except IdentityBindingError as exc:
                 return send_json(self, 403, {"error": str(exc)})
 
-        if self.path in {"/execution/intents", "/execution/approve", "/execution/run", "/execution/recover"}:
-            # Execution is private and requires per-user host-issued JWT identity.
-            # Shared XP_TOKEN compatibility mode is deliberately insufficient.
-            if AUTH_MODE != "jwt" or SESSION_VERIFIER is None:
-                return send_json(self, 503, {"error": "trusted_execution_identity_unavailable"})
-            if EXECUTION_API is None:
-                return send_json(self, 503, {"error": "trusted_execution_host_not_configured"})
-            try:
-                if self.path == "/execution/intents":
-                    result = EXECUTION_API.request_intent(self.identity_context, data)
-                    return send_json(self, 201, result)
-                if self.path == "/execution/approve":
-                    result = EXECUTION_API.approve_intent(self.identity_context, data)
-                    return send_json(self, 200, result)
-                if self.path == "/execution/run":
-                    result = EXECUTION_API.execute_ticket(self.identity_context, data)
-                    return send_json(self, 200, result)
-                result = EXECUTION_API.recover_pending(self.identity_context, data)
-                return send_json(self, 200, result)
-            except PermissionError as exc:
-                return send_json(self, 403, {"error": str(exc)})
-            except LookupError as exc:
-                return send_json(self, 404, {"error": str(exc)})
-            except (ValueError, TypeError) as exc:
-                return send_json(self, 400, {"error": str(exc)})
-            except Exception:
-                return send_json(self, 503, {"error": "trusted_execution_service_failure"})
+        if dispatch_execution_post(self, self.path, data):
+            return
 
         if self.path == "/conversations":
             workspace = self.workspace_context(data)["workspace_id"]
