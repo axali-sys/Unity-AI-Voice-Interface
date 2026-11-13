@@ -237,6 +237,35 @@ class ExecutionReceiptLedger:
                 "previous_hash": previous_hash, "receipt_hash": receipt_hash,
                 "signature": signature, "recorded_at": now}
 
+    def get_by_intent(self, session: Any, intent_id: str) -> dict[str, Any] | None:
+        """Find a committed receipt after validating workspace, writer authority and chain."""
+        principal = self._principal(session)
+        key = _id(intent_id, "intent_id")
+        job = self._resolve_job(principal["workspace_id"], key)
+        if not isinstance(job, dict):
+            raise LookupError("authoritative_execution_record_not_found")
+        if job.get("workspace_id") != principal["workspace_id"] or job.get("intent_id") != key:
+            raise ValueError("authoritative_execution_record_scope_mismatch")
+        if self._authorize_writer(principal, job) is not True:
+            raise PermissionError("receipt_writer_not_authorized")
+        integrity = self.verify_chain(session)
+        if integrity.get("valid") is not True:
+            raise ValueError("execution_receipt_chain_integrity_failed")
+        with _LOCK:
+            row = self._db.execute(
+                """SELECT sequence, receipt_json, previous_hash, receipt_hash,
+                   signature, recorded_at FROM execution_receipts
+                   WHERE workspace_id=? AND intent_id=?""",
+                (principal["workspace_id"], key),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "sequence": row["sequence"], "receipt": json.loads(row["receipt_json"]),
+            "previous_hash": row["previous_hash"], "receipt_hash": row["receipt_hash"],
+            "signature": row["signature"], "recorded_at": row["recorded_at"],
+        }
+
     def verify_chain(self, session: Any) -> dict[str, Any]:
         principal = self._principal(session)
         with _LOCK:
