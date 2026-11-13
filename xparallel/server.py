@@ -263,7 +263,12 @@ class Handler(BaseHTTPRequestHandler):
             error = str(exc) or "invalid_json"
             return send_json(self, 413 if error == "request_too_large" else 400, {"error": error}, cors=is_public)
 
-        if not is_public and AUTH_MODE == "jwt":
+        if is_public:
+            # Public endpoints use a fixed public namespace; caller-supplied
+            # tenant/actor fields must never select a private workspace.
+            data["workspace_id"] = "public"
+            data["actor"] = "anonymous"
+        elif AUTH_MODE == "jwt":
             try:
                 data = bind_request_identity(data, getattr(self, "identity_context", {}))
             except IdentityBindingError as exc:
@@ -510,6 +515,11 @@ class Handler(BaseHTTPRequestHandler):
             return send_json(self, 404, {"error": "not_found"})
 
         if self.path in ("/execute", "/experiment"):
+            if AUTH_MODE == "jwt":
+                return send_json(self, 503, {
+                    "error": "verified_execution_gate_not_integrated",
+                    "message": "Execution is disabled in JWT mode until the verified action gate and one-time approval ticket are connected.",
+                })
             execution = data.get("execution")
             if not isinstance(execution, dict) or not execution.get("files"):
                 return send_json(self, 400, {"error": "execution.files_required"})
