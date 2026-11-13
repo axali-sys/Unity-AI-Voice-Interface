@@ -66,10 +66,14 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** SDK is in-process and performs no network delivery. No published package/SDK release, external developer documentation, sandbox distribution, migration tooling, cross-organization conformance, trusted key exchange, live federation, or end-to-end collaboration through production governance is demonstrated.
 
 ### M4.1 — Evolution and learning laboratory
-Add evaluation datasets, reproducible experiments, versioned proposals, human review, staged rollout, rollback, regression detection and provenance. No autonomous self-modification or silent capability promotion.
+**Partial implementation:** `xparallel/evolution_lab.py` adds authenticated workspace-scoped experiment records with canonical dataset/config digests, baseline/candidate evaluation adapters, regression-gated proposals, separate human approval checks for staging and promotion, lifecycle event history, and rollback state records. Tests cover approval, regression blocking, workspace isolation and record-only rollback. See `docs/DRI-001/EVOLUTION_AND_LEARNING_LAB.md`.
+
+**Not operational:** no model training, trusted dataset registry, signed experiment runner, benchmark governance, canary traffic, live promotion/deployment, actual runtime rollback, telemetry/drift detection or independent reproducibility review. Promotion and rollback are records only; autonomous self-modification is not enabled.
 
 ### M4.2 — Reality interface
-Design permissioned connectors to external services and devices with explicit scopes, operator consent, safety interlocks, simulation-first testing and emergency revocation. Physical-world actions remain disabled until independent safety validation.
+**Partial implementation:** `xparallel/reality_interface.py` adds authenticated workspace-scoped connector registration, exact non-wildcard scopes, short-lived operator consent, simulation-only actions, payload/result digests, audit events, expiry and emergency revocation. Tests cover consent, scope, expiry, workspace isolation and revocation. See `docs/DRI-001/REALITY_INTERFACE_SAFETY_BOUNDARY.md`.
+
+**Not operational / hard gate:** no external service/device connector, network transport, hardware interlock, operator UI, production identity/consent provider, route integration or independent safety case exists. No real-world execution method is provided; physical-world actions remain disabled.
 
 ### M5 — System integration and independent security validation
 Integrate components behind stable interfaces, perform threat modeling, dependency and supply-chain review, penetration testing, disaster recovery, privacy review, accessibility checks, performance and load tests, and independent conformance review. Resolve all critical/high findings before any release proposal.
