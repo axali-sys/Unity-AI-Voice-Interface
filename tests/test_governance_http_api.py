@@ -42,21 +42,19 @@ class GovernanceHTTPDispatchTests(unittest.TestCase):
         self.assertTrue(server.dispatch_governance_get(
             FakeHandler(), "/governance/grants/grant:123"
         ))
-        server.send_json.assert_called_once_with(
-            FakeHandler(), 200,
-            {"grant": {"grant_id": "grant:123", "status": "approved"}}
-        )
+        server.send_json.assert_called_once()
+        args, _ = server.send_json.call_args
+        self.assertEqual(args[1:], (200, {"grant": {"grant_id": "grant:123", "status": "approved"}}))
 
     def test_revoke_requires_exact_schema_and_returns_revoked_state(self):
         payload = {"grant_id": "grant:123", "reason": "Owner requested revocation"}
         self.assertTrue(server.dispatch_governance_post(
             FakeHandler(), "/governance/grants/revoke", payload
         ))
-        server.send_json.assert_called_once_with(
-            FakeHandler(), 200,
-            {"grant": {"grant_id": "grant:123", "status": "revoked",
-                       "reason": "Owner requested revocation"}, "revoked": True}
-        )
+        server.send_json.assert_called_once()
+        args, _ = server.send_json.call_args
+        self.assertEqual(args[1:], (200, {"grant": {"grant_id": "grant:123", "status": "revoked",
+                       "reason": "Owner requested revocation"}, "revoked": True}))
 
     def test_missing_trusted_registry_fails_closed(self):
         with patch.object(server, "ENTITY_GOVERNANCE", None):
@@ -64,18 +62,18 @@ class GovernanceHTTPDispatchTests(unittest.TestCase):
                 FakeHandler(), "/governance/grants/revoke",
                 {"grant_id": "grant:123", "reason": "review"}
             ))
-        server.send_json.assert_called_once_with(
-            FakeHandler(), 503, {"error": "trusted_governance_adapters_not_configured"}
-        )
+        server.send_json.assert_called_once()
+        args, _ = server.send_json.call_args
+        self.assertEqual(args[1:], (503, {"error": "trusted_governance_adapters_not_configured"}))
 
     def test_unknown_fields_are_rejected(self):
         self.assertTrue(server.dispatch_governance_post(
             FakeHandler(), "/governance/grants/revoke",
             {"grant_id": "grant:123", "reason": "review", "workspace_id": "attacker"}
         ))
-        server.send_json.assert_called_once_with(
-            FakeHandler(), 400, {"error": "governance_request_schema_mismatch"}
-        )
+        server.send_json.assert_called_once()
+        args, _ = server.send_json.call_args
+        self.assertEqual(args[1:], (400, {"error": "governance_request_schema_mismatch"}))
 
 
 if __name__ == "__main__":
