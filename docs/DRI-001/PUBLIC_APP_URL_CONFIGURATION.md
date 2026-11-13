@@ -1,42 +1,30 @@
-# Public Application URL Configuration
+# Public Application URL — frontend integration
 
-## Variable
+## Behavior
 
-`NEXT_PUBLIC_APP_URL` is the public origin of the frontend application.
-Because it has the `NEXT_PUBLIC_` prefix, Next.js can expose its value to
-browser code. It must contain only a public URL; never put credentials,
-session tokens, API keys, or backend secrets in it.
+`lib/public-app-url.mjs` reads `NEXT_PUBLIC_APP_URL` and returns a validated
+HTTP(S) origin. It defaults to `http://localhost:3000` for local development.
+Credentials, non-HTTP protocols, paths, query strings and fragments are rejected.
 
-## Isolated DRI-001 Preview
+`app/layout.js` uses that origin as Next.js `metadataBase` and declares
+canonical and Open Graph URLs as relative paths. Next.js therefore resolves
+those URLs against the configured Preview origin without hardcoding a
+deployment-specific address in application source.
 
-A branch-scoped Vercel environment variable has been configured:
+## Verification
 
-- Project: `unity-ai-voice-interface-ua47`
-- Key: `NEXT_PUBLIC_APP_URL`
-- Value: `https://unity-ai-voice-interface-ua47-git-dri-00-b9ad9a-azalibol74-8215.vercel.app`
-- Target: Preview only
-- Git branch: `dri-001/xparallel-master-blueprint`
-- Type: plain/public configuration
-- Production: not configured or changed
+Run:
 
-The value uses the branch deployment alias returned by Vercel for this
-project. It is preferable to a one-off deployment URL because the alias is
-intended to follow deployments for this branch. The exact current commit must
-still receive its own successful Preview deployment before runtime behavior
-can be considered verified.
+- `npm run test:public-url` — validates defaults, normalization and rejection cases.
+- `npm run build` — confirms the Next.js application compiles with the selected environment.
 
-## Local development
+The tests do not contact Vercel or prove that a deployment received the environment
+variable. Runtime verification still requires a successful Preview deployment
+for the exact branch commit and inspection of its rendered canonical/Open Graph
+metadata.
 
-The committed `.env.example` uses `http://localhost:3000` as the local
-development default. Copy it to an ignored local env file and replace values
-only when running against a different host.
+## Security
 
-## Related settings
-
-- `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_XP_API_URL` are endpoint
-  addresses, not the frontend origin.
-- `XP_API_URL` is server-side and should remain private to server code.
-- `XP_TOKEN` is a secret and must never use a `NEXT_PUBLIC_` prefix.
-
-No Production environment variable, custom domain, DNS record, deployment
-target, or production release was changed by this configuration.
+`NEXT_PUBLIC_APP_URL` is public configuration only. It must never contain
+`XP_TOKEN`, API keys, passwords, session tokens or any other secret.
+Backend credentials remain server-side.
