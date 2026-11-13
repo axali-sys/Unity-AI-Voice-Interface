@@ -76,7 +76,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational / hard gate:** no external service/device connector, network transport, hardware interlock, operator UI, production identity/consent provider, route integration or independent safety case exists. No real-world execution method is provided; physical-world actions remain disabled.
 
 ### M5 — System integration and independent security validation
-Integrate components behind stable interfaces, perform threat modeling, dependency and supply-chain review, penetration testing, disaster recovery, privacy review, accessibility checks, performance and load tests, and independent conformance review. Resolve all critical/high findings before any release proposal.
+**Documentation foundation added:** `docs/DRI-001/SECURITY_THREAT_MODEL.md` records assets, trust boundaries, 16 threat classes, release-blocking controls and a staged validation plan. `docs/DRI-001/INTEGRATION_ACCEPTANCE_MATRIX.md` records cross-subsystem integration evidence requirements, current blockers and a fail-closed acceptance sequence.
+
+**Not complete / release blocked:** this is a threat-model draft, not an independent security assessment. No full cross-module production integration, trusted identity provider, API-level tenant isolation proof, live executor integration, multi-node transport/federation, hostile-code red team, independent penetration test, SBOM/vulnerability review, disaster-recovery rehearsal, privacy/accessibility/performance review or external conformance audit has been completed. Critical/high findings cannot yet be declared closed.
 
 ### M6 — Release-readiness dossier
 Produce a component-by-component evidence register, operational runbooks, cost and hosting analysis, backup/restore proof, incident response, governance terms, user documentation, API compatibility guarantees and explicit release blockers. A release recommendation is not a deployment authorization.
