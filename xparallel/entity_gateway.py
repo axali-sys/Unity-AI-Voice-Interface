@@ -59,9 +59,13 @@ class EntityCommunicationGateway:
                 envelope_json TEXT NOT NULL,
                 queued_at TEXT NOT NULL,
                 delivered_at TEXT,
+                expired_at TEXT,
                 PRIMARY KEY (workspace_id, message_id)
             )
         """)
+        columns = {row[1] for row in self._db.execute("PRAGMA table_info(entity_gateway_queue)").fetchall()}
+        if "expired_at" not in columns:
+            self._db.execute("ALTER TABLE entity_gateway_queue ADD COLUMN expired_at TEXT")
         self._db.execute("""
             CREATE INDEX IF NOT EXISTS entity_gateway_inbox
             ON entity_gateway_queue(workspace_id, recipient_entity_id, delivered_at, queued_at)
@@ -143,13 +147,25 @@ class EntityCommunicationGateway:
         with _GATEWAY_LOCK:
             rows = self._db.execute(
                 """SELECT * FROM entity_gateway_queue
-                   WHERE workspace_id=? AND recipient_entity_id=? AND delivered_at IS NULL
+                   WHERE workspace_id=? AND recipient_entity_id=? AND delivered_at IS NULL AND expired_at IS NULL
                    ORDER BY queued_at, message_id LIMIT ?""",
                 (workspace, recipient, limit),
             ).fetchall()
         delivered = []
         for row in rows:
             envelope = json.loads(row["envelope_json"])
+            expires_at = datetime.fromisoformat(envelope["expires_at"].replace("Z", "+00:00"))
+            if expires_at.tzinfo is None or expires_at <= datetime.now(timezone.utc):
+                expired_at = datetime.now(timezone.utc).isoformat()
+                with _GATEWAY_LOCK, self._db:
+                    cursor = self._db.execute(
+                        """UPDATE entity_gateway_queue SET expired_at=?
+                           WHERE workspace_id=? AND message_id=? AND delivered_at IS NULL AND expired_at IS NULL""",
+                        (expired_at, workspace, row["message_id"]),
+                    )
+                    if cursor.rowcount == 1:
+                        self._audit(workspace, row["message_id"], recipient, "expired", {}, expired_at)
+                continue
             metadata = {
                 "workspace_id": workspace, "message_id": row["message_id"],
                 "sender_entity_id": row["sender_entity_id"],
@@ -187,7 +203,7 @@ class EntityCommunicationGateway:
         with _GATEWAY_LOCK:
             row = self._db.execute(
                 """SELECT message_id, sender_entity_id, recipient_entity_id,
-                          queued_at, delivered_at
+                          queued_at, delivered_at, expired_at
                    FROM entity_gateway_queue
                    WHERE workspace_id=? AND message_id=?""",
                 (identity["workspace_id"], message_id),
@@ -212,6 +228,15 @@ class EntityCommunicationGateway:
         identity = self._identity(session)
         _identifier(message_id, "message_id")
         with _GATEWAY_LOCK:
+            owner = self._db.execute(
+                """SELECT sender_entity_id, recipient_entity_id
+                   FROM entity_gateway_queue WHERE workspace_id=? AND message_id=?""",
+                (identity["workspace_id"], message_id),
+            ).fetchone()
+            if owner is None:
+                return []
+            if identity["entity_id"] not in (owner["sender_entity_id"], owner["recipient_entity_id"]):
+                raise PermissionError("message_audit_forbidden")
             rows = self._db.execute(
                 """SELECT actor_entity_id, event_type, occurred_at, detail_json
                    FROM entity_gateway_audit WHERE workspace_id=? AND message_id=?
