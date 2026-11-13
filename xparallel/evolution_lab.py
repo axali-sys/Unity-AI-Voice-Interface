@@ -53,7 +53,8 @@ class EvolutionLab:
         dataset_digest=_digest(ds);config_digest=_digest(config)
         experiment_id=uuid.uuid4().hex
         result=self._runner({"baseline_version":baseline_version,"candidate_version":candidate_version,
-            "dataset":ds,"dataset_digest":dataset_digest,"config":config,"config_digest":config_digest})
+            "dataset":ds,"dataset_digest":dataset_digest,"config":config,"config_digest":config_digest},
+            {"workspace_id":p["workspace_id"],"actor":p["subject"],"experiment_id":experiment_id})
         if not isinstance(result,dict) or not isinstance(result.get("metrics"),dict):
             raise ValueError("evaluation_runner_must_return_metrics")
         metrics=result["metrics"]
