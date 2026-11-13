@@ -46,11 +46,17 @@ Use the following labels:
 ## 5. Verified CI evidence
 Latest observed branch-head CI at this dossier update:
 
-- XParallel Integration Tests (DRI-001): run 43469234695, head `f19907ef67afbe2c539309b49770b0ced9b5f854`, passed.
-- Verify Axaliai V1: run 43469242487, same head, passed.
-- The XParallel workflow includes the new cross-module governance/verification/action-gate test; its named test step completed successfully.
-- M4.1 evolution and M4.2 reality interface tests are included in the integration workflow.
-- An earlier adapter invocation failed and was corrected before later passing CI; this development history is retained.
+- XParallel Integration Tests (DRI-001), push: run 43526653153, head `21d6cedd25bb4ce8fd0e57ce4049a8bcce87cffa`, passed.
+- XParallel Integration Tests (DRI-001), pull request: run 43526659798, same head, passed.
+- Verify Axaliai V1: run 43526660453, same head, passed.
+- The XParallel integration workflow includes the new persistent recovery health store, supervisor restart restoration, JWT-protected `/execution/health` dispatch, and operator-role authorization tests.
+- M4.1 evolution, M4.2 reality interface, cross-module governance/action-gate, approved execution and receipt tests are included in the integration workflow.
+- An intermediate recovery-health test exposed a race between the worker signal and supervisor health update; the test was corrected to wait for the completed health update. All three workflows passed on the corrected exact branch head.
+
+
+
+### M2.17 — Recovery supervision and health
+The branch now includes bounded receipt recovery, an explicitly enabled supervisor, optional append-only SQLite health history with restart restoration, and a JWT-only operator health endpoint. The new tests are included in the passing branch-head workflows above. This remains local CI evidence only: no real process manager, live persistent volume, identity provider, external alert sink or production listener is configured.
 
 ## 6. Mandatory release blockers
 1. Real authentication, immutable workspace/tenant derivation and route-level authorization.
