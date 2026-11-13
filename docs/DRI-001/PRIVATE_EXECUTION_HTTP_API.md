@@ -28,3 +28,14 @@ injected `ExecutionHTTPAPI` instance. With no host bootstrap, requests return
 `trusted_execution_host_not_configured`; in legacy shared-token mode they
 return `trusted_execution_identity_unavailable`. No default execution adapters
 are created, and these routes are not public.
+
+
+## HTTP dispatch verification
+
+`tests/test_execution_http_routes.py` exercises the actual server dispatch
+helper with injected test adapters. It verifies that unrelated paths are not
+captured, legacy shared-token mode is denied, missing host bootstrap is denied,
+all four JWT-only routes dispatch with the verified workspace claims, and
+authorization failures map to safe HTTP responses. These are in-process tests;
+they do not establish a live network listener, configured identity provider,
+or production host integration.
