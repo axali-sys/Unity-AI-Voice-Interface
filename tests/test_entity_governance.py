@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from xparallel.entity_governance import EntityGovernanceRegistry
@@ -109,6 +110,21 @@ class GovernanceRegistryTests(unittest.TestCase):
         self.assertEqual(self.registry.active_grants("ws-a", "entity-a"), [])
         with self.assertRaisesRegex(ValueError, "grant_not_active"):
             self.registry.reinstate("approver", approved["grant_id"], "try again")
+
+    def test_expired_approved_grant_is_not_returned(self):
+        self.approved()
+        future = datetime.now(timezone.utc) + timedelta(days=2)
+        self.assertEqual(
+            self.registry.active_grants("ws-a", "entity-a", now=future), []
+        )
+
+    def test_ttl_bounds_are_enforced(self):
+        with self.assertRaisesRegex(ValueError, "grant_ttl_out_of_range"):
+            self.registry.request_grant(
+                "owner", entity_id="entity-a", key_id="key-a",
+                capability_id="research.read", action="read",
+                resource_scope="source:document-7", ttl_seconds=1
+            )
 
     def test_workspace_isolation(self):
         approved = self.approved()
