@@ -205,6 +205,8 @@ def run_project(intent, *, approved_limits=None, expected_image_digest=None, sho
         return {"environment": "docker", "status": "failed", "error": "invalid_test_command"}
     if not _valid_limits():
         return {"environment": "docker", "status": "blocked", "error": "invalid_sandbox_limits"}
+    if not _image_is_pinned(IMAGE):
+        return {"environment": "docker", "status": "blocked", "error": "runner_image_digest_not_pinned"}
     if not isinstance(approved_limits, dict) or set(approved_limits) != {
         "timeout_seconds", "memory_mb", "cpu_millis", "pids", "output_bytes"
     }:
