@@ -46,7 +46,9 @@ Status: living engineering plan; milestone acceptance is evidence-based. This ro
 **Not operational:** no live local model was queried; existing chat routes are not migrated; no streaming/cancellation, production model policy, token accounting, context management, verified execution integration, benchmark corpus or independent prompt-injection review exists. No paid provider is selected by default.
 
 ### M3.3 — Parallel Intelligence collaboration
-Implement bounded specialist delegation, attributable contributions, independent verification, disagreement resolution, synthesis, budgets and human approval. Measure task quality rather than treating agent count as intelligence.
+**Partial implementation:** `xparallel/parallel_intelligence.py` adds bounded sequential specialist delegation, attributable content/evidence digests, a mandatory independent verifier, synthesis from verified contributions only, conflict escalation, and strict task/context/output budgets. Every result requires human review; no tool execution occurs. Tests cover attribution, verification failure, conflicts and budgets. See `docs/DRI-001/PARALLEL_INTELLIGENCE_COLLABORATION.md`.
+
+**Not operational:** no model specialists, durable queue, concurrency scheduler, cancellation/timeouts, token/cost accounting, evidence validation service, quality benchmark, review UI, approval-ticket binding or verified execution integration exists. Conflict detection is supplied by the synthesis adapter and is not independently calibrated.
 
 ### M3.4 — Omni orchestration
 Connect planning, scheduling, routing, retries, policy checks, approval gates and execution receipts through typed workflows. Every external or consequential action must use the same server-side enforcement boundary.
