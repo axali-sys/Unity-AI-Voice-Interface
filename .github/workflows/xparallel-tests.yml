@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install project and test dependencies
-        run: python -m pip install -e . cryptography
+        run: python -m pip install cryptography
       - name: Compile Python sources
         run: python -m compileall -q xparallel tests
       - name: Check Axaliai and XParallel JavaScript syntax
