@@ -140,3 +140,20 @@ service manager, or live recovery process. The recovery loop and concurrency
 behavior are unit-tested only; deployment and restart behavior remain
 unverified.
 
+## Explicit host supervisor lifecycle
+
+`xparallel/execution_recovery_supervisor.py` provides the host lifecycle
+wrapper. Construction is inert: it does not start a thread or perform recovery.
+The host must pass the already-configured execution host services and trusted
+short-lived executor-session provider, explicitly set `enabled=True`, and call
+`start()`. The supervisor exposes a small health snapshot and a bounded
+`stop()` operation that joins the worker thread.
+
+The supervisor is deliberately not imported or started by `xparallel.server`.
+There is no environment-variable shortcut that silently activates recovery.
+This keeps the recovery process under the host's explicit lifecycle and
+identity-management control. Unit tests cover disabled-by-default behavior,
+explicit start, stop/join and timeout validation. No live host service manager,
+identity provider, persistent volume or restart policy is configured by this
+development branch.
+
