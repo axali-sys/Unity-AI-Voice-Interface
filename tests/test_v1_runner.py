@@ -81,6 +81,7 @@ class HardenedRunnerTests(unittest.TestCase):
         self.assertEqual(len(result["stderr"]), 4096)
         self.assertTrue(result["output_truncated"]["stdout"])
         self.assertTrue(result["output_truncated"]["stderr"])
+        self.assertEqual(result["output_bytes"], 1_000_000)
 
     def test_bounded_runner_kills_timed_out_process_group(self):
         with self.assertRaises(v1_runner.subprocess.TimeoutExpired):
@@ -131,6 +132,7 @@ class HardenedRunnerTests(unittest.TestCase):
         completed = {
             "returncode": 0, "stdout": "x" * 10000, "stderr": "ok",
             "output_truncated": {"stdout": True, "stderr": False},
+            "output_bytes": 10003,
         }
         with patch.object(v1_runner, "IMAGE", image), \
              patch.object(v1_runner.shutil, "which", return_value="/usr/bin/docker"), \
@@ -139,6 +141,7 @@ class HardenedRunnerTests(unittest.TestCase):
             result = v1_runner.run_project({"files": {"main.py": self.encoded()}}, approved_limits={"timeout_seconds": 600, "memory_mb": 2048, "cpu_millis": 4000, "pids": 1024, "output_bytes": 100000}, expected_image_digest="a" * 64)
         self.assertEqual(result["status"], "success")
         self.assertEqual(len(result["stdout"]), 10000)
+        self.assertEqual(result["output_bytes"], 10003)
         self.assertTrue(result["output_truncated"]["stdout"])
         self.assertTrue(result["isolation"]["host_credentials_mounted"] is False)
         args = run.call_args.args[0]
