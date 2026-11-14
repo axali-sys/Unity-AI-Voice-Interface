@@ -19,7 +19,7 @@ class HttpIdentityBindingTests(unittest.TestCase):
     def test_bearer_header_is_parsed_strictly(self):
         self.assertEqual(bearer_token("Bearer abc.def"), "abc.def")
         self.assertEqual(bearer_token("bearer token"), "token")
-        for value in (None, "", "Basic abc", "Bearer ", "Bearer a b", "Bearer a\\tb"):
+        for value in (None, "", "Basic abc", "Bearer ", "Bearer a b", "Bearer a\tb"):
             with self.subTest(value=value):
                 self.assertIsNone(bearer_token(value))
 
@@ -73,6 +73,6 @@ class HttpIdentityBindingTests(unittest.TestCase):
         with self.assertRaises(IdentityBindingError):
             bind_request_identity({}, [])
 
-
+ 
 if __name__ == "__main__":
     unittest.main()
