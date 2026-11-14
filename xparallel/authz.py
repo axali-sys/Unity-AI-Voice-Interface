@@ -1,15 +1,19 @@
 """Explicit, deny-by-default authorization boundary for XParallel."""
 from __future__ import annotations
 
-ROLES = {"owner": 4, "admin": 3, "operator": 2, "viewer": 1}
-ACTIONS = {
+from types import MappingProxyType
+
+# Immutable policy tables prevent runtime callers from silently changing
+# privilege levels or adding permissive actions.
+ROLES = MappingProxyType({"owner": 4, "admin": 3, "operator": 2, "viewer": 1})
+ACTIONS = MappingProxyType({
     "read": 1,
     "search": 1,
     "create_solution": 2,
     "verify": 3,
     "approve_deployment": 4,
     "billing": 3,
-}
+})
 
 
 def authorize(role: str, action: str) -> bool:
