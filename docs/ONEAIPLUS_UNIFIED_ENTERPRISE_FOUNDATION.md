@@ -86,3 +86,41 @@ Shared UI components should be deduplicated. Keep only one navigation, one sessi
 - Main branch base at foundation creation: 142f6ac02c9991229ff5f1054364ce02835804b1
 - Working branch: oneaiplus/unification-foundation-2026-11-14
 - This document records the architecture and sequence only. It does not claim code consolidation, build success, live service integration or production readiness.
+
+
+## Source inspection findings (2026-11-14)
+
+The following are direct file-level findings from the four Lovable projects; they are not claims of runtime verification.
+
+### Canonical Oneaiplus
+
+- `src/lib/sections.ts` defines 14 navigation sections: workspace, builder, XParallel, Parallel Intelligence, AI Mixer, Omni Engine, Jellybox, UnitAI, Omnibox, Repair Shop, UIDaaS, Integrations, Deployments and Settings.
+- `src/components/modules/ModulePage.tsx` routes those sections to shared module panels.
+- `src/components/modules/panels.tsx` already includes server-side probes for XParallel, GitHub and database; memory save/list/delete functions; audit display; and explicit blocked/partial statuses.
+- The current code itself records AI Gateway HTTP 402 as a blocker, XParallel public endpoint checks as previously returning 403 origin_not_allowed, and missing server-side private XParallel chat configuration.
+- Oneaiplus is the correct place to keep the canonical navigation and module-status vocabulary. Preserve its existing owner/auth and server-function patterns rather than replacing them with donor-project shells.
+
+### OneAI Workspace donor
+
+- `src/components/WorkspaceTools.tsx` contains reusable interaction patterns for saved records, save/delete, audit viewing, health checks, connector status, repository selection and task modes (answer, research, compare, plan, code, repair, agent and recall).
+- Its `src/components/AppShell.tsx` duplicates a OneAI navigation shell, search and theme controls. Do not copy that shell over Oneaiplus; selectively port missing WorkspaceTools capabilities into the canonical panels after adapting their data contracts and permissions.
+- Its AI-backed `runWorkspaceAI` action must not be copied as an operational feature unless a real provider is configured. Non-AI CRUD and read-only tools can work without Lovable credits.
+
+### Pixel Perfect Replica donor
+
+- `src/lib/enterprise.ts` defines admin/operator/member role concepts, product operational statuses, and query helpers for products, user profiles, user roles and audit events.
+- `src/components/AppShell.tsx` is a separate AXALIAI-branded admin shell with sign-out and role-based People navigation. Do not copy the shell or role schema blindly.
+- Its useful contribution is the enterprise administration pattern: product/service registry, explicit lifecycle status, role-gated management and audit visibility. Reconcile these with Oneaiplus' existing owner-access model, database migrations and row-level security before any schema migration.
+
+### Pixel Perfect Replay donor
+
+- The inspected `src/components/AppShell.tsx` is substantially another copy of the OneAI searchable sidebar/mobile navigation pattern, with theme/navigation presentation and no unique backend behavior in that file.
+- Prefer the existing Oneaiplus shell; import only demonstrably unique visual details or accessible interaction improvements after comparison.
+
+### Consolidation decisions
+
+1. Keep Oneaiplus `AppShell`, route tree, `sections.ts`, auth boundary and shared module panel architecture as canonical.
+2. Port missing WorkspaceTools capabilities selectively: saved workspace records, research/task history, read-only connector diagnostics and exportable reports. Keep model calls explicitly provider-dependent.
+3. Reuse the Replica donor's product registry and role/status ideas only after aligning them to the current Oneaiplus database schema and owner/RLS checks.
+4. Treat Replay as a visual donor, not a separate subsystem.
+5. Do not duplicate chat, navigation, memory, identity, audit or deployment surfaces. Oneaiplus should have one canonical implementation of each.
