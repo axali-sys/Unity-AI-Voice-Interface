@@ -37,6 +37,10 @@ The full inventory currently remains **unverified as a whole**. Earlier source i
 
 These are bounded observations, not claims that an entire named component is complete.
 
+## Publication withdrawal confirmation
+
+On 2026-11-15, the owner explicitly confirmed in the conversation that Oneaiplus has been unpublished. This is recorded as owner-reported confirmation; no independent HTTP availability probe or Lovable publication-state API was available in this workflow. The project source, history, and donor projects remain preserved.
+
 ## Current blockers
 
 - Lovable workspace reports insufficient credits for project remix/build operations.
