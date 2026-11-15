@@ -48,6 +48,7 @@ class ExecutionHostServices:
         store_evidence: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]],
         receipts: Any,
         validate_worker_lease: Callable[[Any, str, dict[str, Any]], bool] | None = None,
+        require_worker_lease: bool = False,
     ):
         callbacks = (runner, load_payload, resolve_artifact_digest,
                      resolve_policy_evidence, measure_resources, store_evidence)
@@ -68,7 +69,12 @@ class ExecutionHostServices:
         self.receipts = receipts
         if validate_worker_lease is not None and not callable(validate_worker_lease):
             raise TypeError("trusted_worker_lease_adapter_invalid")
+        if not isinstance(require_worker_lease, bool):
+            raise TypeError("worker_lease_requirement_must_be_boolean")
+        if require_worker_lease and validate_worker_lease is None:
+            raise ValueError("trusted_worker_lease_resolver_required")
         self._validate_worker_lease = validate_worker_lease
+        self.worker_lease_required = require_worker_lease
         if not callable(getattr(approvals, "set_receipt_commit_verifier", None)):
             raise TypeError("receipt_verification_hook_required")
         approvals.set_receipt_commit_verifier(
