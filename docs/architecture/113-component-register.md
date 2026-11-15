@@ -142,10 +142,10 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C072 | UIDaaS | Universal digital identity and access | UIDaaS | Authentication; authorization; tenant model | AuthZ, session and tenant isolation tests | Unverified |
+| C072 | UIDaaS | Universal digital identity and access | UIDaaS | Authentication; authorization; tenant model | AuthZ, session and tenant isolation tests | Partial |
 | C073 | AI Guardian | Security monitoring and threat detection | Shared security/observability | Logs; policy; incident workflow | Simulated threat and alert tests | Unverified |
 | C074 | Trust Engine | Assess source/provider trust | Shared trust services | Provenance; source metadata; policies | Explainable trust score with evidence | Unverified |
-| C075 | Permission Engine | Granular authorization | UIDaaS / policy layer | Identity; resource scopes | Deny-by-default matrix tests | Unverified |
+| C075 | Permission Engine | Granular authorization | UIDaaS / policy layer | Identity; resource scopes | Deny-by-default matrix tests | Partial |
 | C076 | Privacy Vault | Protected personal information | UIDaaS + Storage Fabric | Encryption; consent; retention | Access, export and deletion tests | Unverified |
 | C077 | Credential Vault | Server-side secret management | Shared security infrastructure | Runtime config; rotation; redaction | Secret never reaches browser/log/source | Unverified |
 | C078 | AROT | Historical evidence and integrity | AROT provenance service | Hashes; immutable history where feasible | Tamper detection and chain-of-custody tests | Unverified |
