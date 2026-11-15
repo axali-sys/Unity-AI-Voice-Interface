@@ -317,8 +317,9 @@ def create_task(workspace_id: str, title: str, description: str = "",
                                   ("verse_agents", "agent_id", created_by),
                                   ("verse_agents", "agent_id", assigned_to)):
             if value:
+                selected = "status" if table == "verse_agents" else "1"
                 row = conn.execute(
-                    f"SELECT status FROM {table} WHERE {key}=? AND workspace_id=?",
+                    f"SELECT {selected} FROM {table} WHERE {key}=? AND workspace_id=?",
                     (value, workspace),
                 ).fetchone()
                 if not row:
