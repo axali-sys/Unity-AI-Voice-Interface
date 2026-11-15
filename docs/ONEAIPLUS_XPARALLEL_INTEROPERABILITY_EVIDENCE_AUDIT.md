@@ -219,3 +219,11 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Explicit binding between the approved entity/capability and the resolved worker assignment.
 - Integration tests proving approval → lease claim → checkpoint validation/renewal → revocation → blocked outcome → signed receipt.
 - Real runner polling and multi-worker reassignment verification.
+
+
+### Host composition inspection (additional integration blocker)
+- `ExecutionHostServices.build_worker()` currently constructs `ApprovedExecutionWorker` without forwarding a `validate_worker_lease` callback.
+- `ExecutionHTTPAPI` builds its worker from `ExecutionHostServices`; therefore the lease callback is not currently reachable through the documented HTTP host composition, even if an external caller has one.
+- `server.py` keeps `EXECUTION_API = None` until an explicit trusted bootstrap calls `configure_execution_api`; the private execution API is not activated by default.
+- A safe next implementation must add explicit lease-validator injection to host services and bind it to an intent-specific trusted assignment resolver. The resolver needs an immutable intent identifier or equivalent authoritative lookup key, and must cross-check workspace/entity/capability before returning task/agent/worker/lease records.
+- Until those conditions are met, lease heartbeat remains a tested policy helper, not an enforced property of HTTP execution.
