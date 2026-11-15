@@ -151,7 +151,7 @@ class WorkerLeaseTests(unittest.TestCase):
                                       (datetime.now(timezone.utc) + timedelta(seconds=60)).isoformat())
             self.assertEqual(replacement["lease_id"], "lease-new")
             self.assertEqual(replacement["version"], 2)
-            self.assertEqual(repo.list_events("w1", "t1")[-1]["event_type"], "lease_reclaimed")
+            self.assertEqual(repo.list_events("w1", "t1")[0]["event_type"], "lease_reclaimed")
 
 
 if __name__ == "__main__":
