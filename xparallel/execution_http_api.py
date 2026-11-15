@@ -23,6 +23,8 @@ revalidates identity and workspace instead of trusting a caller-built dict.
         build_worker = getattr(host_services, "build_worker", None)
         if not callable(build_worker):
             raise TypeError("trusted_execution_host_services_required")
+        if getattr(host_services, "worker_lease_required", False) is not True:
+            raise ValueError("execution_host_requires_trusted_worker_lease")
         self._approvals = approvals
         self._worker = build_worker()
         if recovery_supervisor is not None and not callable(getattr(recovery_supervisor, 'health', None)):
