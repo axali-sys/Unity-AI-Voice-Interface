@@ -22,6 +22,7 @@ class TrustedExecutionControlPlane:
         authorize_cancel: Callable[[dict[str, str], dict[str, Any]], bool],
         authorize_executor: Callable[[dict[str, str], dict[str, Any]], bool],
         verify_receipt_commit: Callable[[Any, dict[str, str], str, str], bool] | None = None,
+        validate_agent_active: Callable[[dict[str, str], dict[str, Any]], bool] | None = None,
         db_path: str = ".xparallel/execution_approvals.sqlite3",
     ):
         for name, adapter in (
@@ -36,6 +37,9 @@ class TrustedExecutionControlPlane:
                 raise TypeError("trusted_host_adapter_incomplete")
 
         self._host = trusted_host
+        if validate_agent_active is not None and not callable(validate_agent_active):
+            raise TypeError("agent_registry_revocation_adapter_invalid")
+        self._validate_agent_active = validate_agent_active
         # The registry authenticates the external session first. From this point
         # onward, internal callbacks receive only that normalized principal.
         self._gate = trusted_host.build_action_gate(
@@ -53,6 +57,12 @@ class TrustedExecutionControlPlane:
                     return False
                 if context.get("artifact_digest") != intent.get("artifact_digest"):
                     return False
+                # Optional explicit bridge to the workspace-scoped Parallel Verse
+                # registry. A deployment must inject this adapter to make agent
+                # registry revocation part of execution start/checkpoint decisions.
+                if self._validate_agent_active is not None:
+                    if self._validate_agent_active(principal, intent) is not True:
+                        return False
                 decision = self._gate.authorize(
                     principal,
                     entity_id=intent["entity_id"],
