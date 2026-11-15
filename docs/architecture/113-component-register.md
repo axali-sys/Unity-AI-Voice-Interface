@@ -44,7 +44,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C001 | Cognitive Core | Reasoning, analysis, problem-solving, decisions | ƎllE intelligence runtime | Model Gateway; Omni context | Task suite with traceable inputs/results | Unverified |
 | C002 | Multi-Model Intelligence | Combine, compare, debate and synthesize models | Parallel Intelligence | Model Gateway; provider adapters | Multi-model run with attributed outputs | Partial |
 | C003 | Self-Evaluation Engine | Check answers, uncertainty and contradictions | Parallel Intelligence | Evaluation datasets; OmniTrace | Calibrated evaluation and contradiction tests | Unverified |
-| C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Unverified |
+| C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Partial |
 | C005 | Reasoning Laboratory | Test hypotheses, simulate scenarios, explore alternatives | Parallel Intelligence | C002, C006, sandbox/compute | Reproducible experiment record | Unverified |
 | C006 | Decision Intelligence | Risk, forecasting, evidence-based recommendations | ƎllE domain capabilities | OmniSearch/Trace; uncertainty | Benchmark with evidence and uncertainty | Unverified |
 | C007 | Context awareness engine | Use relevant session, project and environment context | ƎllE + Omni | OmniMemory; access controls | Context relevance and isolation tests | Unverified |
