@@ -3,7 +3,7 @@ import os
 import tempfile
 import unittest
 
-from xparallel.worker_lease import WorkerLeaseService, WorkerLeaseHeartbeat
+from xparallel.worker_lease import WorkerLeaseService, WorkerLeaseHeartbeat, WorkerLeaseExecutionValidator
 from xparallel.sqlite_worker_lease_repository import SQLiteWorkerLeaseRepository
 
 
@@ -195,6 +195,92 @@ class WorkerLeaseTests(unittest.TestCase):
         repo.rows[("w1", "t1")].update(worker_id="worker-2", lease_id="lease-reassigned", version=2)
         heartbeat = WorkerLeaseHeartbeat(service=service, lease=lease, clock=clock)
         self.assertFalse(heartbeat.should_continue())
+
+
+    def test_execution_validator_binds_intent_and_renews_same_worker_lease(self):
+        service, repo, clock = self.make_service()
+        service.claim(workspace_id="w1", task_id="task-1", agent_id="agent-1",
+                      worker_id="worker-1", ttl_seconds=60)
+        intent = {
+            "workspace_id": "w1", "entity_id": "entity-1",
+            "capability_id": "capability.run",
+        }
+        calls = []
+        def resolve(session, intent_id, immutable_intent):
+            calls.append((session, intent_id, immutable_intent))
+            return {
+                "intent_id": "intent-1", "workspace_id": "w1",
+                "entity_id": "entity-1", "capability_id": "capability.run",
+                "task_id": "task-1", "agent_id": "agent-1", "worker_id": "worker-1",
+            }
+        validator = WorkerLeaseExecutionValidator(
+            service=service, resolve_assignment=resolve,
+            ttl_seconds=60, heartbeat_interval_seconds=20,
+        )
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        clock.value += timedelta(seconds=20)
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        self.assertEqual(repo.get("w1", "task-1")["version"], 2)
+        self.assertEqual(calls[0][0:2], ("trusted-session", "intent-1"))
+        self.assertTrue(validator.forget("intent-1"))
+        self.assertFalse(validator.forget("intent-1"))
+
+    def test_execution_validator_fails_closed_on_intent_mismatch(self):
+        service, repo, clock = self.make_service()
+        service.claim(workspace_id="w1", task_id="task-1", agent_id="agent-1",
+                      worker_id="worker-1", ttl_seconds=60)
+        intent = {"workspace_id": "w1", "entity_id": "entity-1",
+                  "capability_id": "capability.run"}
+        validator = WorkerLeaseExecutionValidator(
+            service=service,
+            resolve_assignment=lambda session, intent_id, immutable: {
+                "intent_id": intent_id, "workspace_id": "w1",
+                "entity_id": "different-entity", "capability_id": "capability.run",
+                "task_id": "task-1", "agent_id": "agent-1", "worker_id": "worker-1",
+            },
+        )
+        self.assertFalse(validator("trusted-session", "intent-1", intent))
+
+    def test_execution_validator_fails_closed_after_worker_reassignment(self):
+        service, repo, clock = self.make_service()
+        service.claim(workspace_id="w1", task_id="task-1", agent_id="agent-1",
+                      worker_id="worker-1", ttl_seconds=60)
+        assignment = {"worker_id": "worker-1"}
+        intent = {"workspace_id": "w1", "entity_id": "entity-1",
+                  "capability_id": "capability.run"}
+        def resolve(session, intent_id, immutable):
+            return {
+                "intent_id": intent_id, "workspace_id": "w1",
+                "entity_id": "entity-1", "capability_id": "capability.run",
+                "task_id": "task-1", "agent_id": "agent-1",
+                "worker_id": assignment["worker_id"],
+            }
+        validator = WorkerLeaseExecutionValidator(service=service, resolve_assignment=resolve)
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        repo.rows[("w1", "task-1")].update(
+            worker_id="worker-2", lease_id="lease-reassigned", version=2,
+        )
+        assignment["worker_id"] = "worker-2"
+        self.assertFalse(validator("trusted-session", "intent-1", intent))
+
+    def test_execution_validator_fails_closed_on_agent_revocation(self):
+        active = {"value": True}
+        service, repo, clock = self.make_service(lambda workspace, agent: active["value"])
+        service.claim(workspace_id="w1", task_id="task-1", agent_id="agent-1",
+                      worker_id="worker-1", ttl_seconds=60)
+        intent = {"workspace_id": "w1", "entity_id": "entity-1",
+                  "capability_id": "capability.run"}
+        validator = WorkerLeaseExecutionValidator(
+            service=service,
+            resolve_assignment=lambda session, intent_id, immutable: {
+                "intent_id": intent_id, "workspace_id": "w1",
+                "entity_id": "entity-1", "capability_id": "capability.run",
+                "task_id": "task-1", "agent_id": "agent-1", "worker_id": "worker-1",
+            },
+        )
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        active["value"] = False
+        self.assertFalse(validator("trusted-session", "intent-1", intent))
 
 
 if __name__ == "__main__":
