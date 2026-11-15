@@ -227,3 +227,12 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - `server.py` keeps `EXECUTION_API = None` until an explicit trusted bootstrap calls `configure_execution_api`; the private execution API is not activated by default.
 - A safe next implementation must add explicit lease-validator injection to host services and bind it to an intent-specific trusted assignment resolver. The resolver needs an immutable intent identifier or equivalent authoritative lookup key, and must cross-check workspace/entity/capability before returning task/agent/worker/lease records.
 - Until those conditions are met, lease heartbeat remains a tested policy helper, not an enforced property of HTTP execution.
+
+
+### 2026-11-15: worker lease validator now reaches the execution host
+- `ApprovedExecutionWorker` now supplies the immutable `intent_id` together with the authenticated session and immutable intent to the lease-validation callback: `(session, intent_id, intent)`.
+- `ExecutionHostServices` now accepts an optional `validate_worker_lease` trusted host adapter and forwards it when constructing the worker.
+- The resolver contract explicitly requires task/agent/worker/lease resolution from authoritative host records and fail-closed behavior. The intent ID gives the resolver a stable lookup key; the immutable intent provides workspace/entity/capability constraints for cross-checking.
+- Added tests for intent-ID delivery, checkpoint revalidation, resolver forwarding, and rejection of a non-callable adapter.
+- This is host composition plumbing, not a configured resolver: no task/agent/worker/lease registry is currently supplied by this repository's default bootstrap. Therefore no live lease enforcement is claimed.
+- The callback remains optional for compatibility with existing host compositions. A production host must make it mandatory before enabling worker execution; the present default bootstrap keeps execution API disabled unless explicitly configured.
