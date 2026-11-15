@@ -78,6 +78,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_http_identity.py" -v
       - name: Test private execution HTTP route dispatch and fail-closed behavior
         run: python -m unittest discover -s tests -p "test_execution_http_routes.py" -v
+      - name: Test private execution routes over loopback HTTP
+        run: python -m unittest discover -s tests -p "test_execution_http_transport.py" -v
       - name: Test JWT-bound execution approval, workspace scope and revocation lifecycle
         run: python -m unittest discover -s tests -p "test_execution_http_jwt_binding.py" -v
       - name: Test governance HTTP dispatch and revocation schema
