@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:public-url": "node --test tests/public-app-url.test.mjs"
+    "test:public-url": "node --test tests/public-app-url.test.mjs",
+    "test:oneaiplus-registry": "node --test tests/oneaiplus-ecosystem-registry.test.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.3.1",
