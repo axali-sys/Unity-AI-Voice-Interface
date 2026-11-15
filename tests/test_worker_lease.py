@@ -154,6 +154,13 @@ class WorkerLeaseTests(unittest.TestCase):
             self.assertEqual(repo.list_events("w1", "t1")[0]["event_type"], "lease_reclaimed")
 
 
+    def test_public_lease_clock_and_ttl_contract(self):
+        service, repo, clock = self.make_service()
+        self.assertEqual(service.current_time(), clock.value)
+        self.assertEqual(service.validate_ttl(30), 30)
+        with self.assertRaisesRegex(ValueError, "lease_ttl_out_of_range"):
+            service.validate_ttl(1)
+
     def test_checkpoint_heartbeat_renews_only_when_due_and_tracks_version(self):
         service, repo, clock = self.make_service()
         lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
