@@ -66,6 +66,8 @@ class _JWTTrustedHost:
 
 
 class _HostServices:
+    worker_lease_required = True
+
     def __init__(self, approvals):
         self.approvals = approvals
 
@@ -186,6 +188,12 @@ class ExecutionHTTPJWTBindingTests(unittest.TestCase):
                 "durable": True, "references": ["xpevidence://workspace-a/job/evidence-digest"],
             },
             receipts=receipts,
+            validate_worker_lease=lambda session, intent_id, intent: (
+                self.verifier(session).get("workspace_id") == intent.get("workspace_id")
+                and approvals.get(session, intent_id).get("intent") == intent
+                and self.host.allowed
+            ),
+            require_worker_lease=True,
         )
         api = ExecutionHTTPAPI(control_plane=self.control, host_services=host_services)
         limits = {
