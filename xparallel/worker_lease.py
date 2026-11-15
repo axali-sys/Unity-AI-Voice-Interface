@@ -131,3 +131,74 @@ class WorkerLeaseService:
                 or current.get("version") != expected_version):
             raise PermissionError("worker_lease_owner_or_version_mismatch")
         return self._repo.release(workspace, task, lease, worker, expected_version)
+
+
+class WorkerLeaseHeartbeat:
+    """Checkpoint-driven heartbeat for a trusted worker lease.
+
+    Call should_continue from the execution runner's existing polling callback.
+    This is deliberately not a background thread: a stalled runner cannot be
+    kept alive by an independent heartbeat. Identity and initial lease must
+    come from trusted host-side resolution, never request-body claims.
+    """
+
+    def __init__(self, *, service: WorkerLeaseService, lease: dict[str, Any],
+                 ttl_seconds: int = 60, heartbeat_interval_seconds: int | None = None,
+                 clock: Callable[[], datetime] | None = None):
+        if not isinstance(lease, dict):
+            raise TypeError("trusted_worker_lease_record_required")
+        self._service = service
+        self._workspace = WorkerLeaseService._identity(lease.get("workspace_id"), "workspace_id")
+        self._task = WorkerLeaseService._identity(lease.get("task_id"), "task_id")
+        self._agent = WorkerLeaseService._identity(lease.get("agent_id"), "agent_id")
+        self._worker = WorkerLeaseService._identity(lease.get("worker_id"), "worker_id")
+        self._lease_id = WorkerLeaseService._identity(lease.get("lease_id"), "lease_id")
+        version = lease.get("version")
+        if isinstance(version, bool) or not isinstance(version, int) or version < 1:
+            raise ValueError("invalid_worker_lease_version")
+        self._version = version
+        self._ttl = service._ttl(ttl_seconds)
+        interval = heartbeat_interval_seconds if heartbeat_interval_seconds is not None else max(1, self._ttl // 3)
+        if isinstance(interval, bool) or not isinstance(interval, int) or not 1 <= interval < self._ttl:
+            raise ValueError("heartbeat_interval_must_be_positive_and_less_than_ttl")
+        self._interval = interval
+        self._clock = clock or service._clock
+        self._next_beat = self._now() + timedelta(seconds=interval)
+        import threading
+        self._lock = threading.Lock()
+
+    def _now(self) -> datetime:
+        value = self._clock()
+        if not isinstance(value, datetime) or value.tzinfo is None:
+            raise ValueError("heartbeat_clock_must_return_timezone_aware_datetime")
+        return value.astimezone(timezone.utc)
+
+    def should_continue(self) -> bool:
+        """Validate each runner poll and renew only when the heartbeat is due."""
+        try:
+            with self._lock:
+                now = self._now()
+                if now >= self._next_beat:
+                    renewed = self._service.renew(
+                        workspace_id=self._workspace, task_id=self._task,
+                        agent_id=self._agent, worker_id=self._worker,
+                        lease_id=self._lease_id, expected_version=self._version,
+                        ttl_seconds=self._ttl,
+                    )
+                    if not isinstance(renewed, dict) or renewed.get("lease_id") != self._lease_id:
+                        return False
+                    self._version = renewed.get("version")
+                    if isinstance(self._version, bool) or not isinstance(self._version, int):
+                        return False
+                    self._next_beat = now + timedelta(seconds=self._interval)
+                    return True
+                return self._service.validate(
+                    workspace_id=self._workspace, task_id=self._task,
+                    agent_id=self._agent, worker_id=self._worker,
+                ) is True
+        except Exception:
+            return False
+
+    @property
+    def current_version(self) -> int:
+        return self._version
