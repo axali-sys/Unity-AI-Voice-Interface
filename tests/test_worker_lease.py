@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta, timezone
+import os
+import tempfile
 import unittest
 
 from xparallel.worker_lease import WorkerLeaseService
+from xparallel.sqlite_worker_lease_repository import SQLiteWorkerLeaseRepository
 
 
 class Clock:
@@ -109,6 +112,46 @@ class WorkerLeaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "timezone_aware"):
             service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
                           worker_id="worker-1")
+
+
+    def test_sqlite_repository_persists_leases_and_audit_events(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "leases.sqlite3")
+            repo = SQLiteWorkerLeaseRepository(path)
+            expires = (datetime.now(timezone.utc) + timedelta(seconds=60)).isoformat()
+            lease = repo.claim("w1", "t1", "a1", "worker-1", "lease-1", expires)
+            reopened = SQLiteWorkerLeaseRepository(path)
+            self.assertEqual(reopened.get("w1", "t1")["lease_id"], lease["lease_id"])
+            with self.assertRaisesRegex(PermissionError, "already_claimed"):
+                reopened.claim("w1", "t1", "a2", "worker-2", "lease-2", expires)
+            renewed = reopened.renew("w1", "t1", "lease-1", "worker-1", 1,
+                                     (datetime.now(timezone.utc) + timedelta(seconds=90)).isoformat())
+            self.assertEqual(renewed["version"], 2)
+            with self.assertRaisesRegex(PermissionError, "stale"):
+                repo.renew("w1", "t1", "lease-1", "worker-1", 1,
+                           (datetime.now(timezone.utc) + timedelta(seconds=90)).isoformat())
+            released = repo.release("w1", "t1", "lease-1", "worker-1", 2)
+            self.assertEqual(released["status"], "released")
+            events = reopened.list_events("w1", "t1")
+            self.assertEqual([event["event_type"] for event in events],
+                             ["lease_released", "lease_renewed", "lease_claimed"])
+
+    def test_sqlite_repository_reclaims_expired_lease_with_new_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = SQLiteWorkerLeaseRepository(os.path.join(directory, "leases.sqlite3"))
+            expired = (datetime.now(timezone.utc) - timedelta(seconds=2)).isoformat()
+            repo.claim("w1", "t1", "a1", "worker-1", "lease-old",
+                       (datetime.now(timezone.utc) + timedelta(seconds=1)).isoformat())
+            # Force expiry through a separate direct test-fixture update.
+            import sqlite3
+            with sqlite3.connect(repo.path) as db:
+                db.execute("UPDATE worker_leases SET expires_at=? WHERE workspace_id=? AND task_id=?",
+                           (expired, "w1", "t1"))
+            replacement = repo.claim("w1", "t1", "a2", "worker-2", "lease-new",
+                                      (datetime.now(timezone.utc) + timedelta(seconds=60)).isoformat())
+            self.assertEqual(replacement["lease_id"], "lease-new")
+            self.assertEqual(replacement["version"], 2)
+            self.assertEqual(repo.list_events("w1", "t1")[-1]["event_type"], "lease_reclaimed")
 
 
 if __name__ == "__main__":
