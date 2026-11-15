@@ -83,7 +83,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C030 | OmniScheduler | Recurring and scheduled tasks | Omni orchestration plane | Queue/event bus; durable storage | Schedule, timezone and cancellation tests | Unverified |
 | C031 | OmniSwarm | Coordinate specialized agent groups | Omni orchestration plane + Parallel Intelligence | Agent Registry; XParallel | Multi-agent coordination with audit | Unverified |
 | C032 | OmniPilot | Supervise multi-step tasks | ƎllE + Omni orchestration | OmniFlow/Plan; status events | End-to-end task with checkpoints | Unverified |
-| C033 | OmniControl | Permissions and approvals | UIDaaS / policy layer | Identity; audit; task contracts | Denied-by-default and approval tests | Unverified |
+| C033 | OmniControl | Permissions and approvals | UIDaaS / policy layer | Identity; audit; task contracts | Denied-by-default and approval tests | Partial |
 | C034 | OmniEvent | Event-driven automation | Shared event runtime | Event Bus; schema/versioning | Event delivery, deduplication and retry tests | Unverified |
 | C035 | OmniSim | Simulate tasks before execution | Omni orchestration plane | Sandbox/Compute Fabric; World Model | Dry-run cannot cause external side effects | Unverified |
 | C036 | OmniVerify | Verify execution results | Shared verification service | Task contracts; evidence; AROT | Result checks against explicit acceptance criteria | Unverified |
