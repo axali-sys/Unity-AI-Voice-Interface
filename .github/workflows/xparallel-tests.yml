@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "dri-001/xparallel-master-blueprint"
+      - "oneaiplus/unification-foundation-2026-11-14"
   pull_request:
     paths:
       - "xparallel/**"
