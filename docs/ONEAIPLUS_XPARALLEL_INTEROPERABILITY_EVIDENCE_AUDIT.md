@@ -37,6 +37,19 @@ This is a static source-and-test inventory, not a live deployment certification.
 | C045 | XParallel Registry | `xparallel/parallel_verse.py` | `tests/test_parallel_verse.py` | Partial: workspace-scoped agent registration, capability lookup, persistence across database reopen and cross-workspace reference rejection. This is a local registry primitive, not a deployed federated service registry. |
 | C082 | Audit Intelligence | `xparallel/audit_repository.py` | `tests/test_audit_repository.py` | Partial: workspace-filtered actor/action event storage and a single-event round-trip test. No complete action timeline, identity/policy correlation, tamper-evident chain or production durability is certified. |
 
+## Additional component boundary review — 2026-11-15
+
+The following adjacent modules were inspected to avoid promoting components based on name similarity alone:
+
+- **C003 Self-Evaluation Engine — remains Unverified:** `xparallel/cognitive_runtime.py` includes an `evaluate_cases` harness and structured-output validation. The inspected tests check exact expected values and schema errors; they do not establish calibrated confidence, contradiction detection, reasoning-quality scoring, or a validated self-correction loop.
+- **C005 Reasoning Laboratory — remains Unverified:** `xparallel/experiment.py` and `xparallel/simulator.py` create an experiment record and deterministic simulation result. The simulator explicitly does not execute arbitrary code and states that simulation success is not production proof. No inspected test suite establishes reproducible scientific experiment management, hypothesis comparison, or validated scenario modelling.
+- **C017 OmniSearch — remains Unverified:** no dedicated OmniSearch implementation or ACL-filtered cross-source retrieval test was identified in the inspected `xparallel/` module and `tests/` inventories. The simple text search in `xparallel/graph.py` is not a unified, permission-aware source search service.
+- **C018 OmniGraph / C027 Knowledge Genome — remain Unverified:** `xparallel/graph.py` is an in-memory Solution Graph for solution records, with keyword matching and candidate-to-verified status promotion. Its tests cover add/search/promote and fingerprint changes. It is not a persistent entity/document/event relationship graph with provenance-aware traversal, so it is not counted as OmniGraph or Knowledge Genome delivery.
+- **C015 OmniStream and C023 OmniTrace — remain Unverified:** the inspected connector helper fetches a caller-supplied HTTPS URL with a byte limit, but no ingestion queue, consent/revocation lifecycle, source-lineage graph, or retrieval-to-source resolution test was identified. A connector fetch alone does not establish continuous ingestion or lineage.
+- **C036 OmniVerify — remains Unverified:** structured-output schema validation and execution receipt verification are narrower controls. No general acceptance-criteria verifier for arbitrary workflow results was identified in this review.
+
+These are scoped repository inspections, not proof that no related code exists anywhere in the wider ecosystem. The register remains conservative: no status promotion is made from a similarly named but materially narrower primitive.
+
 ## Operational gaps still open
 
 1. Execute the full targeted test suite against a reproducible checkout and record exact command, environment, test count and result.
