@@ -169,3 +169,13 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - A false result or adapter exception fails closed through the existing checkpoint path; the runner receives the live checkpoint callback and must poll it during execution for timely cancellation.
 - Added worker tests for lease denial before runner start and lease loss during runner activity.
 - This remains an optional host integration: no deployment adapter currently proves how immutable execution intents map to task/worker/lease records. The host must inject a trusted adapter and the runner must poll `should_continue`. No durable lease repository, worker heartbeat, automatic task reassignment, or live deployment verification is claimed.
+
+
+## Dedicated SQLite worker-lease repository — 2026-11-15
+
+- Added `xparallel/sqlite_worker_lease_repository.py`, a separate SQLite database adapter for durable lease records and append-only lease lifecycle events. It uses `BEGIN IMMEDIATE` for claim/renew/release, a workspace+task uniqueness boundary, lease IDs, expiry checks, and expected-version compare-and-swap updates.
+- Expired leases may be reclaimed with a new lease ID and incremented version. Active, unexpired leases cannot be double-claimed. Stale renewals/releases are rejected.
+- The adapter owns a dedicated database file and private tables; it does not alter the existing Parallel Verse or execution-approval database schemas and adds no migration to those stores.
+- Added persistence/reopen, active-claim exclusion, stale-version, event history, and expiry-reclaim tests.
+- **Not yet operationally integrated:** no host deployment selects/configures this repository path, no worker heartbeat loop or task reassignment scheduler exists, and the execution-worker lease adapter still requires trusted host composition. CI results must be checked before treating this implementation as verified.
+- SQLite durability is limited to the configured filesystem/volume. A serverless ephemeral filesystem is not a durable multi-instance lease backend; production requires a persistent shared transactional store and host-level configuration.
