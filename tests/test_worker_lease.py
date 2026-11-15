@@ -3,7 +3,7 @@ import os
 import tempfile
 import unittest
 
-from xparallel.worker_lease import WorkerLeaseService
+from xparallel.worker_lease import WorkerLeaseService, WorkerLeaseHeartbeat
 from xparallel.sqlite_worker_lease_repository import SQLiteWorkerLeaseRepository
 
 
@@ -152,6 +152,42 @@ class WorkerLeaseTests(unittest.TestCase):
             self.assertEqual(replacement["lease_id"], "lease-new")
             self.assertEqual(replacement["version"], 2)
             self.assertEqual(repo.list_events("w1", "t1")[0]["event_type"], "lease_reclaimed")
+
+
+    def test_checkpoint_heartbeat_renews_only_when_due_and_tracks_version(self):
+        service, repo, clock = self.make_service()
+        lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                              worker_id="worker-1", ttl_seconds=60)
+        heartbeat = WorkerLeaseHeartbeat(
+            service=service, lease=lease, ttl_seconds=60,
+            heartbeat_interval_seconds=20, clock=clock,
+        )
+        self.assertTrue(heartbeat.should_continue())
+        self.assertEqual(heartbeat.current_version, 1)
+        clock.value += timedelta(seconds=19)
+        self.assertTrue(heartbeat.should_continue())
+        self.assertEqual(heartbeat.current_version, 1)
+        clock.value += timedelta(seconds=1)
+        self.assertTrue(heartbeat.should_continue())
+        self.assertEqual(heartbeat.current_version, 2)
+        self.assertEqual(repo.get("w1", "t1")["version"], 2)
+
+    def test_checkpoint_heartbeat_fails_closed_after_agent_revocation(self):
+        active = {"value": True}
+        service, repo, clock = self.make_service(lambda workspace, agent: active["value"])
+        lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                              worker_id="worker-1", ttl_seconds=60)
+        heartbeat = WorkerLeaseHeartbeat(service=service, lease=lease, clock=clock)
+        active["value"] = False
+        self.assertFalse(heartbeat.should_continue())
+
+    def test_checkpoint_heartbeat_fails_closed_after_lease_reassignment(self):
+        service, repo, clock = self.make_service()
+        lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                              worker_id="worker-1", ttl_seconds=60)
+        repo.rows[("w1", "t1")].update(worker_id="worker-2", lease_id="lease-reassigned", version=2)
+        heartbeat = WorkerLeaseHeartbeat(service=service, lease=lease, clock=clock)
+        self.assertFalse(heartbeat.should_continue())
 
 
 if __name__ == "__main__":
