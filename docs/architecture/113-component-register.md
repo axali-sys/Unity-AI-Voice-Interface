@@ -47,7 +47,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Partial |
 | C005 | Reasoning Laboratory | Test hypotheses, simulate scenarios, explore alternatives | Parallel Intelligence | C002, C006, sandbox/compute | Reproducible experiment record | Unverified |
 | C006 | Decision Intelligence | Risk, forecasting, evidence-based recommendations | ƎllE domain capabilities | OmniSearch/Trace; uncertainty | Benchmark with evidence and uncertainty | Unverified |
-| C007 | Context awareness engine | Use relevant session, project and environment context | ƎllE + Omni | OmniMemory; access controls | Context relevance and isolation tests | Unverified |
+| C007 | Context awareness engine | Use relevant session, project and environment context | ƎllE + Omni | OmniMemory; access controls | Context relevance and isolation tests | Partial |
 | C008 | Knowledge gap detector | Identify missing evidence or knowledge | Omni + ƎllE | OmniSearch; C003 | Known-gap benchmark and citations | Unverified |
 | C009 | Explainability engine | Explain reasoning basis and evidence | ƎllE / Parallel Intelligence | OmniTrace; AROT | Explanation links to actual sources/artifacts | Unverified |
 | C010 | Confidence and uncertainty evaluator | Estimate and communicate uncertainty | Parallel Intelligence | C003; evaluation data | Calibration metrics and abstention tests | Unverified |
