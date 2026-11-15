@@ -189,3 +189,33 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Host code must resolve the workspace/task/agent/worker/lease identity from authenticated server-side records and inject a closure into the existing `validate_worker_lease(session, intent)` adapter. The helper is not automatically wired into the executor or any deployed host.
 - Tests cover heartbeat timing/version progression, revocation, and reassignment. Passing tests establish local policy behavior only; they do not demonstrate live deployment, cross-process worker scheduling, heartbeat delivery from a real runner, or automatic task reassignment.
 - Safe reassignment remains claim-after-expiry/revocation under the repository's atomic claim operation. There is no independent scheduler, worker liveness detector, grace-period policy, or workload checkpoint/restore mechanism yet.
+
+
+## 2026-11-15 continuation: worker lease adapter contract
+
+### Implemented
+- `WorkerLeaseService.current_time()` exposes the configured timezone-aware UTC clock through a public adapter contract.
+- `WorkerLeaseService.validate_ttl()` exposes configured TTL-bound validation without requiring callers to depend on private service fields.
+- `WorkerLeaseHeartbeat` now consumes those public methods rather than reaching into the service's private clock/TTL internals.
+- Added a unit test for the public clock and TTL contract.
+- The existing heartbeat tests continue to cover due-time renewal/version progression, agent revocation, and lease reassignment.
+
+### Identity boundary confirmed
+- The approved immutable execution intent currently binds `workspace_id`, `entity_id`, `key_id`, and `capability_id`.
+- It does **not** currently bind `task_id`, `agent_id`, `worker_id`, or `lease_id`.
+- Therefore a safe adapter cannot yet construct `WorkerLeaseHeartbeat` from the execution intent alone. Those values must be resolved from authenticated server-side task/agent/worker/lease records and validated against the approved entity and workspace.
+- Request-body-supplied worker or lease identifiers are not an acceptable substitute.
+- No host adapter was wired and no live runner/lease integration is claimed.
+
+### Verification
+- Commit: `7bd0ce96785ed37401387ffecb1219303a5e8c68`.
+- GitHub Actions run `43695697370`: the full `test` job completed successfully; all listed steps, including the approved execution worker and governance/identity suites, passed.
+- GitHub Actions run `43695697391`: compile and focused worker lease test job completed successfully.
+- The Windows executable workflow was still finalizing its post-checkout step at the time of this audit; no final conclusion is claimed for that job.
+- Automated Vercel status checks on this commit reported deployment rate limits for multiple linked project contexts. These were external integration checks, not deployments initiated by this work; no successful deployment is evidenced here. The user-authorized no-production-deployment boundary remains in force.
+
+### Remaining blockers
+- Trusted host resolver for task/agent/worker/lease identity.
+- Explicit binding between the approved entity/capability and the resolved worker assignment.
+- Integration tests proving approval → lease claim → checkpoint validation/renewal → revocation → blocked outcome → signed receipt.
+- Real runner polling and multi-worker reassignment verification.
