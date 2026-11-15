@@ -47,3 +47,14 @@ This is a static source-and-test inventory, not a live deployment certification.
 ## Release conclusion
 
 No component in this audit is promoted to fully operational based on static inspection alone. The listed modules and test cases establish implementation foundations and test intent. Runtime, host configuration, peer interoperability, sandbox isolation and deployment evidence remain required. No production deployment, main merge or external execution was performed for this audit.
+
+## CI execution update — 2026-11-15
+
+The earlier static-audit statement above describes the audit's original inspection point. Subsequent isolated-branch commits expanded the GitHub Actions workflow to run the selected authorization, identity, execution-route, JWT-binding and governance suites. The latest recorded successful run at commit `84c72ead9c1868690eb4b7fba6d2774cd367e783` completed both workflows:
+
+- [XParallel Integration Tests (DRI-001)](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/43682039561) — success.
+- [Verify Axaliai V1](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/43682039544) — success.
+
+The XParallel workflow includes `tests/test_execution_http_transport.py`, which starts a temporary loopback HTTP server and sends actual HTTP requests through the request handler. It verifies that the private health route rejects a missing bearer token and that an authenticated intent request passes verified claims and the original session token to a test-double execution API.
+
+**Limit:** these are CI tests with a test verifier and test execution adapter. They do not validate the production JWT issuer/audience/secret, Render environment variables, actual host adapters, public-origin allowlist, real peer interoperability, or sandbox isolation. The XParallel component statuses remain Partial, not operational.
