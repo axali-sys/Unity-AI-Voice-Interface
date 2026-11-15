@@ -34,6 +34,9 @@ This is a static source-and-test inventory, not a live deployment certification.
 - `xparallel/roaming_ai.py` runs planner → read-only evidence gatherer → arbiter and returns `execution.performed=false`; it is a proposal pipeline, not a general-purpose autonomous executor.
 - `xparallel/parallel_verse.py` has explicit tests for persistence across database reopen, workspace isolation, capability discovery, invalid inputs and cross-workspace reference rejection.
 
+| C045 | XParallel Registry | `xparallel/parallel_verse.py` | `tests/test_parallel_verse.py` | Partial: workspace-scoped agent registration, capability lookup, persistence across database reopen and cross-workspace reference rejection. This is a local registry primitive, not a deployed federated service registry. |
+| C082 | Audit Intelligence | `xparallel/audit_repository.py` | `tests/test_audit_repository.py` | Partial: workspace-filtered actor/action event storage and a single-event round-trip test. No complete action timeline, identity/policy correlation, tamper-evident chain or production durability is certified. |
+
 ## Operational gaps still open
 
 1. Execute the full targeted test suite against a reproducible checkout and record exact command, environment, test count and result.
