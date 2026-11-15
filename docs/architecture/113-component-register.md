@@ -198,7 +198,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C110 | Time Intelligence | Connect historical records, present information and forecasts | Omni + Parallel Intelligence | OmniArchive/Trace; forecasting evaluation | Time-aware provenance and forecast evaluation | Experimental |
 | C111 | Governed network of independent AI agents | Share discoveries and specialist knowledge | XParallel + Parallel Intelligence | C045/C046; trust and policy | Consent, provenance, isolation and revocation tests | Experimental |
 | C112 | World Model | Structured environment/system/object model for simulation/planning | OmniGraph + Engineering Intelligence | Knowledge Genome; compute/simulation | Model consistency and simulation tests | Experimental |
-| C113 | Universal AI Passport | Portable agent identity, permissions and capability declarations | UIDaaS + XParallel | C046; signed claims; revocation | Cross-system validation, scope and revoke tests | Experimental |
+| C113 | Universal AI Passport | Portable agent identity, permissions and capability declarations | UIDaaS + XParallel | C046; signed claims; revocation | Cross-system validation, scope and revoke tests | Partial |
 
 ## Section 11: existing identities to preserve (15, tracked separately)
 
@@ -265,6 +265,11 @@ These are source/test inspections, not test executions or live runtime certifica
 
 - **C037 OmniRecovery — Partial:** `xparallel/execution_recovery_service.py`, `xparallel/execution_recovery_supervisor.py`, and `xparallel/execution_recovery_health_store.py`; tests `tests/test_execution_recovery_service.py`, `tests/test_execution_recovery_supervisor.py`, and the health-store tests. The bounded service recovers already-persisted execution finalizations only; it does not start or retry workloads. It requires a fresh executor session, skips overlapping cycles, is disabled by default, and requires explicit host start. Optional SQLite health history is append-only and stores aggregate counters/error classes without credentials. No production host enablement, durable fleet-wide scheduler, or live recovery drill is established.
 - **C037 boundary:** this is a partial receipt-finalization recovery primitive, not proof that all Omni workflows, queues, or arbitrary failed operations can be retried/recovered.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C113 Universal AI Passport — Partial:** related foundations exist in `xparallel/digital_dna.py` / `tests/test_digital_dna.py` (workspace-scoped versioned manifest revisions and secret-field/self-certification rejection); `xparallel/identity_trust.py` / `tests/test_identity_trust.py` (Ed25519 owner proof, one-time challenges, key lifecycle); `xparallel/entity_federation.py` / `tests/test_entity_federation.py` (signed, expiring, visibility-controlled local federation records and revocation); and `xparallel/capability_verification.py` / `tests/test_capability_verification.py` plus `xparallel/verified_action_gate.py` / `tests/test_verified_action_gate.py` (artifact-bound capability evidence composed with exact-scope grants).
+- **C113 boundary:** these are separate local primitives, not yet one portable passport issuance/verification service. Digital DNA manifest registration itself does not authenticate owners or verify signatures; federation is explicitly a local discovery prototype; capability test adapters must be supplied by a trusted host and a separately hardened sandbox. Cross-system interoperability, common credential packaging, live key custody/rotation and deployed revocation propagation remain unverified.
 
 ## Dependency-first delivery phases
 
