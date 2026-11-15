@@ -26,6 +26,7 @@ class FakeGate:
 class FakeTrustedHost:
     def __init__(self):
         self.allowed = True
+        self.agent_active = True
         self.sessions = {
             "owner-session": {"authenticated": True, "subject": "owner:1", "workspace_id": "workspace-a"},
             "approver-session": {"authenticated": True, "subject": "admin:1", "workspace_id": "workspace-a"},
@@ -57,6 +58,7 @@ class TrustedExecutionControlPlaneTests(unittest.TestCase):
             authorize_approval=lambda principal, intent: principal["subject"] == "admin:1",
             authorize_cancel=lambda principal, intent: principal["subject"] == "admin:1",
             authorize_executor=lambda principal, intent: principal["subject"] == "worker:1",
+            validate_agent_active=lambda principal, intent: self.host.agent_active,
             db_path=":memory:",
         )
         self.limits = {
@@ -102,6 +104,19 @@ class TrustedExecutionControlPlaneTests(unittest.TestCase):
         )
         self.control.approvals.start("worker-session", approved["one_time_ticket"])
         self.host.allowed = False
+        checkpoint = self.control.approvals.check_running(
+            "worker-session", intent["intent_id"]
+        )
+        self.assertFalse(checkpoint["continue"])
+        self.assertEqual(checkpoint["reason"], "execution_revoked_or_stale")
+
+    def test_parallel_verse_agent_revocation_blocks_worker_checkpoint(self):
+        intent = self.request()
+        approved = self.control.approvals.approve(
+            "approver-session", intent["intent_id"], reason="Approved"
+        )
+        self.control.approvals.start("worker-session", approved["one_time_ticket"])
+        self.host.agent_active = False
         checkpoint = self.control.approvals.check_running(
             "worker-session", intent["intent_id"]
         )
