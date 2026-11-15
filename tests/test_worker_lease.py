@@ -283,5 +283,28 @@ class WorkerLeaseTests(unittest.TestCase):
         self.assertFalse(validator("trusted-session", "intent-1", intent))
 
 
+    def test_execution_validator_releases_exact_lease_after_execution(self):
+        service, repo, clock = self.make_service()
+        service.claim(workspace_id="w1", task_id="task-1", agent_id="agent-1",
+                      worker_id="worker-1", ttl_seconds=60)
+        intent = {"workspace_id": "w1", "entity_id": "entity-1",
+                  "capability_id": "capability.run"}
+        resolver = lambda session, intent_id, immutable: {
+            "intent_id": intent_id, "workspace_id": "w1",
+            "entity_id": "entity-1", "capability_id": "capability.run",
+            "task_id": "task-1", "agent_id": "agent-1", "worker_id": "worker-1",
+        }
+        validator = WorkerLeaseExecutionValidator(
+            service=service, resolve_assignment=resolver,
+            ttl_seconds=60, heartbeat_interval_seconds=20,
+        )
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        clock.value += timedelta(seconds=20)
+        self.assertTrue(validator("trusted-session", "intent-1", intent))
+        self.assertTrue(validator.complete("trusted-session", "intent-1", intent))
+        self.assertEqual(repo.get("w1", "task-1")["status"], "released")
+        self.assertFalse(validator("trusted-session", "intent-1", intent))
+
+
 if __name__ == "__main__":
     unittest.main()
