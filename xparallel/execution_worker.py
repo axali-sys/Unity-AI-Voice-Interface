@@ -174,6 +174,19 @@ class ApprovedExecutionWorker:
             result = {"status": "failed", "error": "worker_adapter_failure", "detail": type(exc).__name__}
             outcome = "failure"
 
+        # If the lease validator owns lifecycle state, release the exact
+        # assignment after the runner stops. A successful workload cannot be
+        # reported as successful if its lease could not be safely finalized.
+        complete_lease = getattr(self._validate_worker_lease, "complete", None)
+        if callable(complete_lease):
+            try:
+                lease_released = complete_lease(session, intent_id, intent) is True
+            except Exception:
+                lease_released = False
+            if not lease_released and outcome == "success":
+                outcome = "blocked"
+                result = {"status": "blocked", "error": "worker_lease_release_failed"}
+
         # Freeze the outcome first, but do not make it terminal until a signed
         # receipt has been appended. Failed evidence preparation remains recoverable.
         evidence_errors = []
