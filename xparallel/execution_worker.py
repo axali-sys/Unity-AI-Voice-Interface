@@ -25,6 +25,7 @@ class ApprovedExecutionWorker:
         measure_resources: Callable[[dict[str, Any], dict[str, Any]], dict[str, int]],
         store_evidence: Callable[[dict[str, Any], dict[str, Any]], list[str]],
         receipts: Any,
+        validate_worker_lease: Callable[[Any, dict[str, Any]], bool] | None = None,
     ):
         adapters = (runner, load_payload, resolve_artifact_digest,
                     resolve_policy_evidence, measure_resources, store_evidence)
@@ -42,6 +43,9 @@ class ApprovedExecutionWorker:
         self._measure = measure_resources
         self._store_evidence = store_evidence
         self._receipts = receipts
+        if validate_worker_lease is not None and not callable(validate_worker_lease):
+            raise TypeError("trusted_worker_lease_adapter_invalid")
+        self._validate_worker_lease = validate_worker_lease
 
     def recover_finalization(self, session: Any, intent_id: str) -> dict[str, Any]:
         """Retry receipt commit from persisted evidence; never re-run the workload."""
@@ -132,7 +136,13 @@ class ApprovedExecutionWorker:
         def checkpoint() -> bool:
             try:
                 result = self._approvals.check_running(session, intent_id)
-                return isinstance(result, dict) and result.get("continue") is True
+                if not isinstance(result, dict) or result.get("continue") is not True:
+                    return False
+                # Optional host adapter resolves lease identity from immutable,
+                # trusted intent data and checks current ownership/expiry/revocation.
+                if self._validate_worker_lease is not None:
+                    return self._validate_worker_lease(session, intent) is True
+                return True
             except Exception:
                 return False
 
