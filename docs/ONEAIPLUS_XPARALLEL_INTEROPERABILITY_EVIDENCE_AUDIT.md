@@ -253,3 +253,12 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Updated the JWT integration fixture to explicitly inject a test-only lease validator and set `require_worker_lease=True`. The test validator re-checks the authenticated workspace, the authoritative approved intent record and the test host's revocation flag.
 - This fixture demonstrates callback delivery and revocation checkpoint behavior only. It is not a production task/agent/worker/lease registry and does not prove lease claim, renewal, or reassignment.
 - CI for corrected commit `7b2ba0a27c29f0cb9d64a5631a4645b4bc1f998b`: all three GitHub Actions checks completed successfully, including the full test suite (368 tests), the JWT-bound approval/execution lifecycle suite, and frontend configuration checks.
+
+
+### 2026-11-15: trusted execution intent-to-lease adapter
+- Added `WorkerLeaseService.get_active_lease()`, which validates agent status, expiry and worker ownership and confirms the repository snapshot did not change across validation.
+- Added `WorkerLeaseExecutionValidator`. Its required host resolver receives the authenticated execution session, immutable intent ID and intent. It must resolve the intent-to-task/agent/worker mapping from authoritative server-side records; it does not accept those identities from request payloads.
+- The validator checks workspace, entity and capability binding against the immutable intent, resolves the active lease, and maintains a per-intent checkpoint heartbeat. Reassignment or lease identity changes fail closed.
+- Added an explicit completion hook that compare-and-swap releases the same lease after the runner stops. The execution worker calls this hook before receipt finalization; a nominal success is downgraded to blocked if safe lease release fails.
+- Tests cover intent binding, heartbeat renewal/version progression, agent revocation, worker reassignment, and exact lease release.
+- This is now a concrete reusable adapter, but the actual host-specific resolver that maps authenticated worker sessions and approved intents to task records remains an integration dependency. No live server bootstrap or production worker registry is enabled.
