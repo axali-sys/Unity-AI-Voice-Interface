@@ -42,7 +42,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
 | C001 | Cognitive Core | Reasoning, analysis, problem-solving, decisions | ƎllE intelligence runtime | Model Gateway; Omni context | Task suite with traceable inputs/results | Unverified |
-| C002 | Multi-Model Intelligence | Combine, compare, debate and synthesize models | Parallel Intelligence | Model Gateway; provider adapters | Multi-model run with attributed outputs | Unverified |
+| C002 | Multi-Model Intelligence | Combine, compare, debate and synthesize models | Parallel Intelligence | Model Gateway; provider adapters | Multi-model run with attributed outputs | Partial |
 | C003 | Self-Evaluation Engine | Check answers, uncertainty and contradictions | Parallel Intelligence | Evaluation datasets; OmniTrace | Calibrated evaluation and contradiction tests | Unverified |
 | C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Unverified |
 | C005 | Reasoning Laboratory | Test hypotheses, simulate scenarios, explore alternatives | Parallel Intelligence | C002, C006, sandbox/compute | Reproducible experiment record | Unverified |
@@ -54,14 +54,14 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C011 | Scientific research assistant | Research synthesis and hypothesis support | ƎllE research capability | Omni connectors/search/trace | Source-backed research task | Unverified |
 | C012 | Mathematical and engineering intelligence | Mathematics and engineering problem solving | ƎllE domain capabilities | QCode; Engineering Intelligence; verification | Unit-tested calculations and stated assumptions | Unverified |
 | C013 | Strategic planning engine | Build plans against goals and constraints | OmniPlan + ƎllE | OmniFlow; OmniControl | Plan validation and approval flow | Unverified |
-| C014 | Collective intelligence engine | Synthesize contributions from independent agents | Parallel Intelligence | XParallel; Agent Registry; trust policy | Attributed synthesis and disagreement record | Unverified |
+| C014 | Collective intelligence engine | Synthesize contributions from independent agents | Parallel Intelligence | XParallel; Agent Registry; trust policy | Attributed synthesis and disagreement record | Partial |
 
 ### 2. Omni universal data and knowledge — 13 entries
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
 | C015 | OmniStream | Continuous authorized data ingestion | Omni knowledge plane | Connectors; consent; queues | Ingestion, retry and revoke tests | Unverified |
-| C016 | OmniMemory | Persistent contextual/project memory | Omni knowledge plane | Storage Fabric; tenant isolation | Save/retrieve/delete/isolation tests | Unverified |
+| C016 | OmniMemory | Persistent contextual/project memory | Omni knowledge plane | Storage Fabric; tenant isolation | Save/retrieve/delete/isolation tests | Partial |
 | C017 | OmniSearch | Unified search across connected sources | Omni knowledge plane | OmniIndex; OmniTrace; permissions | Relevant results with citations and ACL filtering | Unverified |
 | C018 | OmniGraph | Relationships between entities, documents, events | Omni knowledge plane | Knowledge Genome; OmniTrace | Relationship query with provenance | Unverified |
 | C019 | OmniVault | Protected knowledge/document storage | Omni + Storage Fabric | UIDaaS; encryption; retention | Access-control and lifecycle tests | Unverified |
@@ -78,8 +78,8 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C028 | OmniFlow | Visual workflow builder | Omni orchestration plane | OmniPlan; event/queue contracts | Create, run, pause and resume workflow tests | Unverified |
-| C029 | OmniPlan | Convert objectives to executable plans | Omni orchestration plane | C013; OmniControl | Plan schema, constraints and approval tests | Unverified |
+| C028 | OmniFlow | Visual workflow builder | Omni orchestration plane | OmniPlan; event/queue contracts | Create, run, pause and resume workflow tests | Partial |
+| C029 | OmniPlan | Convert objectives to executable plans | Omni orchestration plane | C013; OmniControl | Plan schema, constraints and approval tests | Partial |
 | C030 | OmniScheduler | Recurring and scheduled tasks | Omni orchestration plane | Queue/event bus; durable storage | Schedule, timezone and cancellation tests | Unverified |
 | C031 | OmniSwarm | Coordinate specialized agent groups | Omni orchestration plane + Parallel Intelligence | Agent Registry; XParallel | Multi-agent coordination with audit | Unverified |
 | C032 | OmniPilot | Supervise multi-step tasks | ƎllE + Omni orchestration | OmniFlow/Plan; status events | End-to-end task with checkpoints | Unverified |
@@ -177,7 +177,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
 | C096 | Compute Fabric | Access local and cloud computing | Shared platform infrastructure | Policy; sandbox; resource quotas | Local profile and quota tests | Unverified |
-| C097 | Model Gateway | Standardized model access | Shared model runtime | Adapter registry; secrets; policy | Provider contract suite; safe fallback | Unverified |
+| C097 | Model Gateway | Standardized model access | Shared model runtime | Adapter registry; secrets; policy | Provider contract suite; safe fallback | Partial |
 | C098 | Data Fabric | Unified data connectivity | Omni + connector infrastructure | Connector SDK; permissions | Connector contract and ACL tests | Unverified |
 | C099 | Storage Fabric | Files, objects and databases | Shared platform infrastructure | Storage adapters; migrations; backups | Persistence, isolation and restore tests | Unverified |
 | C100 | Vector Engine | Semantic retrieval | Omni knowledge plane | Embeddings; OmniIndex; permissions | Retrieval benchmark and deletion propagation | Unverified |
@@ -221,6 +221,21 @@ These are preservation targets, not additional entries in the 113 count. Their s
 | P013 | Build Studio | Creation and development | Umbrella creation workspace | Create/build/test/preview tests | Unverified |
 | P014 | AI Repair Shop | Diagnostics and repair | Repair proposal and approval workflow | Diagnose, propose, test, approve and rollback | Unverified |
 | P015 | AI Mixer | Multi-model routing and comparison surface | User-facing model selection/collaboration UI | Provider selection, attribution, fallback and tests | Unverified |
+
+## Evidence update — 2026-11-15 (isolated Oneaiplus/XParallel branch)
+
+The following entries are now **Partial** based on inspected implementation and passing automated tests in commit `5412dfd84028d618d00596ecbe73291f7575251e`. Partial means a bounded foundation exists; it does not mean the complete named product capability is integrated or live.
+
+| Component | Inspected implementation and test | Verified scope | Remaining boundary |
+|---|---|---|---|
+| C002 Multi-Model Intelligence | `xparallel/parallel_intelligence.py`; `tests/test_parallel_intelligence.py` | Attributed specialist contributions, independent verifier callback, evidence references, conflict disclosure, bounded outputs and no-execution result; tests pass. | Injected specialist/verifier/synthesis adapters are test doubles here; live model providers and app integration not verified. |
+| C014 Collective intelligence engine | Same Parallel Intelligence implementation and tests. | Multi-agent contribution synthesis and explicit disagreement/review state. | No live federated agent network or external participant trust bootstrap verified. |
+| C016 OmniMemory | `xparallel/entity_memory.py`; `tests/test_entity_memory.py` | Encrypted SQLite records, workspace/entity scope, injected auth/ACL/key adapters, provenance, retention, search/export/delete and tamper detection; tests pass. | Host authentication, production key vault, app integration, backup/restore and semantic/vector retrieval not verified. |
+| C028 OmniFlow | `xparallel/omni_orchestrator.py`; `tests/test_omni_orchestrator.py` | Typed workflow steps, dependency ordering, bounded retries, policy/approval gates and receipts; tests pass. | No visual workflow builder, durable pause/resume scheduler or product UI integration verified. |
+| C029 OmniPlan | Same orchestrator implementation and tests. | Validated workflow plan, dependency/cycle checks and consequential-step approval requirement. | Natural-language objective-to-plan generation and live OmniControl integration not verified. |
+| C097 Model Gateway | `xparallel/cognitive_runtime.py`; `tests/test_cognitive_runtime.py` | Provider-neutral adapter contract, context/output budgets, structured-output validation and local Ollama loopback adapter; tests pass. | Ollama was not contacted in CI; no device model installation, live inference, production secret management or app integration verified. |
+
+CI evidence: GitHub Actions run `43682293854` completed successfully; its job explicitly passed the JWT verifier, trusted HTTP identity, execution transport, Parallel Verse persistence, Omni orchestrator, Parallel Intelligence, cognitive runtime/Model Gateway and encrypted entity-memory test steps. Additional checks `43682298630` and `43682298673` also completed successfully. These are automated test results, not live-host or production verification.
 
 ## Explicit overlap rules
 
