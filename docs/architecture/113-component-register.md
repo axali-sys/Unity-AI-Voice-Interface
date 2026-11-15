@@ -152,7 +152,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C079 | VOUCHER | Attribution and verification mechanisms | VOUCHER | AROT; identity; evidence rules | Attribution trail; no unsupported ownership claims | Unverified |
 | C080 | AI Firewall | Inspect/control inbound and outbound AI operations | Shared security infrastructure | Policy; egress controls; tool registry | Allow/deny, prompt-injection and egress tests | Unverified |
 | C081 | Policy Engine | Enforce platform/workspace rules | Shared policy layer | UIDaaS; OmniControl; audit | Policy decision and enforcement tests | Unverified |
-| C082 | Audit Intelligence | Explain who/what acted and why | AROT + observability | Auth identity; policy decision; event records | Reconstructable action timeline | Unverified |
+| C082 | Audit Intelligence | Explain who/what acted and why | AROT + observability | Auth identity; policy decision; event records | Reconstructable action timeline | Partial |
 
 ### 8. Personal and organizational intelligence — 13 entries
 
@@ -253,6 +253,13 @@ CI evidence: GitHub Actions run `43682293854` completed successfully; its job ex
 7. Compute Fabric provides compute; XParallel Sandbox constrains execution; Storage Fabric persists data; Event Bus/Queue Engine transport events/tasks; Observability diagnoses; Backup Engine restores.
 8. Build Studio is the creation umbrella; Image/Video/Audio and Music studios are focused workflows; QCode is developer capability; AI Repair Shop handles diagnose/propose/test/approval/rollback.
 9. Existing identities remain discoverable even if their implementation is shared with another subsystem. Shared implementation is not omission.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C045 XParallel Registry — Partial (additional evidence):** `xparallel/parallel_verse.py` and `tests/test_parallel_verse.py` provide workspace-scoped agent registration, capability lookup, persistent local records, and rejection of cross-workspace references. This complements (but does not replace) the separate governance/federation registry primitives. It is not evidence of one deployed, durable, federated service registry.
+- **C082 Audit Intelligence — Partial:** `xparallel/audit_repository.py` and `tests/test_audit_repository.py` provide workspace-filtered actor/action audit-event persistence and a round-trip test. The implementation is a local SQLite repository; the test covers a single event round trip only. It does not yet establish a complete action timeline, policy/identity correlation, tamper-evident chain, durable production storage, or operational audit analytics.
+
+These are source/test inspections, not test executions or live runtime certification. C082 is therefore Partial, not fully operational.
 
 ## Dependency-first delivery phases
 
