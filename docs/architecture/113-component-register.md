@@ -148,7 +148,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C075 | Permission Engine | Granular authorization | UIDaaS / policy layer | Identity; resource scopes | Deny-by-default matrix tests | Partial |
 | C076 | Privacy Vault | Protected personal information | UIDaaS + Storage Fabric | Encryption; consent; retention | Access, export and deletion tests | Unverified |
 | C077 | Credential Vault | Server-side secret management | Shared security infrastructure | Runtime config; rotation; redaction | Secret never reaches browser/log/source | Unverified |
-| C078 | AROT | Historical evidence and integrity | AROT provenance service | Hashes; immutable history where feasible | Tamper detection and chain-of-custody tests | Unverified |
+| C078 | AROT | Historical evidence and integrity | AROT provenance service | Hashes; immutable history where feasible | Tamper detection and chain-of-custody tests | Partial |
 | C079 | VOUCHER | Attribution and verification mechanisms | VOUCHER | AROT; identity; evidence rules | Attribution trail; no unsupported ownership claims | Unverified |
 | C080 | AI Firewall | Inspect/control inbound and outbound AI operations | Shared security infrastructure | Policy; egress controls; tool registry | Allow/deny, prompt-injection and egress tests | Unverified |
 | C081 | Policy Engine | Enforce platform/workspace rules | Shared policy layer | UIDaaS; OmniControl; audit | Policy decision and enforcement tests | Unverified |
@@ -176,10 +176,10 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C096 | Compute Fabric | Access local and cloud computing | Shared platform infrastructure | Policy; sandbox; resource quotas | Local profile and quota tests | Unverified |
+| C096 | Compute Fabric | Access local and cloud computing | Shared platform infrastructure | Policy; sandbox; resource quotas | Local profile and quota tests | Partial |
 | C097 | Model Gateway | Standardized model access | Shared model runtime | Adapter registry; secrets; policy | Provider contract suite; safe fallback | Partial |
 | C098 | Data Fabric | Unified data connectivity | Omni + connector infrastructure | Connector SDK; permissions | Connector contract and ACL tests | Unverified |
-| C099 | Storage Fabric | Files, objects and databases | Shared platform infrastructure | Storage adapters; migrations; backups | Persistence, isolation and restore tests | Unverified |
+| C099 | Storage Fabric | Files, objects and databases | Shared platform infrastructure | Storage adapters; migrations; backups | Persistence, isolation and restore tests | Partial |
 | C100 | Vector Engine | Semantic retrieval | Omni knowledge plane | Embeddings; OmniIndex; permissions | Retrieval benchmark and deletion propagation | Unverified |
 | C101 | Event Bus | Internal communication | Shared runtime | Versioned event schemas | Delivery, ordering and duplicate handling tests | Unverified |
 | C102 | Queue Engine | Reliable task delivery | Shared runtime | Event Bus; durable state; idempotency | Retry/dead-letter/replay tests | Unverified |
@@ -234,6 +234,11 @@ The following entries are now **Partial** based on inspected implementation and 
 | C028 OmniFlow | `xparallel/omni_orchestrator.py`; `tests/test_omni_orchestrator.py` | Typed workflow steps, dependency ordering, bounded retries, policy/approval gates and receipts; tests pass. | No visual workflow builder, durable pause/resume scheduler or product UI integration verified. |
 | C029 OmniPlan | Same orchestrator implementation and tests. | Validated workflow plan, dependency/cycle checks and consequential-step approval requirement. | Natural-language objective-to-plan generation and live OmniControl integration not verified. |
 | C097 Model Gateway | `xparallel/cognitive_runtime.py`; `tests/test_cognitive_runtime.py` | Provider-neutral adapter contract, context/output budgets, structured-output validation and local Ollama loopback adapter; tests pass. | Ollama was not contacted in CI; no device model installation, live inference, production secret management or app integration verified. |
+
+| C044 XParallel Sandbox | `xparallel/v1_runner.py`, `xparallel/docker_cgroup_meter.py`; `tests/test_v1_runner.py`, `tests/test_docker_cgroup_meter.py` | Restricted Docker runner boundary and resource metering are exercised by CI. | No live Docker daemon execution, hostile-container escape assessment, or outbound-egress test on a deployed host verified. |
+| C078 AROT | `xparallel/execution_evidence_store.py`, `xparallel/execution_receipts.py`; `tests/test_execution_evidence_store.py`, `tests/test_execution_receipts.py` | Content-addressed evidence references, append-only evidence rows, sanitized result storage and signed receipt/provenance tests. | Full cross-product historical ledger, independent key custody and operational retention/restore not verified. |
+| C096 Compute Fabric | `xparallel/v1_runner.py`, `xparallel/docker_cgroup_meter.py`; `tests/test_v1_runner.py`, `tests/test_docker_cgroup_meter.py` | Bounded execution runner and CPU/memory/process/output metering contracts tested. | No cloud/local fleet scheduler, hardware discovery, live resource quota enforcement on host, or compute marketplace integration verified. |
+| C099 Storage Fabric | `xparallel/storage_recovery.py`, `xparallel/execution_evidence_store.py`; `tests/test_storage_recovery.py`, `tests/test_execution_evidence_store.py` | Workspace-scoped SQLite repository, transactional writes, ordered/checksummed migrations, backup integrity, approval-gated restore, append-only evidence and workspace-read isolation. | Not a general object/file storage abstraction; production volume durability, off-host backup and app-wide adoption not verified. |
 
 CI evidence: GitHub Actions run `43682293854` completed successfully; its job explicitly passed the JWT verifier, trusted HTTP identity, execution transport, Parallel Verse persistence, Omni orchestrator, Parallel Intelligence, cognitive runtime/Model Gateway and encrypted entity-memory test steps. Additional checks `43682298630` and `43682298673` also completed successfully. These are automated test results, not live-host or production verification.
 
