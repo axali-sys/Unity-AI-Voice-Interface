@@ -63,9 +63,6 @@ class WorkerLeaseService:
     def _ttl(self, value: int) -> int:
         return self.validate_ttl(value)
 
-    def _legacy_ttl_body(self, value: int) -> int:
-        return self.validate_ttl(value)
-
     @staticmethod
     def _identity(value: str, field: str) -> str:
         if not isinstance(value, str) or not value.strip() or len(value) > 200:
