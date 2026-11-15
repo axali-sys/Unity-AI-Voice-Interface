@@ -87,7 +87,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C034 | OmniEvent | Event-driven automation | Shared event runtime | Event Bus; schema/versioning | Event delivery, deduplication and retry tests | Unverified |
 | C035 | OmniSim | Simulate tasks before execution | Omni orchestration plane | Sandbox/Compute Fabric; World Model | Dry-run cannot cause external side effects | Unverified |
 | C036 | OmniVerify | Verify execution results | Shared verification service | Task contracts; evidence; AROT | Result checks against explicit acceptance criteria | Unverified |
-| C037 | OmniRecovery | Retry and recover failed operations | Shared reliability runtime | Queue Engine; durable state; idempotency | Fault injection and recovery tests | Unverified |
+| C037 | OmniRecovery | Retry and recover failed operations | Shared reliability runtime | Queue Engine; durable state; idempotency | Fault injection and recovery tests | Partial |
 
 ### 4. XParallel universal interoperability — 10 entries
 
@@ -260,6 +260,11 @@ CI evidence: GitHub Actions run `43682293854` completed successfully; its job ex
 - **C082 Audit Intelligence — Partial:** `xparallel/audit_repository.py` and `tests/test_audit_repository.py` provide workspace-filtered actor/action audit-event persistence and a round-trip test. The implementation is a local SQLite repository; the test covers a single event round trip only. It does not yet establish a complete action timeline, policy/identity correlation, tamper-evident chain, durable production storage, or operational audit analytics.
 
 These are source/test inspections, not test executions or live runtime certification. C082 is therefore Partial, not fully operational.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C037 OmniRecovery — Partial:** `xparallel/execution_recovery_service.py`, `xparallel/execution_recovery_supervisor.py`, and `xparallel/execution_recovery_health_store.py`; tests `tests/test_execution_recovery_service.py`, `tests/test_execution_recovery_supervisor.py`, and the health-store tests. The bounded service recovers already-persisted execution finalizations only; it does not start or retry workloads. It requires a fresh executor session, skips overlapping cycles, is disabled by default, and requires explicit host start. Optional SQLite health history is append-only and stores aggregate counters/error classes without credentials. No production host enablement, durable fleet-wide scheduler, or live recovery drill is established.
+- **C037 boundary:** this is a partial receipt-finalization recovery primitive, not proof that all Omni workflows, queues, or arbitrary failed operations can be retried/recovered.
 
 ## Dependency-first delivery phases
 
