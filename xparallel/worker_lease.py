@@ -42,18 +42,29 @@ class WorkerLeaseService:
         self._min_ttl = min_ttl_seconds
         self._max_ttl = max_ttl_seconds
 
-    def _now(self) -> datetime:
+    def current_time(self) -> datetime:
+        """Return the service clock as an aware UTC datetime for trusted adapters."""
         value = self._clock()
         if not isinstance(value, datetime) or value.tzinfo is None:
             raise ValueError("lease_clock_must_return_timezone_aware_datetime")
         return value.astimezone(timezone.utc)
 
-    def _ttl(self, value: int) -> int:
+    def _now(self) -> datetime:
+        return self.current_time()
+
+    def validate_ttl(self, value: int) -> int:
+        """Validate a lease TTL against this service's configured bounds."""
         if isinstance(value, bool) or not isinstance(value, int):
             raise ValueError("invalid_lease_ttl")
         if not self._min_ttl <= value <= self._max_ttl:
             raise ValueError("lease_ttl_out_of_range")
         return value
+
+    def _ttl(self, value: int) -> int:
+        return self.validate_ttl(value)
+
+    def _legacy_ttl_body(self, value: int) -> int:
+        return self.validate_ttl(value)
 
     @staticmethod
     def _identity(value: str, field: str) -> str:
@@ -157,12 +168,12 @@ class WorkerLeaseHeartbeat:
         if isinstance(version, bool) or not isinstance(version, int) or version < 1:
             raise ValueError("invalid_worker_lease_version")
         self._version = version
-        self._ttl = service._ttl(ttl_seconds)
+        self._ttl = service.validate_ttl(ttl_seconds)
         interval = heartbeat_interval_seconds if heartbeat_interval_seconds is not None else max(1, self._ttl // 3)
         if isinstance(interval, bool) or not isinstance(interval, int) or not 1 <= interval < self._ttl:
             raise ValueError("heartbeat_interval_must_be_positive_and_less_than_ttl")
         self._interval = interval
-        self._clock = clock or service._clock
+        self._clock = clock or service.current_time
         self._next_beat = self._now() + timedelta(seconds=interval)
         import threading
         self._lock = threading.Lock()
