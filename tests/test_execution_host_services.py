@@ -44,6 +44,24 @@ class ExecutionHostServicesTests(unittest.TestCase):
         from xparallel.execution_worker import ApprovedExecutionWorker
         self.assertIsInstance(self.services.build_worker(), ApprovedExecutionWorker)
 
+    def test_forwards_trusted_worker_lease_resolver(self):
+        calls = []
+        self.services._validate_worker_lease = lambda session, intent_id, intent: calls.append((session, intent_id, intent)) or True
+        worker = self.services.build_worker()
+        self.assertIs(worker._validate_worker_lease, self.services._validate_worker_lease)
+        self.assertTrue(worker._validate_worker_lease("trusted-session", "job:123", self.intent))
+        self.assertEqual(calls, [("trusted-session", "job:123", self.intent)])
+
+    def test_rejects_non_callable_worker_lease_resolver(self):
+        with self.assertRaisesRegex(TypeError, "worker_lease_adapter_invalid"):
+            ExecutionHostServices(
+                approvals=FakeApprovals(), runner=lambda *a, **k: {"status": "success"},
+                load_payload=lambda intent: {}, resolve_artifact_digest=lambda intent: "a" * 64,
+                resolve_policy_evidence=lambda intent: {"allowed": True, "grant_id": "g", "evidence_run_id": "r"},
+                measure_resources=lambda result, intent: {}, store_evidence=lambda result, intent: {},
+                receipts=FakeReceipts(), validate_worker_lease=True,
+            )
+
     def test_rejects_artifact_mismatch(self):
         self.services._resolve_artifact = lambda intent: "b" * 64
         with self.assertRaisesRegex(PermissionError, "artifact_digest_mismatch"):
