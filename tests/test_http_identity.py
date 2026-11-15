@@ -19,7 +19,7 @@ class HttpIdentityBindingTests(unittest.TestCase):
     def test_bearer_header_is_parsed_strictly(self):
         self.assertEqual(bearer_token("Bearer abc.def"), "abc.def")
         self.assertEqual(bearer_token("bearer token"), "token")
-        for value in (None, "", "Basic abc", "Bearer ", "Bearer a b"):
+        for value in (None, "", "Basic abc", "Bearer ", "Bearer a b", "Bearer a\tb"):
             with self.subTest(value=value):
                 self.assertIsNone(bearer_token(value))
 
@@ -51,14 +51,28 @@ class HttpIdentityBindingTests(unittest.TestCase):
         with self.assertRaisesRegex(IdentityBindingError, "actor_claim_mismatch"):
             bind_request_identity({"actor": "user:mallory"}, self.claims)
 
-    def test_invalid_trusted_role_fails_closed(self):
-        with self.assertRaisesRegex(IdentityBindingError, "trusted_role_invalid"):
-            bind_request_identity({}, {**self.claims, "role": "superuser"})
+    def test_invalid_trusted_role_fails_closed_for_all_types(self):
+        for role in ("superuser", None, [], {}, 7):
+            with self.subTest(role=role):
+                with self.assertRaisesRegex(IdentityBindingError, "trusted_role_invalid"):
+                    bind_request_identity({}, {**self.claims, "role": role})
 
-    def test_missing_trusted_identity_fails_closed(self):
+    def test_missing_or_blank_trusted_identity_fails_closed(self):
+        for claims in (
+            {"workspace_id": "workspace-a"},
+            {**self.claims, "subject": "   "},
+            {**self.claims, "workspace_id": "  "},
+        ):
+            with self.subTest(claims=claims):
+                with self.assertRaises(IdentityBindingError):
+                    bind_request_identity({}, claims)
+
+    def test_non_object_identity_inputs_fail_closed(self):
         with self.assertRaises(IdentityBindingError):
-            bind_request_identity({}, {"workspace_id": "workspace-a"})
+            bind_request_identity([], self.claims)
+        with self.assertRaises(IdentityBindingError):
+            bind_request_identity({}, [])
 
-
+ 
 if __name__ == "__main__":
     unittest.main()

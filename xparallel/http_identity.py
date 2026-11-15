@@ -8,11 +8,19 @@ class IdentityBindingError(PermissionError):
     """A request attempted to override authenticated identity or tenancy."""
 
 
+_ALLOWED_ROLES = frozenset({"owner", "admin", "operator", "viewer"})
+
+
 def bearer_token(value: str | None) -> str | None:
     if not isinstance(value, str):
         return None
     scheme, separator, token = value.partition(" ")
-    if not separator or scheme.lower() != "bearer" or not token or " " in token:
+    if (
+        not separator
+        or scheme.lower() != "bearer"
+        or not token
+        or any(character.isspace() for character in token)
+    ):
         return None
     return token
 
@@ -26,9 +34,9 @@ def bind_request_identity(data: dict[str, Any], claims: dict[str, Any]) -> dict[
     role = claims.get("role", "viewer")
     if not isinstance(subject, str) or not subject.strip():
         raise IdentityBindingError("trusted_subject_missing")
-    if not isinstance(workspace, str) or not workspace:
+    if not isinstance(workspace, str) or not workspace.strip():
         raise IdentityBindingError("trusted_workspace_missing")
-    if role not in {"owner", "admin", "operator", "viewer"}:
+    if not isinstance(role, str) or role not in _ALLOWED_ROLES:
         raise IdentityBindingError("trusted_role_invalid")
 
     def one(value):

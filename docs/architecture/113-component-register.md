@@ -42,26 +42,26 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
 | C001 | Cognitive Core | Reasoning, analysis, problem-solving, decisions | ƎllE intelligence runtime | Model Gateway; Omni context | Task suite with traceable inputs/results | Unverified |
-| C002 | Multi-Model Intelligence | Combine, compare, debate and synthesize models | Parallel Intelligence | Model Gateway; provider adapters | Multi-model run with attributed outputs | Unverified |
+| C002 | Multi-Model Intelligence | Combine, compare, debate and synthesize models | Parallel Intelligence | Model Gateway; provider adapters | Multi-model run with attributed outputs | Partial |
 | C003 | Self-Evaluation Engine | Check answers, uncertainty and contradictions | Parallel Intelligence | Evaluation datasets; OmniTrace | Calibrated evaluation and contradiction tests | Unverified |
-| C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Unverified |
+| C004 | Adaptive Intelligence | Improve workflows from approved feedback | ƎllE / Parallel Intelligence | Consent, versioning, rollback | Feedback opt-in, version history, rollback test | Partial |
 | C005 | Reasoning Laboratory | Test hypotheses, simulate scenarios, explore alternatives | Parallel Intelligence | C002, C006, sandbox/compute | Reproducible experiment record | Unverified |
 | C006 | Decision Intelligence | Risk, forecasting, evidence-based recommendations | ƎllE domain capabilities | OmniSearch/Trace; uncertainty | Benchmark with evidence and uncertainty | Unverified |
-| C007 | Context awareness engine | Use relevant session, project and environment context | ƎllE + Omni | OmniMemory; access controls | Context relevance and isolation tests | Unverified |
+| C007 | Context awareness engine | Use relevant session, project and environment context | ƎllE + Omni | OmniMemory; access controls | Context relevance and isolation tests | Partial |
 | C008 | Knowledge gap detector | Identify missing evidence or knowledge | Omni + ƎllE | OmniSearch; C003 | Known-gap benchmark and citations | Unverified |
 | C009 | Explainability engine | Explain reasoning basis and evidence | ƎllE / Parallel Intelligence | OmniTrace; AROT | Explanation links to actual sources/artifacts | Unverified |
 | C010 | Confidence and uncertainty evaluator | Estimate and communicate uncertainty | Parallel Intelligence | C003; evaluation data | Calibration metrics and abstention tests | Unverified |
 | C011 | Scientific research assistant | Research synthesis and hypothesis support | ƎllE research capability | Omni connectors/search/trace | Source-backed research task | Unverified |
 | C012 | Mathematical and engineering intelligence | Mathematics and engineering problem solving | ƎllE domain capabilities | QCode; Engineering Intelligence; verification | Unit-tested calculations and stated assumptions | Unverified |
 | C013 | Strategic planning engine | Build plans against goals and constraints | OmniPlan + ƎllE | OmniFlow; OmniControl | Plan validation and approval flow | Unverified |
-| C014 | Collective intelligence engine | Synthesize contributions from independent agents | Parallel Intelligence | XParallel; Agent Registry; trust policy | Attributed synthesis and disagreement record | Unverified |
+| C014 | Collective intelligence engine | Synthesize contributions from independent agents | Parallel Intelligence | XParallel; Agent Registry; trust policy | Attributed synthesis and disagreement record | Partial |
 
 ### 2. Omni universal data and knowledge — 13 entries
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
 | C015 | OmniStream | Continuous authorized data ingestion | Omni knowledge plane | Connectors; consent; queues | Ingestion, retry and revoke tests | Unverified |
-| C016 | OmniMemory | Persistent contextual/project memory | Omni knowledge plane | Storage Fabric; tenant isolation | Save/retrieve/delete/isolation tests | Unverified |
+| C016 | OmniMemory | Persistent contextual/project memory | Omni knowledge plane | Storage Fabric; tenant isolation | Save/retrieve/delete/isolation tests | Partial |
 | C017 | OmniSearch | Unified search across connected sources | Omni knowledge plane | OmniIndex; OmniTrace; permissions | Relevant results with citations and ACL filtering | Unverified |
 | C018 | OmniGraph | Relationships between entities, documents, events | Omni knowledge plane | Knowledge Genome; OmniTrace | Relationship query with provenance | Unverified |
 | C019 | OmniVault | Protected knowledge/document storage | Omni + Storage Fabric | UIDaaS; encryption; retention | Access-control and lifecycle tests | Unverified |
@@ -78,31 +78,31 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C028 | OmniFlow | Visual workflow builder | Omni orchestration plane | OmniPlan; event/queue contracts | Create, run, pause and resume workflow tests | Unverified |
-| C029 | OmniPlan | Convert objectives to executable plans | Omni orchestration plane | C013; OmniControl | Plan schema, constraints and approval tests | Unverified |
+| C028 | OmniFlow | Visual workflow builder | Omni orchestration plane | OmniPlan; event/queue contracts | Create, run, pause and resume workflow tests | Partial |
+| C029 | OmniPlan | Convert objectives to executable plans | Omni orchestration plane | C013; OmniControl | Plan schema, constraints and approval tests | Partial |
 | C030 | OmniScheduler | Recurring and scheduled tasks | Omni orchestration plane | Queue/event bus; durable storage | Schedule, timezone and cancellation tests | Unverified |
 | C031 | OmniSwarm | Coordinate specialized agent groups | Omni orchestration plane + Parallel Intelligence | Agent Registry; XParallel | Multi-agent coordination with audit | Unverified |
 | C032 | OmniPilot | Supervise multi-step tasks | ƎllE + Omni orchestration | OmniFlow/Plan; status events | End-to-end task with checkpoints | Unverified |
-| C033 | OmniControl | Permissions and approvals | UIDaaS / policy layer | Identity; audit; task contracts | Denied-by-default and approval tests | Unverified |
+| C033 | OmniControl | Permissions and approvals | UIDaaS / policy layer | Identity; audit; task contracts | Denied-by-default and approval tests | Partial |
 | C034 | OmniEvent | Event-driven automation | Shared event runtime | Event Bus; schema/versioning | Event delivery, deduplication and retry tests | Unverified |
 | C035 | OmniSim | Simulate tasks before execution | Omni orchestration plane | Sandbox/Compute Fabric; World Model | Dry-run cannot cause external side effects | Unverified |
 | C036 | OmniVerify | Verify execution results | Shared verification service | Task contracts; evidence; AROT | Result checks against explicit acceptance criteria | Unverified |
-| C037 | OmniRecovery | Retry and recover failed operations | Shared reliability runtime | Queue Engine; durable state; idempotency | Fault injection and recovery tests | Unverified |
+| C037 | OmniRecovery | Retry and recover failed operations | Shared reliability runtime | Queue Engine; durable state; idempotency | Fault injection and recovery tests | Partial |
 
 ### 4. XParallel universal interoperability — 10 entries
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C038 | XParallel Discovery | Discover compatible AI systems/services | XParallel | Registry; safe probes; egress policy | Authorized discovery and timeout tests | Unverified |
-| C039 | XParallel Connect | Establish authorized connections | XParallel | UIDaaS; Credential Vault; connector SDK | Auth, revoke and reconnect tests | Unverified |
-| C040 | XParallel Roaming | Workers operate in approved environments | XParallel roaming runtime | Registry; queues; sandbox; policy | Register/heartbeat/task/result/revoke lifecycle | Unverified |
-| C041 | XParallel Exchange | Standardized information/task exchange | XParallel | Protocol; versioned contracts | Contract compatibility tests | Unverified |
-| C042 | XParallel Protocol | Common communication contracts | XParallel | Auth; versioning; schema validation | Compatibility and invalid-payload tests | Unverified |
-| C043 | XParallel Mesh | Distributed network of workers/systems | XParallel | C038–C042; observability | Node failure and isolation tests | Unverified |
-| C044 | XParallel Sandbox | Isolated execution environments | XParallel + Compute Fabric | Least privilege; egress restrictions | Escape/egress and resource-limit tests | Unverified |
-| C045 | XParallel Registry | Discoverable agent/service directory | XParallel | UIDaaS; manifests; health | Registration, lookup, stale entry and revoke tests | Unverified |
-| C046 | XParallel Passport | Portable, revocable agent identity | UIDaaS + XParallel | Signed claims; expiry; revocation | Signature, scope, expiry and revoke tests | Unverified |
-| C047 | Parallel Verse | Persistent environment for agents to coexist and collaborate | XParallel | Registry; events; storage; sandbox | Persistence, tenant isolation and recovery tests | Unverified |
+| C038 | XParallel Discovery | Discover compatible AI systems/services | XParallel | Registry; safe probes; egress policy | Authorized discovery and timeout tests | Partial |
+| C039 | XParallel Connect | Establish authorized connections | XParallel | UIDaaS; Credential Vault; connector SDK | Auth, revoke and reconnect tests | Partial |
+| C040 | XParallel Roaming | Workers operate in approved environments | XParallel roaming runtime | Registry; queues; sandbox; policy | Register/heartbeat/task/result/revoke lifecycle | Partial |
+| C041 | XParallel Exchange | Standardized information/task exchange | XParallel | Protocol; versioned contracts | Contract compatibility tests | Partial |
+| C042 | XParallel Protocol | Common communication contracts | XParallel | Auth; versioning; schema validation | Compatibility and invalid-payload tests | Partial |
+| C043 | XParallel Mesh | Distributed network of workers/systems | XParallel | C038–C042; observability | Node failure and isolation tests | Partial |
+| C044 | XParallel Sandbox | Isolated execution environments | XParallel + Compute Fabric | Least privilege; egress restrictions | Escape/egress and resource-limit tests | Partial |
+| C045 | XParallel Registry | Discoverable agent/service directory | XParallel | UIDaaS; manifests; health | Registration, lookup, stale entry and revoke tests | Partial |
+| C046 | XParallel Passport | Portable, revocable agent identity | UIDaaS + XParallel | Signed claims; expiry; revocation | Signature, scope, expiry and revoke tests | Partial |
+| C047 | Parallel Verse | Persistent environment for agents to coexist and collaborate | XParallel | Registry; events; storage; sandbox | Persistence, tenant isolation and recovery tests | Partial |
 
 ### 5. Creative intelligence — 14 entries
 
@@ -142,17 +142,17 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C072 | UIDaaS | Universal digital identity and access | UIDaaS | Authentication; authorization; tenant model | AuthZ, session and tenant isolation tests | Unverified |
+| C072 | UIDaaS | Universal digital identity and access | UIDaaS | Authentication; authorization; tenant model | AuthZ, session and tenant isolation tests | Partial |
 | C073 | AI Guardian | Security monitoring and threat detection | Shared security/observability | Logs; policy; incident workflow | Simulated threat and alert tests | Unverified |
 | C074 | Trust Engine | Assess source/provider trust | Shared trust services | Provenance; source metadata; policies | Explainable trust score with evidence | Unverified |
-| C075 | Permission Engine | Granular authorization | UIDaaS / policy layer | Identity; resource scopes | Deny-by-default matrix tests | Unverified |
+| C075 | Permission Engine | Granular authorization | UIDaaS / policy layer | Identity; resource scopes | Deny-by-default matrix tests | Partial |
 | C076 | Privacy Vault | Protected personal information | UIDaaS + Storage Fabric | Encryption; consent; retention | Access, export and deletion tests | Unverified |
 | C077 | Credential Vault | Server-side secret management | Shared security infrastructure | Runtime config; rotation; redaction | Secret never reaches browser/log/source | Unverified |
-| C078 | AROT | Historical evidence and integrity | AROT provenance service | Hashes; immutable history where feasible | Tamper detection and chain-of-custody tests | Unverified |
+| C078 | AROT | Historical evidence and integrity | AROT provenance service | Hashes; immutable history where feasible | Tamper detection and chain-of-custody tests | Partial |
 | C079 | VOUCHER | Attribution and verification mechanisms | VOUCHER | AROT; identity; evidence rules | Attribution trail; no unsupported ownership claims | Unverified |
 | C080 | AI Firewall | Inspect/control inbound and outbound AI operations | Shared security infrastructure | Policy; egress controls; tool registry | Allow/deny, prompt-injection and egress tests | Unverified |
 | C081 | Policy Engine | Enforce platform/workspace rules | Shared policy layer | UIDaaS; OmniControl; audit | Policy decision and enforcement tests | Unverified |
-| C082 | Audit Intelligence | Explain who/what acted and why | AROT + observability | Auth identity; policy decision; event records | Reconstructable action timeline | Unverified |
+| C082 | Audit Intelligence | Explain who/what acted and why | AROT + observability | Auth identity; policy decision; event records | Reconstructable action timeline | Partial |
 
 ### 8. Personal and organizational intelligence — 13 entries
 
@@ -176,10 +176,10 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C096 | Compute Fabric | Access local and cloud computing | Shared platform infrastructure | Policy; sandbox; resource quotas | Local profile and quota tests | Unverified |
-| C097 | Model Gateway | Standardized model access | Shared model runtime | Adapter registry; secrets; policy | Provider contract suite; safe fallback | Unverified |
+| C096 | Compute Fabric | Access local and cloud computing | Shared platform infrastructure | Policy; sandbox; resource quotas | Local profile and quota tests | Partial |
+| C097 | Model Gateway | Standardized model access | Shared model runtime | Adapter registry; secrets; policy | Provider contract suite; safe fallback | Partial |
 | C098 | Data Fabric | Unified data connectivity | Omni + connector infrastructure | Connector SDK; permissions | Connector contract and ACL tests | Unverified |
-| C099 | Storage Fabric | Files, objects and databases | Shared platform infrastructure | Storage adapters; migrations; backups | Persistence, isolation and restore tests | Unverified |
+| C099 | Storage Fabric | Files, objects and databases | Shared platform infrastructure | Storage adapters; migrations; backups | Persistence, isolation and restore tests | Partial |
 | C100 | Vector Engine | Semantic retrieval | Omni knowledge plane | Embeddings; OmniIndex; permissions | Retrieval benchmark and deletion propagation | Unverified |
 | C101 | Event Bus | Internal communication | Shared runtime | Versioned event schemas | Delivery, ordering and duplicate handling tests | Unverified |
 | C102 | Queue Engine | Reliable task delivery | Shared runtime | Event Bus; durable state; idempotency | Retry/dead-letter/replay tests | Unverified |
@@ -198,7 +198,7 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 | C110 | Time Intelligence | Connect historical records, present information and forecasts | Omni + Parallel Intelligence | OmniArchive/Trace; forecasting evaluation | Time-aware provenance and forecast evaluation | Experimental |
 | C111 | Governed network of independent AI agents | Share discoveries and specialist knowledge | XParallel + Parallel Intelligence | C045/C046; trust and policy | Consent, provenance, isolation and revocation tests | Experimental |
 | C112 | World Model | Structured environment/system/object model for simulation/planning | OmniGraph + Engineering Intelligence | Knowledge Genome; compute/simulation | Model consistency and simulation tests | Experimental |
-| C113 | Universal AI Passport | Portable agent identity, permissions and capability declarations | UIDaaS + XParallel | C046; signed claims; revocation | Cross-system validation, scope and revoke tests | Experimental |
+| C113 | Universal AI Passport | Portable agent identity, permissions and capability declarations | UIDaaS + XParallel | C046; signed claims; revocation | Cross-system validation, scope and revoke tests | Partial |
 
 ## Section 11: existing identities to preserve (15, tracked separately)
 
@@ -222,6 +222,26 @@ These are preservation targets, not additional entries in the 113 count. Their s
 | P014 | AI Repair Shop | Diagnostics and repair | Repair proposal and approval workflow | Diagnose, propose, test, approve and rollback | Unverified |
 | P015 | AI Mixer | Multi-model routing and comparison surface | User-facing model selection/collaboration UI | Provider selection, attribution, fallback and tests | Unverified |
 
+## Evidence update — 2026-11-15 (isolated Oneaiplus/XParallel branch)
+
+The following entries are now **Partial** based on inspected implementation and passing automated tests in commit `5412dfd84028d618d00596ecbe73291f7575251e`. Partial means a bounded foundation exists; it does not mean the complete named product capability is integrated or live.
+
+| Component | Inspected implementation and test | Verified scope | Remaining boundary |
+|---|---|---|---|
+| C002 Multi-Model Intelligence | `xparallel/parallel_intelligence.py`; `tests/test_parallel_intelligence.py` | Attributed specialist contributions, independent verifier callback, evidence references, conflict disclosure, bounded outputs and no-execution result; tests pass. | Injected specialist/verifier/synthesis adapters are test doubles here; live model providers and app integration not verified. |
+| C014 Collective intelligence engine | Same Parallel Intelligence implementation and tests. | Multi-agent contribution synthesis and explicit disagreement/review state. | No live federated agent network or external participant trust bootstrap verified. |
+| C016 OmniMemory | `xparallel/entity_memory.py`; `tests/test_entity_memory.py` | Encrypted SQLite records, workspace/entity scope, injected auth/ACL/key adapters, provenance, retention, search/export/delete and tamper detection; tests pass. | Host authentication, production key vault, app integration, backup/restore and semantic/vector retrieval not verified. |
+| C028 OmniFlow | `xparallel/omni_orchestrator.py`; `tests/test_omni_orchestrator.py` | Typed workflow steps, dependency ordering, bounded retries, policy/approval gates and receipts; tests pass. | No visual workflow builder, durable pause/resume scheduler or product UI integration verified. |
+| C029 OmniPlan | Same orchestrator implementation and tests. | Validated workflow plan, dependency/cycle checks and consequential-step approval requirement. | Natural-language objective-to-plan generation and live OmniControl integration not verified. |
+| C097 Model Gateway | `xparallel/cognitive_runtime.py`; `tests/test_cognitive_runtime.py` | Provider-neutral adapter contract, context/output budgets, structured-output validation and local Ollama loopback adapter; tests pass. | Ollama was not contacted in CI; no device model installation, live inference, production secret management or app integration verified. |
+
+| C044 XParallel Sandbox | `xparallel/v1_runner.py`, `xparallel/docker_cgroup_meter.py`; `tests/test_v1_runner.py`, `tests/test_docker_cgroup_meter.py` | Restricted Docker runner boundary and resource metering are exercised by CI. | No live Docker daemon execution, hostile-container escape assessment, or outbound-egress test on a deployed host verified. |
+| C078 AROT | `xparallel/execution_evidence_store.py`, `xparallel/execution_receipts.py`; `tests/test_execution_evidence_store.py`, `tests/test_execution_receipts.py` | Content-addressed evidence references, append-only evidence rows, sanitized result storage and signed receipt/provenance tests. | Full cross-product historical ledger, independent key custody and operational retention/restore not verified. |
+| C096 Compute Fabric | `xparallel/v1_runner.py`, `xparallel/docker_cgroup_meter.py`; `tests/test_v1_runner.py`, `tests/test_docker_cgroup_meter.py` | Bounded execution runner and CPU/memory/process/output metering contracts tested. | No cloud/local fleet scheduler, hardware discovery, live resource quota enforcement on host, or compute marketplace integration verified. |
+| C099 Storage Fabric | `xparallel/storage_recovery.py`, `xparallel/execution_evidence_store.py`; `tests/test_storage_recovery.py`, `tests/test_execution_evidence_store.py` | Workspace-scoped SQLite repository, transactional writes, ordered/checksummed migrations, backup integrity, approval-gated restore, append-only evidence and workspace-read isolation. | Not a general object/file storage abstraction; production volume durability, off-host backup and app-wide adoption not verified. |
+
+CI evidence: GitHub Actions run `43682293854` completed successfully; its job explicitly passed the JWT verifier, trusted HTTP identity, execution transport, Parallel Verse persistence, Omni orchestrator, Parallel Intelligence, cognitive runtime/Model Gateway and encrypted entity-memory test steps. Additional checks `43682298630` and `43682298673` also completed successfully. These are automated test results, not live-host or production verification.
+
 ## Explicit overlap rules
 
 1. OmniStream ingests; OmniMemory stores contextual memory; OmniGraph models relationships; OmniIndex indexes; OmniSearch retrieves; OmniTrace links results to sources; OmniArchive preserves history. Knowledge Genome organizes relationships across these. These are distinct responsibilities, even if code is shared.
@@ -233,6 +253,23 @@ These are preservation targets, not additional entries in the 113 count. Their s
 7. Compute Fabric provides compute; XParallel Sandbox constrains execution; Storage Fabric persists data; Event Bus/Queue Engine transport events/tasks; Observability diagnoses; Backup Engine restores.
 8. Build Studio is the creation umbrella; Image/Video/Audio and Music studios are focused workflows; QCode is developer capability; AI Repair Shop handles diagnose/propose/test/approval/rollback.
 9. Existing identities remain discoverable even if their implementation is shared with another subsystem. Shared implementation is not omission.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C045 XParallel Registry — Partial (additional evidence):** `xparallel/parallel_verse.py` and `tests/test_parallel_verse.py` provide workspace-scoped agent registration, capability lookup, persistent local records, and rejection of cross-workspace references. This complements (but does not replace) the separate governance/federation registry primitives. It is not evidence of one deployed, durable, federated service registry.
+- **C082 Audit Intelligence — Partial:** `xparallel/audit_repository.py` and `tests/test_audit_repository.py` provide workspace-filtered actor/action audit-event persistence and a round-trip test. The implementation is a local SQLite repository; the test covers a single event round trip only. It does not yet establish a complete action timeline, policy/identity correlation, tamper-evident chain, durable production storage, or operational audit analytics.
+
+These are source/test inspections, not test executions or live runtime certification. C082 is therefore Partial, not fully operational.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C037 OmniRecovery — Partial:** `xparallel/execution_recovery_service.py`, `xparallel/execution_recovery_supervisor.py`, and `xparallel/execution_recovery_health_store.py`; tests `tests/test_execution_recovery_service.py`, `tests/test_execution_recovery_supervisor.py`, and the health-store tests. The bounded service recovers already-persisted execution finalizations only; it does not start or retry workloads. It requires a fresh executor session, skips overlapping cycles, is disabled by default, and requires explicit host start. Optional SQLite health history is append-only and stores aggregate counters/error classes without credentials. No production host enablement, durable fleet-wide scheduler, or live recovery drill is established.
+- **C037 boundary:** this is a partial receipt-finalization recovery primitive, not proof that all Omni workflows, queues, or arbitrary failed operations can be retried/recovered.
+
+### Additional source/test evidence — 2026-11-15
+
+- **C113 Universal AI Passport — Partial:** related foundations exist in `xparallel/digital_dna.py` / `tests/test_digital_dna.py` (workspace-scoped versioned manifest revisions and secret-field/self-certification rejection); `xparallel/identity_trust.py` / `tests/test_identity_trust.py` (Ed25519 owner proof, one-time challenges, key lifecycle); `xparallel/entity_federation.py` / `tests/test_entity_federation.py` (signed, expiring, visibility-controlled local federation records and revocation); and `xparallel/capability_verification.py` / `tests/test_capability_verification.py` plus `xparallel/verified_action_gate.py` / `tests/test_verified_action_gate.py` (artifact-bound capability evidence composed with exact-scope grants).
+- **C113 boundary:** these are separate local primitives, not yet one portable passport issuance/verification service. Digital DNA manifest registration itself does not authenticate owners or verify signatures; federation is explicitly a local discovery prototype; capability test adapters must be supplied by a trusted host and a separately hardened sandbox. Cross-system interoperability, common credential packaging, live key custody/rotation and deployed revocation propagation remain unverified.
 
 ## Dependency-first delivery phases
 

@@ -31,6 +31,10 @@ class ExecutionHostServices:
       - measure_resources: return measurements from the actual host/container runtime
       - store_evidence: persist execution evidence durably and return immutable references
       - receipts: signed receipt ledger with authoritative job lookup and signing
+      - validate_worker_lease: when execution is enabled, a mandatory trusted
+        resolver/check receiving (session, intent_id, immutable_intent); it must
+        resolve task/agent/worker/lease from authoritative host records and fail closed.
+        A WorkerLeaseExecutionValidator also releases its exact lease after the runner stops.
 
     The adapter implementations are trust roots. This wrapper validates their
     outputs but cannot independently prove that an operator's storage or
@@ -45,6 +49,8 @@ class ExecutionHostServices:
         measure_resources: Callable[[dict[str, Any], dict[str, Any]], dict[str, int]],
         store_evidence: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]],
         receipts: Any,
+        validate_worker_lease: Callable[[Any, str, dict[str, Any]], bool] | None = None,
+        require_worker_lease: bool = False,
     ):
         callbacks = (runner, load_payload, resolve_artifact_digest,
                      resolve_policy_evidence, measure_resources, store_evidence)
@@ -63,6 +69,14 @@ class ExecutionHostServices:
         self._measure = measure_resources
         self._store = store_evidence
         self.receipts = receipts
+        if validate_worker_lease is not None and not callable(validate_worker_lease):
+            raise TypeError("trusted_worker_lease_adapter_invalid")
+        if not isinstance(require_worker_lease, bool):
+            raise TypeError("worker_lease_requirement_must_be_boolean")
+        if require_worker_lease and validate_worker_lease is None:
+            raise ValueError("trusted_worker_lease_resolver_required")
+        self._validate_worker_lease = validate_worker_lease
+        self.worker_lease_required = require_worker_lease
         if not callable(getattr(approvals, "set_receipt_commit_verifier", None)):
             raise TypeError("receipt_verification_hook_required")
         approvals.set_receipt_commit_verifier(
@@ -134,4 +148,5 @@ class ExecutionHostServices:
             measure_resources=self.measure_resources,
             store_evidence=self.store_evidence,
             receipts=self.receipts,
+            validate_worker_lease=self._validate_worker_lease,
         )

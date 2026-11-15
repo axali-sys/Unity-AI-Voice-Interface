@@ -204,5 +204,29 @@ class ApprovedExecutionWorkerTests(unittest.TestCase):
         self.assertEqual(self.runner_calls, [])
 
 
+    def test_expired_or_reassigned_worker_lease_blocks_before_runner(self):
+        self.worker._validate_worker_lease = lambda session, intent_id, intent: False
+        result = self.worker.execute("worker-session", "one-use-ticket")
+        self.assertEqual(result["outcome"], "blocked")
+        self.assertEqual(result["runner_result"]["error"], "execution_revoked_before_worker_start")
+        self.assertEqual(self.runner_calls, [])
+
+    def test_worker_lease_is_rechecked_during_runner_execution(self):
+        checks = {"count": 0}
+        def validate_lease(session, intent_id, intent):
+            checks["count"] += 1
+            self.assertEqual(intent_id, "job:123")
+            self.assertIs(intent, self.intent)
+            return checks["count"] == 1
+        def runner(payload, **kwargs):
+            self.assertFalse(kwargs["should_continue"]())
+            return {"status": "blocked", "error": "worker_lease_lost"}
+        self.worker._validate_worker_lease = validate_lease
+        self.worker._runner = runner
+        result = self.worker.execute("worker-session", "one-use-ticket")
+        self.assertEqual(result["outcome"], "blocked")
+        self.assertGreaterEqual(checks["count"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

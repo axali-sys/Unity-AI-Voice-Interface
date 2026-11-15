@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "dri-001/xparallel-master-blueprint"
+      - "oneaiplus/unification-foundation-2026-11-14"
   pull_request:
     paths:
       - "xparallel/**"
@@ -72,6 +73,20 @@ jobs:
         run: python -m unittest discover -s tests -p "test_identity_trust.py" -v
       - name: Test entity action authorization policy
         run: python -m unittest discover -s tests -p "test_entity_authorization.py" -v
+      - name: Test XParallel role authorization policy boundaries
+        run: python -m unittest discover -s tests -p "test_authz_audit.py" -v
+      - name: Test trusted HTTP identity and workspace claim binding
+        run: python -m unittest discover -s tests -p "test_http_identity.py" -v
+      - name: Test signed host-session JWT verification
+        run: python -m unittest discover -s tests -p "test_session_jwt.py" -v
+      - name: Test private execution HTTP route dispatch and fail-closed behavior
+        run: python -m unittest discover -s tests -p "test_execution_http_routes.py" -v
+      - name: Test private execution routes over loopback HTTP
+        run: python -m unittest discover -s tests -p "test_execution_http_transport.py" -v
+      - name: Test JWT-bound execution approval, workspace scope and revocation lifecycle
+        run: python -m unittest discover -s tests -p "test_execution_http_jwt_binding.py" -v
+      - name: Test governance HTTP dispatch and revocation schema
+        run: python -m unittest discover -s tests -p "test_governance_http_api.py" -v
       - name: Test signed entity messaging and replay protection
         run: python -m unittest discover -s tests -p "test_entity_messaging.py" -v
       - name: Test secure entity communication gateway
