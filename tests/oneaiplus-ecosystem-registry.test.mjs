@@ -17,7 +17,7 @@ test("registry contains 113 unique component IDs across 10 categories", () => {
 test("registry preserves 15 unique identities separately", () => {
   assert.equal(registry.identities.length, 15);
   assert.equal(new Set(registry.identities.map((item) => item.id)).size, 15);
-  assert.ok(registry.identities.every((item) => /^P\\d{3}$/.test(item.id)));
+  assert.ok(registry.identities.every((item) => /^P\d{3}$/.test(item.id)));
 });
 
 test("component statuses use the controlled evidence vocabulary", () => {
