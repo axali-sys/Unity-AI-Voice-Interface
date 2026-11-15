@@ -167,6 +167,61 @@ def list_agents(workspace_id: str, limit: int = 50,
     return [_agent(row) for row in rows]
 
 
+def agent_is_active(workspace_id: str, agent_id: str,
+                    db_path: str | None = None) -> bool:
+    """Return current registry status for a workspace-bound agent."""
+    workspace = _workspace(workspace_id)
+    if not isinstance(agent_id, str) or not agent_id.strip():
+        return False
+    with _LOCK, closing(_connect(db_path)) as conn:
+        row = conn.execute(
+            "SELECT status FROM verse_agents WHERE agent_id=? AND workspace_id=?",
+            (agent_id, workspace),
+        ).fetchone()
+    return bool(row and row["status"] == "active")
+
+
+def revoke_agent(workspace_id: str, agent_id: str, reason: str,
+                 db_path: str | None = None) -> dict[str, Any]:
+    """Revoke a registered agent in this workspace and append one audit event.
+
+    This storage primitive is not an authentication boundary. Callers must
+    authorize the owner/operator before invoking it. Existing running work
+    must also consult its own live execution-approval checkpoint.
+    """
+    workspace = _workspace(workspace_id)
+    if not isinstance(agent_id, str) or not agent_id.strip() or len(agent_id) > 160:
+        raise ValueError("invalid_agent_id")
+    if not isinstance(reason, str) or not reason.strip() or len(reason.strip()) > 1000:
+        raise ValueError("revocation_reason_required_or_too_long")
+    now = _now()
+    with _LOCK, closing(_connect(db_path)) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT * FROM verse_agents WHERE agent_id=? AND workspace_id=?",
+            (agent_id, workspace),
+        ).fetchone()
+        if row is None:
+            raise ValueError("agent_not_found_in_workspace")
+        if row["status"] != "revoked":
+            conn.execute(
+                "UPDATE verse_agents SET status='revoked', updated_at=? "
+                "WHERE agent_id=? AND workspace_id=?",
+                (now, agent_id, workspace),
+            )
+            conn.execute(
+                "INSERT INTO verse_events VALUES (?, ?, NULL, ?, ?, ?, ?)",
+                ("evt_" + uuid.uuid4().hex, workspace, agent_id,
+                 "agent.revoked", _json({"reason": reason.strip()}), now),
+            )
+        conn.commit()
+        updated = conn.execute(
+            "SELECT * FROM verse_agents WHERE agent_id=? AND workspace_id=?",
+            (agent_id, workspace),
+        ).fetchone()
+    return _agent(updated)
+
+
 def create_space(workspace_id: str, name: str, description: str = "",
                  db_path: str | None = None) -> dict[str, Any]:
     workspace, name = _workspace(workspace_id), str(name).strip()
@@ -261,11 +316,15 @@ def create_task(workspace_id: str, title: str, description: str = "",
         for table, key, value in (("verse_spaces", "space_id", space_id),
                                   ("verse_agents", "agent_id", created_by),
                                   ("verse_agents", "agent_id", assigned_to)):
-            if value and not conn.execute(
-                f"SELECT 1 FROM {table} WHERE {key}=? AND workspace_id=?",
-                (value, workspace),
-            ).fetchone():
-                raise ValueError(f"{key}_not_found_in_workspace")
+            if value:
+                row = conn.execute(
+                    f"SELECT status FROM {table} WHERE {key}=? AND workspace_id=?",
+                    (value, workspace),
+                ).fetchone()
+                if not row:
+                    raise ValueError(f"{key}_not_found_in_workspace")
+                if table == "verse_agents" and row["status"] != "active":
+                    raise ValueError("agent_not_active")
         task = {"task_id": task_id, "workspace_id": workspace, "space_id": space_id,
                 "created_by": created_by, "assigned_to": assigned_to, "title": title,
                 "description": str(description), "status": "open", "result": None,
@@ -304,7 +363,8 @@ def discover_agents(workspace_id: str, capability: str | None = None,
                     limit: int = 50, db_path: str | None = None) -> list[dict[str, Any]]:
     """Find registered agents by declared capability; this does not imply runtime health."""
     query = str(capability or "").strip().casefold()
-    agents = list_agents(workspace_id, limit=limit, db_path=db_path)
+    agents = [agent for agent in list_agents(workspace_id, limit=limit, db_path=db_path)
+              if agent.get("status") == "active"]
     if not query:
         return agents
 
