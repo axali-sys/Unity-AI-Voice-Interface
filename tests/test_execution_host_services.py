@@ -44,6 +44,16 @@ class ExecutionHostServicesTests(unittest.TestCase):
         from xparallel.execution_worker import ApprovedExecutionWorker
         self.assertIsInstance(self.services.build_worker(), ApprovedExecutionWorker)
 
+    def test_requires_callable_resolver_when_lease_enforcement_is_mandatory(self):
+        with self.assertRaisesRegex(ValueError, "trusted_worker_lease_resolver_required"):
+            ExecutionHostServices(
+                approvals=FakeApprovals(), runner=lambda *a, **k: {"status": "success"},
+                load_payload=lambda intent: {}, resolve_artifact_digest=lambda intent: "a" * 64,
+                resolve_policy_evidence=lambda intent: {"allowed": True, "grant_id": "g", "evidence_run_id": "r"},
+                measure_resources=lambda result, intent: {}, store_evidence=lambda result, intent: {},
+                receipts=FakeReceipts(), require_worker_lease=True,
+            )
+
     def test_forwards_trusted_worker_lease_resolver(self):
         calls = []
         self.services._validate_worker_lease = lambda session, intent_id, intent: calls.append((session, intent_id, intent)) or True
