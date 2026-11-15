@@ -134,3 +134,12 @@ This review is based on static source/test inspection. Test definitions were rea
 - **Network connector safety boundary:** `connectors.py` accepts caller-supplied HTTPS URLs and applies a response-size limit and timeout. The inspected helper does not implement an explicit hostname/IP allowlist or redirect revalidation policy. Do not expose it as a general-purpose untrusted URL fetcher or treat HTTPS-only as complete SSRF protection. No network/egress security test was run in this review.
 
 Static source and test inspection only; tests were not executed here. No peer network, worker fleet, message transport, event broker or production host was exercised. Existing component statuses were not promoted by this review.
+
+
+## Agent registry revocation implementation update — 2026-11-15
+
+- `xparallel/parallel_verse.py` now provides workspace-scoped `revoke_agent` and `agent_is_active` storage primitives. Revocation changes the existing agent status to `revoked` and appends an `agent.revoked` event in the same SQLite transaction. Repeated revocation is idempotent and does not create duplicate revocation events.
+- Capability discovery now excludes revoked agents. New task creation rejects revoked agents as either the task creator or assignee. The existing schema was reused; no migration or new database column was added.
+- `tests/test_parallel_verse.py` adds checks for revocation, idempotent audit history, workspace isolation, discovery exclusion, and denial of new task creation/assignment to revoked agents.
+- GitHub Actions run [43693767648](https://github.com/axali-sys/Unity-AI-Voice-Interface/actions/runs/43693767648) completed successfully on source commit `02e91e1f162dd15f41d701df47b6b365f23756f5`. Its Parallel Verse persistence/isolation step and the full XParallel integration job passed.
+- **Security boundary:** these are storage primitives, not an authorization API. The host must authenticate and authorize the revocation request before calling them. This change does not terminate already-running processes, revoke credentials at federation peers, or replace the live execution approval checkpoint. Those remain separate lifecycle integrations and are not claimed operational.
