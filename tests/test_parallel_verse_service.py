@@ -36,7 +36,8 @@ class ParallelVerseServiceTests(unittest.TestCase):
         agent=self.service.register_agent("alpha",name="Worker")
         revoked=self.service.revoke_agent("alpha",agent_id=agent["agent_id"],reason="Security review")
         self.assertEqual(revoked["status"],"revoked")
-        self.assertEqual(self.service.list_agents("alpha"),[])
+        # Management listing retains revoked records for audit visibility.
+        self.assertEqual(self.service.list_agents("alpha")[0]["status"],"revoked")
         with self.assertRaises(ValueError):
             self.service.revoke_agent("beta",agent_id=agent["agent_id"],reason="Cross-workspace")
         self.assertEqual(self.service.list_agents("beta"),[])
