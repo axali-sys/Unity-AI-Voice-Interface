@@ -41,6 +41,8 @@ The canonical Lovable project identifies its template as `tanstack_start_ts_curr
 
 Use the existing register as the source of truth:
 - `docs/architecture/113-component-register.md`
+- A structured, source-derived staging export now exists at `docs/architecture/oneaiplus-ecosystem-registry.json` on this isolated branch. It contains all 113 component rows across 10 categories and all 15 preservation identities, retaining the source IDs, ownership, dependencies, acceptance evidence and status values.
+- `tests/oneaiplus-ecosystem-registry.test.mjs` validates the 113/15 counts, unique IDs, category counts, controlled statuses, and the NexAI/IDEAS independence boundary. The JSON was parsed and structurally validated through the connected GitHub read path; the Node test file has been added but has not yet been executed in a CI run.
 - 10 categories, exactly 113 component entries.
 - 15 preservation identities are tracked separately and excluded from the 113 count.
 - Statuses must remain evidence-based: Unverified, Existing and verified, Partial, Planned, Experimental, or Blocked.
