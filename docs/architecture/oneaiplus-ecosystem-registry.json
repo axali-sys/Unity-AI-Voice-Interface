@@ -1,0 +1,1241 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedFrom": {
+    "path": "docs/architecture/113-component-register.md",
+    "ref": "oneaiplus/unification-foundation-2026-11-14",
+    "blobSha": "1de4c772a5e78e108735705b05a8fd0c66834e05"
+  },
+  "counts": {
+    "components": 113,
+    "categories": 10,
+    "identities": 15
+  },
+  "statusVocabulary": [
+    "Unverified",
+    "Existing and verified",
+    "Partial",
+    "Planned",
+    "Experimental",
+    "Blocked"
+  ],
+  "categories": [
+    {
+      "number": 1,
+      "name": "Intelligence and cognition",
+      "declaredCount": 14,
+      "components": [
+        {
+          "id": "C001",
+          "name": "Cognitive Core",
+          "responsibility": "Reasoning, analysis, problem-solving, decisions",
+          "proposedOwner": "ƎllE intelligence runtime",
+          "dependencies": "Model Gateway; Omni context",
+          "acceptanceEvidence": "Task suite with traceable inputs/results",
+          "status": "Unverified"
+        },
+        {
+          "id": "C002",
+          "name": "Multi-Model Intelligence",
+          "responsibility": "Combine, compare, debate and synthesize models",
+          "proposedOwner": "Parallel Intelligence",
+          "dependencies": "Model Gateway; provider adapters",
+          "acceptanceEvidence": "Multi-model run with attributed outputs",
+          "status": "Partial"
+        },
+        {
+          "id": "C003",
+          "name": "Self-Evaluation Engine",
+          "responsibility": "Check answers, uncertainty and contradictions",
+          "proposedOwner": "Parallel Intelligence",
+          "dependencies": "Evaluation datasets; OmniTrace",
+          "acceptanceEvidence": "Calibrated evaluation and contradiction tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C004",
+          "name": "Adaptive Intelligence",
+          "responsibility": "Improve workflows from approved feedback",
+          "proposedOwner": "ƎllE / Parallel Intelligence",
+          "dependencies": "Consent, versioning, rollback",
+          "acceptanceEvidence": "Feedback opt-in, version history, rollback test",
+          "status": "Partial"
+        },
+        {
+          "id": "C005",
+          "name": "Reasoning Laboratory",
+          "responsibility": "Test hypotheses, simulate scenarios, explore alternatives",
+          "proposedOwner": "Parallel Intelligence",
+          "dependencies": "C002, C006, sandbox/compute",
+          "acceptanceEvidence": "Reproducible experiment record",
+          "status": "Unverified"
+        },
+        {
+          "id": "C006",
+          "name": "Decision Intelligence",
+          "responsibility": "Risk, forecasting, evidence-based recommendations",
+          "proposedOwner": "ƎllE domain capabilities",
+          "dependencies": "OmniSearch/Trace; uncertainty",
+          "acceptanceEvidence": "Benchmark with evidence and uncertainty",
+          "status": "Unverified"
+        },
+        {
+          "id": "C007",
+          "name": "Context awareness engine",
+          "responsibility": "Use relevant session, project and environment context",
+          "proposedOwner": "ƎllE + Omni",
+          "dependencies": "OmniMemory; access controls",
+          "acceptanceEvidence": "Context relevance and isolation tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C008",
+          "name": "Knowledge gap detector",
+          "responsibility": "Identify missing evidence or knowledge",
+          "proposedOwner": "Omni + ƎllE",
+          "dependencies": "OmniSearch; C003",
+          "acceptanceEvidence": "Known-gap benchmark and citations",
+          "status": "Unverified"
+        },
+        {
+          "id": "C009",
+          "name": "Explainability engine",
+          "responsibility": "Explain reasoning basis and evidence",
+          "proposedOwner": "ƎllE / Parallel Intelligence",
+          "dependencies": "OmniTrace; AROT",
+          "acceptanceEvidence": "Explanation links to actual sources/artifacts",
+          "status": "Unverified"
+        },
+        {
+          "id": "C010",
+          "name": "Confidence and uncertainty evaluator",
+          "responsibility": "Estimate and communicate uncertainty",
+          "proposedOwner": "Parallel Intelligence",
+          "dependencies": "C003; evaluation data",
+          "acceptanceEvidence": "Calibration metrics and abstention tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C011",
+          "name": "Scientific research assistant",
+          "responsibility": "Research synthesis and hypothesis support",
+          "proposedOwner": "ƎllE research capability",
+          "dependencies": "Omni connectors/search/trace",
+          "acceptanceEvidence": "Source-backed research task",
+          "status": "Unverified"
+        },
+        {
+          "id": "C012",
+          "name": "Mathematical and engineering intelligence",
+          "responsibility": "Mathematics and engineering problem solving",
+          "proposedOwner": "ƎllE domain capabilities",
+          "dependencies": "QCode; Engineering Intelligence; verification",
+          "acceptanceEvidence": "Unit-tested calculations and stated assumptions",
+          "status": "Unverified"
+        },
+        {
+          "id": "C013",
+          "name": "Strategic planning engine",
+          "responsibility": "Build plans against goals and constraints",
+          "proposedOwner": "OmniPlan + ƎllE",
+          "dependencies": "OmniFlow; OmniControl",
+          "acceptanceEvidence": "Plan validation and approval flow",
+          "status": "Unverified"
+        },
+        {
+          "id": "C014",
+          "name": "Collective intelligence engine",
+          "responsibility": "Synthesize contributions from independent agents",
+          "proposedOwner": "Parallel Intelligence",
+          "dependencies": "XParallel; Agent Registry; trust policy",
+          "acceptanceEvidence": "Attributed synthesis and disagreement record",
+          "status": "Partial"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Omni universal data and knowledge",
+      "declaredCount": 13,
+      "components": [
+        {
+          "id": "C015",
+          "name": "OmniStream",
+          "responsibility": "Continuous authorized data ingestion",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "Connectors; consent; queues",
+          "acceptanceEvidence": "Ingestion, retry and revoke tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C016",
+          "name": "OmniMemory",
+          "responsibility": "Persistent contextual/project memory",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "Storage Fabric; tenant isolation",
+          "acceptanceEvidence": "Save/retrieve/delete/isolation tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C017",
+          "name": "OmniSearch",
+          "responsibility": "Unified search across connected sources",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "OmniIndex; OmniTrace; permissions",
+          "acceptanceEvidence": "Relevant results with citations and ACL filtering",
+          "status": "Unverified"
+        },
+        {
+          "id": "C018",
+          "name": "OmniGraph",
+          "responsibility": "Relationships between entities, documents, events",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "Knowledge Genome; OmniTrace",
+          "acceptanceEvidence": "Relationship query with provenance",
+          "status": "Unverified"
+        },
+        {
+          "id": "C019",
+          "name": "OmniVault",
+          "responsibility": "Protected knowledge/document storage",
+          "proposedOwner": "Omni + Storage Fabric",
+          "dependencies": "UIDaaS; encryption; retention",
+          "acceptanceEvidence": "Access-control and lifecycle tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C020",
+          "name": "OmniIndex",
+          "responsibility": "Semantic, keyword and vector indexing",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "Storage; Vector Engine",
+          "acceptanceEvidence": "Index/reindex/delete/search tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C021",
+          "name": "OmniSync",
+          "responsibility": "Synchronization and freshness management",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "OmniStream; connectors",
+          "acceptanceEvidence": "Staleness and conflict tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C022",
+          "name": "OmniLens",
+          "responsibility": "Image/video/audio/document understanding",
+          "proposedOwner": "ƎllE multimodal + Omni",
+          "dependencies": "Model Gateway; file safety",
+          "acceptanceEvidence": "Supported-format tests and truthful capability states",
+          "status": "Unverified"
+        },
+        {
+          "id": "C023",
+          "name": "OmniTrace",
+          "responsibility": "Information/source lineage",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "AROT; connectors; retrieval",
+          "acceptanceEvidence": "Results resolve to source records",
+          "status": "Unverified"
+        },
+        {
+          "id": "C024",
+          "name": "OmniBridge",
+          "responsibility": "Knowledge exchange between AI systems",
+          "proposedOwner": "Omni + XParallel",
+          "dependencies": "Versioned contracts; permission policy",
+          "acceptanceEvidence": "Authorized import/export contract test",
+          "status": "Unverified"
+        },
+        {
+          "id": "C025",
+          "name": "OmniArchive",
+          "responsibility": "Historical knowledge preservation",
+          "proposedOwner": "Omni + AROT",
+          "dependencies": "Storage Fabric; retention",
+          "acceptanceEvidence": "Restore and historical retrieval tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C026",
+          "name": "OmniPulse",
+          "responsibility": "Monitor updates and emerging information",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "OmniStream/Sync; scheduler/events",
+          "acceptanceEvidence": "Freshness alert with source evidence",
+          "status": "Unverified"
+        },
+        {
+          "id": "C027",
+          "name": "Knowledge Genome",
+          "responsibility": "Structured links among facts, evidence, concepts and discoveries",
+          "proposedOwner": "OmniGraph",
+          "dependencies": "OmniTrace; OmniIndex; AROT",
+          "acceptanceEvidence": "Provenance-aware relationship traversal",
+          "status": "Unverified"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Omni orchestration and autonomous work",
+      "declaredCount": 10,
+      "components": [
+        {
+          "id": "C028",
+          "name": "OmniFlow",
+          "responsibility": "Visual workflow builder",
+          "proposedOwner": "Omni orchestration plane",
+          "dependencies": "OmniPlan; event/queue contracts",
+          "acceptanceEvidence": "Create, run, pause and resume workflow tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C029",
+          "name": "OmniPlan",
+          "responsibility": "Convert objectives to executable plans",
+          "proposedOwner": "Omni orchestration plane",
+          "dependencies": "C013; OmniControl",
+          "acceptanceEvidence": "Plan schema, constraints and approval tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C030",
+          "name": "OmniScheduler",
+          "responsibility": "Recurring and scheduled tasks",
+          "proposedOwner": "Omni orchestration plane",
+          "dependencies": "Queue/event bus; durable storage",
+          "acceptanceEvidence": "Schedule, timezone and cancellation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C031",
+          "name": "OmniSwarm",
+          "responsibility": "Coordinate specialized agent groups",
+          "proposedOwner": "Omni orchestration plane + Parallel Intelligence",
+          "dependencies": "Agent Registry; XParallel",
+          "acceptanceEvidence": "Multi-agent coordination with audit",
+          "status": "Unverified"
+        },
+        {
+          "id": "C032",
+          "name": "OmniPilot",
+          "responsibility": "Supervise multi-step tasks",
+          "proposedOwner": "ƎllE + Omni orchestration",
+          "dependencies": "OmniFlow/Plan; status events",
+          "acceptanceEvidence": "End-to-end task with checkpoints",
+          "status": "Unverified"
+        },
+        {
+          "id": "C033",
+          "name": "OmniControl",
+          "responsibility": "Permissions and approvals",
+          "proposedOwner": "UIDaaS / policy layer",
+          "dependencies": "Identity; audit; task contracts",
+          "acceptanceEvidence": "Denied-by-default and approval tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C034",
+          "name": "OmniEvent",
+          "responsibility": "Event-driven automation",
+          "proposedOwner": "Shared event runtime",
+          "dependencies": "Event Bus; schema/versioning",
+          "acceptanceEvidence": "Event delivery, deduplication and retry tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C035",
+          "name": "OmniSim",
+          "responsibility": "Simulate tasks before execution",
+          "proposedOwner": "Omni orchestration plane",
+          "dependencies": "Sandbox/Compute Fabric; World Model",
+          "acceptanceEvidence": "Dry-run cannot cause external side effects",
+          "status": "Unverified"
+        },
+        {
+          "id": "C036",
+          "name": "OmniVerify",
+          "responsibility": "Verify execution results",
+          "proposedOwner": "Shared verification service",
+          "dependencies": "Task contracts; evidence; AROT",
+          "acceptanceEvidence": "Result checks against explicit acceptance criteria",
+          "status": "Unverified"
+        },
+        {
+          "id": "C037",
+          "name": "OmniRecovery",
+          "responsibility": "Retry and recover failed operations",
+          "proposedOwner": "Shared reliability runtime",
+          "dependencies": "Queue Engine; durable state; idempotency",
+          "acceptanceEvidence": "Fault injection and recovery tests",
+          "status": "Partial"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "XParallel universal interoperability",
+      "declaredCount": 10,
+      "components": [
+        {
+          "id": "C038",
+          "name": "XParallel Discovery",
+          "responsibility": "Discover compatible AI systems/services",
+          "proposedOwner": "XParallel",
+          "dependencies": "Registry; safe probes; egress policy",
+          "acceptanceEvidence": "Authorized discovery and timeout tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C039",
+          "name": "XParallel Connect",
+          "responsibility": "Establish authorized connections",
+          "proposedOwner": "XParallel",
+          "dependencies": "UIDaaS; Credential Vault; connector SDK",
+          "acceptanceEvidence": "Auth, revoke and reconnect tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C040",
+          "name": "XParallel Roaming",
+          "responsibility": "Workers operate in approved environments",
+          "proposedOwner": "XParallel roaming runtime",
+          "dependencies": "Registry; queues; sandbox; policy",
+          "acceptanceEvidence": "Register/heartbeat/task/result/revoke lifecycle",
+          "status": "Partial"
+        },
+        {
+          "id": "C041",
+          "name": "XParallel Exchange",
+          "responsibility": "Standardized information/task exchange",
+          "proposedOwner": "XParallel",
+          "dependencies": "Protocol; versioned contracts",
+          "acceptanceEvidence": "Contract compatibility tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C042",
+          "name": "XParallel Protocol",
+          "responsibility": "Common communication contracts",
+          "proposedOwner": "XParallel",
+          "dependencies": "Auth; versioning; schema validation",
+          "acceptanceEvidence": "Compatibility and invalid-payload tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C043",
+          "name": "XParallel Mesh",
+          "responsibility": "Distributed network of workers/systems",
+          "proposedOwner": "XParallel",
+          "dependencies": "C038–C042; observability",
+          "acceptanceEvidence": "Node failure and isolation tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C044",
+          "name": "XParallel Sandbox",
+          "responsibility": "Isolated execution environments",
+          "proposedOwner": "XParallel + Compute Fabric",
+          "dependencies": "Least privilege; egress restrictions",
+          "acceptanceEvidence": "Escape/egress and resource-limit tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C045",
+          "name": "XParallel Registry",
+          "responsibility": "Discoverable agent/service directory",
+          "proposedOwner": "XParallel",
+          "dependencies": "UIDaaS; manifests; health",
+          "acceptanceEvidence": "Registration, lookup, stale entry and revoke tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C046",
+          "name": "XParallel Passport",
+          "responsibility": "Portable, revocable agent identity",
+          "proposedOwner": "UIDaaS + XParallel",
+          "dependencies": "Signed claims; expiry; revocation",
+          "acceptanceEvidence": "Signature, scope, expiry and revoke tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C047",
+          "name": "Parallel Verse",
+          "responsibility": "Persistent environment for agents to coexist and collaborate",
+          "proposedOwner": "XParallel",
+          "dependencies": "Registry; events; storage; sandbox",
+          "acceptanceEvidence": "Persistence, tenant isolation and recovery tests",
+          "status": "Partial"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Creative intelligence",
+      "declaredCount": 14,
+      "components": [
+        {
+          "id": "C048",
+          "name": "Image Studio",
+          "responsibility": "Image creation workflow",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Model Gateway; media adapters",
+          "acceptanceEvidence": "Generation/edit path and provider-status tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C049",
+          "name": "Video Studio",
+          "responsibility": "Video creation workflow",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Media adapters; storage/compute",
+          "acceptanceEvidence": "Supported workflow with artifact verification",
+          "status": "Unverified"
+        },
+        {
+          "id": "C050",
+          "name": "Audio and Music Studio",
+          "responsibility": "Audio/music creation workflow",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Audio adapters; rights/consent",
+          "acceptanceEvidence": "Artifact playback and provenance tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C051",
+          "name": "Build Studio",
+          "responsibility": "Unified creation/development workspace",
+          "proposedOwner": "Build Studio",
+          "dependencies": "QCode; media tools; sandbox",
+          "acceptanceEvidence": "Create-preview-test workflow",
+          "status": "Unverified"
+        },
+        {
+          "id": "C052",
+          "name": "Website and application generator",
+          "responsibility": "Generate websites/apps",
+          "proposedOwner": "Build Studio + QCode",
+          "dependencies": "Templates; sandbox; verification",
+          "acceptanceEvidence": "Build/test/preview against requirements",
+          "status": "Unverified"
+        },
+        {
+          "id": "C053",
+          "name": "Game development assistant",
+          "responsibility": "Game development support",
+          "proposedOwner": "Build Studio + QCode",
+          "dependencies": "Asset pipeline; sandbox",
+          "acceptanceEvidence": "Example project build and tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C054",
+          "name": "3D modeling and design",
+          "responsibility": "3D model/design workflows",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Supported 3D formats; compute",
+          "acceptanceEvidence": "Export/import validity checks",
+          "status": "Unverified"
+        },
+        {
+          "id": "C055",
+          "name": "CAD and engineering design",
+          "responsibility": "CAD workflows",
+          "proposedOwner": "Engineering Intelligence + Build Studio",
+          "dependencies": "CAD formats; engineering verification",
+          "acceptanceEvidence": "File validity and engineering review gates",
+          "status": "Unverified"
+        },
+        {
+          "id": "C056",
+          "name": "Presentation and document studio",
+          "responsibility": "Create presentations/documents",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Omni knowledge; export/render tools",
+          "acceptanceEvidence": "Rendering and citation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C057",
+          "name": "Voice cloning with consent safeguards",
+          "responsibility": "Consent-based voice cloning",
+          "proposedOwner": "Audio and Music Studio",
+          "dependencies": "Explicit consent; provider policy; rights",
+          "acceptanceEvidence": "Consent, revoke and output disclosure tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C058",
+          "name": "Animation and character creation",
+          "responsibility": "Animation/character workflows",
+          "proposedOwner": "Build Studio",
+          "dependencies": "3D/media adapters",
+          "acceptanceEvidence": "Valid artifact export and preview",
+          "status": "Unverified"
+        },
+        {
+          "id": "C059",
+          "name": "Digital twin builder",
+          "responsibility": "Build digital-twin representations",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "OmniGraph; simulation/compute",
+          "acceptanceEvidence": "Model schema and validation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C060",
+          "name": "Interactive simulation studio",
+          "responsibility": "Interactive simulation workflows",
+          "proposedOwner": "Build Studio + Engineering Intelligence",
+          "dependencies": "Compute; Sandbox; World Model",
+          "acceptanceEvidence": "Reproducible simulation run",
+          "status": "Unverified"
+        },
+        {
+          "id": "C061",
+          "name": "Brand and marketing studio",
+          "responsibility": "Brand/marketing asset workflows",
+          "proposedOwner": "Build Studio",
+          "dependencies": "Image/document studio; policy",
+          "acceptanceEvidence": "Asset export and user review",
+          "status": "Unverified"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Engineering, science and industrial intelligence",
+      "declaredCount": 10,
+      "components": [
+        {
+          "id": "C062",
+          "name": "Engineering AI",
+          "responsibility": "Mechanical, electrical, civil and chemical engineering",
+          "proposedOwner": "ƎllE Engineering Intelligence",
+          "dependencies": "Omni knowledge; QCode; verification",
+          "acceptanceEvidence": "Domain benchmark and assumptions reporting",
+          "status": "Unverified"
+        },
+        {
+          "id": "C063",
+          "name": "Thermal Intelligence",
+          "responsibility": "Thermodynamics, heat transfer, energy systems",
+          "proposedOwner": "ƎllE Engineering Intelligence",
+          "dependencies": "C012/C062; unit-aware compute",
+          "acceptanceEvidence": "Reference-case calculation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C064",
+          "name": "Industrial AI",
+          "responsibility": "Equipment monitoring and maintenance",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "Data Fabric; telemetry; permissions",
+          "acceptanceEvidence": "Simulated telemetry and alert tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C065",
+          "name": "Digital Twin Intelligence",
+          "responsibility": "Virtual models of physical assets",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "C059; OmniGraph; World Model",
+          "acceptanceEvidence": "Model synchronization and validation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C066",
+          "name": "Predictive Maintenance",
+          "responsibility": "Identify likely equipment failures",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "C064; historical data; evaluation",
+          "acceptanceEvidence": "Held-out data evaluation with uncertainty",
+          "status": "Unverified"
+        },
+        {
+          "id": "C067",
+          "name": "Scientific Discovery",
+          "responsibility": "Research, experiments, hypothesis generation",
+          "proposedOwner": "ƎllE research capability",
+          "dependencies": "OmniTrace; Reasoning Lab; experiment controls",
+          "acceptanceEvidence": "Reproducible, source-linked research record",
+          "status": "Unverified"
+        },
+        {
+          "id": "C068",
+          "name": "Robotics Intelligence",
+          "responsibility": "Connect to supported robotics systems",
+          "proposedOwner": "Engineering Intelligence + XParallel",
+          "dependencies": "Device permissions; safety sandbox",
+          "acceptanceEvidence": "Simulation-first, safe command authorization",
+          "status": "Unverified"
+        },
+        {
+          "id": "C069",
+          "name": "Geospatial Intelligence",
+          "responsibility": "Mapping, remote sensing, spatial analysis",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "Geospatial connectors; OmniLens",
+          "acceptanceEvidence": "Coordinate/format validation and provenance",
+          "status": "Unverified"
+        },
+        {
+          "id": "C070",
+          "name": "Energy Intelligence",
+          "responsibility": "Optimize generation, storage and consumption",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "C063/C065; telemetry; constraints",
+          "acceptanceEvidence": "Constrained simulation and benchmark",
+          "status": "Unverified"
+        },
+        {
+          "id": "C071",
+          "name": "Agricultural Intelligence",
+          "responsibility": "Crop, soil, weather and livestock support",
+          "proposedOwner": "Engineering Intelligence",
+          "dependencies": "Geospatial/data connectors; OmniTrace",
+          "acceptanceEvidence": "Source-backed recommendations and limitations",
+          "status": "Unverified"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Identity, trust and security",
+      "declaredCount": 11,
+      "components": [
+        {
+          "id": "C072",
+          "name": "UIDaaS",
+          "responsibility": "Universal digital identity and access",
+          "proposedOwner": "UIDaaS",
+          "dependencies": "Authentication; authorization; tenant model",
+          "acceptanceEvidence": "AuthZ, session and tenant isolation tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C073",
+          "name": "AI Guardian",
+          "responsibility": "Security monitoring and threat detection",
+          "proposedOwner": "Shared security/observability",
+          "dependencies": "Logs; policy; incident workflow",
+          "acceptanceEvidence": "Simulated threat and alert tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C074",
+          "name": "Trust Engine",
+          "responsibility": "Assess source/provider trust",
+          "proposedOwner": "Shared trust services",
+          "dependencies": "Provenance; source metadata; policies",
+          "acceptanceEvidence": "Explainable trust score with evidence",
+          "status": "Unverified"
+        },
+        {
+          "id": "C075",
+          "name": "Permission Engine",
+          "responsibility": "Granular authorization",
+          "proposedOwner": "UIDaaS / policy layer",
+          "dependencies": "Identity; resource scopes",
+          "acceptanceEvidence": "Deny-by-default matrix tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C076",
+          "name": "Privacy Vault",
+          "responsibility": "Protected personal information",
+          "proposedOwner": "UIDaaS + Storage Fabric",
+          "dependencies": "Encryption; consent; retention",
+          "acceptanceEvidence": "Access, export and deletion tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C077",
+          "name": "Credential Vault",
+          "responsibility": "Server-side secret management",
+          "proposedOwner": "Shared security infrastructure",
+          "dependencies": "Runtime config; rotation; redaction",
+          "acceptanceEvidence": "Secret never reaches browser/log/source",
+          "status": "Unverified"
+        },
+        {
+          "id": "C078",
+          "name": "AROT",
+          "responsibility": "Historical evidence and integrity",
+          "proposedOwner": "AROT provenance service",
+          "dependencies": "Hashes; immutable history where feasible",
+          "acceptanceEvidence": "Tamper detection and chain-of-custody tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C079",
+          "name": "VOUCHER",
+          "responsibility": "Attribution and verification mechanisms",
+          "proposedOwner": "VOUCHER",
+          "dependencies": "AROT; identity; evidence rules",
+          "acceptanceEvidence": "Attribution trail; no unsupported ownership claims",
+          "status": "Unverified"
+        },
+        {
+          "id": "C080",
+          "name": "AI Firewall",
+          "responsibility": "Inspect/control inbound and outbound AI operations",
+          "proposedOwner": "Shared security infrastructure",
+          "dependencies": "Policy; egress controls; tool registry",
+          "acceptanceEvidence": "Allow/deny, prompt-injection and egress tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C081",
+          "name": "Policy Engine",
+          "responsibility": "Enforce platform/workspace rules",
+          "proposedOwner": "Shared policy layer",
+          "dependencies": "UIDaaS; OmniControl; audit",
+          "acceptanceEvidence": "Policy decision and enforcement tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C082",
+          "name": "Audit Intelligence",
+          "responsibility": "Explain who/what acted and why",
+          "proposedOwner": "AROT + observability",
+          "dependencies": "Auth identity; policy decision; event records",
+          "acceptanceEvidence": "Reconstructable action timeline",
+          "status": "Partial"
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "name": "Personal and organizational intelligence",
+      "declaredCount": 13,
+      "components": [
+        {
+          "id": "C083",
+          "name": "Business intelligence assistant",
+          "responsibility": "Business analysis and decision support",
+          "proposedOwner": "ƎllE domain capability packs",
+          "dependencies": "OmniSearch; provenance; access controls",
+          "acceptanceEvidence": "Reproducible report with source citations",
+          "status": "Unverified"
+        },
+        {
+          "id": "C084",
+          "name": "Enterprise knowledge assistant",
+          "responsibility": "Organization-scoped knowledge access",
+          "proposedOwner": "ƎllE + Omni",
+          "dependencies": "UIDaaS; tenant-isolated Omni",
+          "acceptanceEvidence": "Cross-tenant leakage tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C085",
+          "name": "Digital secretary",
+          "responsibility": "Administrative task assistance",
+          "proposedOwner": "ƎllE + OmniFlow",
+          "dependencies": "Calendar/mail connectors; approvals",
+          "acceptanceEvidence": "Explicitly approved actions and audit",
+          "status": "Unverified"
+        },
+        {
+          "id": "C086",
+          "name": "Personal research librarian",
+          "responsibility": "Organize and retrieve personal research",
+          "proposedOwner": "Omni + ƎllE",
+          "dependencies": "OmniMemory/Search/Archive; consent",
+          "acceptanceEvidence": "Citation, source import/export and deletion tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C087",
+          "name": "Project manager AI",
+          "responsibility": "Project planning and status support",
+          "proposedOwner": "ƎllE + OmniFlow",
+          "dependencies": "OmniPlan; events; workspace controls",
+          "acceptanceEvidence": "Task-state consistency and approval tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C088",
+          "name": "Financial analysis assistant",
+          "responsibility": "Financial analysis and scenarios",
+          "proposedOwner": "ƎllE domain capability packs",
+          "dependencies": "Data validation; uncertainty; privacy",
+          "acceptanceEvidence": "Calculation tests and clear non-advice boundaries",
+          "status": "Unverified"
+        },
+        {
+          "id": "C089",
+          "name": "Education and tutoring intelligence",
+          "responsibility": "Learning and tutoring support",
+          "proposedOwner": "ƎllE domain capability packs",
+          "dependencies": "User preferences; content provenance",
+          "acceptanceEvidence": "Learning-task evaluation and age safeguards",
+          "status": "Unverified"
+        },
+        {
+          "id": "C090",
+          "name": "Legal research assistant with jurisdiction controls",
+          "responsibility": "Jurisdiction-aware legal research",
+          "proposedOwner": "ƎllE domain capability packs",
+          "dependencies": "Source freshness; jurisdiction metadata",
+          "acceptanceEvidence": "Jurisdiction/source checks and disclaimers",
+          "status": "Unverified"
+        },
+        {
+          "id": "C091",
+          "name": "Medical information assistant with clinical safeguards",
+          "responsibility": "Safeguarded medical information",
+          "proposedOwner": "ƎllE domain capability packs",
+          "dependencies": "Trusted sources; clinical safety controls",
+          "acceptanceEvidence": "Safety evaluation and escalation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C092",
+          "name": "Customer service agent",
+          "responsibility": "Customer support workflows",
+          "proposedOwner": "UnitAI + ƎllE",
+          "dependencies": "Knowledge base; identity; approval policies",
+          "acceptanceEvidence": "Grounded response and escalation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C093",
+          "name": "Team collaboration intelligence",
+          "responsibility": "Team knowledge and coordination",
+          "proposedOwner": "ƎllE + Omni",
+          "dependencies": "Workspace permissions; event bus",
+          "acceptanceEvidence": "Membership and isolation tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C094",
+          "name": "Personal knowledge graph",
+          "responsibility": "Personal entity/relationship graph",
+          "proposedOwner": "OmniGraph",
+          "dependencies": "OmniMemory; privacy permissions",
+          "acceptanceEvidence": "User-scoped graph and deletion tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C095",
+          "name": "Multi-user collaborative workspaces",
+          "responsibility": "Shared workspace and collaboration",
+          "proposedOwner": "OneAI workspace + UIDaaS",
+          "dependencies": "Membership; roles; audit",
+          "acceptanceEvidence": "Invite/revoke and tenant isolation tests",
+          "status": "Unverified"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "name": "Infrastructure and computing",
+      "declaredCount": 12,
+      "components": [
+        {
+          "id": "C096",
+          "name": "Compute Fabric",
+          "responsibility": "Access local and cloud computing",
+          "proposedOwner": "Shared platform infrastructure",
+          "dependencies": "Policy; sandbox; resource quotas",
+          "acceptanceEvidence": "Local profile and quota tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C097",
+          "name": "Model Gateway",
+          "responsibility": "Standardized model access",
+          "proposedOwner": "Shared model runtime",
+          "dependencies": "Adapter registry; secrets; policy",
+          "acceptanceEvidence": "Provider contract suite; safe fallback",
+          "status": "Partial"
+        },
+        {
+          "id": "C098",
+          "name": "Data Fabric",
+          "responsibility": "Unified data connectivity",
+          "proposedOwner": "Omni + connector infrastructure",
+          "dependencies": "Connector SDK; permissions",
+          "acceptanceEvidence": "Connector contract and ACL tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C099",
+          "name": "Storage Fabric",
+          "responsibility": "Files, objects and databases",
+          "proposedOwner": "Shared platform infrastructure",
+          "dependencies": "Storage adapters; migrations; backups",
+          "acceptanceEvidence": "Persistence, isolation and restore tests",
+          "status": "Partial"
+        },
+        {
+          "id": "C100",
+          "name": "Vector Engine",
+          "responsibility": "Semantic retrieval",
+          "proposedOwner": "Omni knowledge plane",
+          "dependencies": "Embeddings; OmniIndex; permissions",
+          "acceptanceEvidence": "Retrieval benchmark and deletion propagation",
+          "status": "Unverified"
+        },
+        {
+          "id": "C101",
+          "name": "Event Bus",
+          "responsibility": "Internal communication",
+          "proposedOwner": "Shared runtime",
+          "dependencies": "Versioned event schemas",
+          "acceptanceEvidence": "Delivery, ordering and duplicate handling tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C102",
+          "name": "Queue Engine",
+          "responsibility": "Reliable task delivery",
+          "proposedOwner": "Shared runtime",
+          "dependencies": "Event Bus; durable state; idempotency",
+          "acceptanceEvidence": "Retry/dead-letter/replay tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C103",
+          "name": "API Gateway",
+          "responsibility": "External and internal APIs",
+          "proposedOwner": "Shared platform infrastructure",
+          "dependencies": "UIDaaS; rate limits; versioned contracts",
+          "acceptanceEvidence": "Auth, validation, throttling and contract tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C104",
+          "name": "Edge Runtime",
+          "responsibility": "Local and distributed inference",
+          "proposedOwner": "Shared runtime / XParallel",
+          "dependencies": "Model Gateway; hardware capability detection",
+          "acceptanceEvidence": "Offline/local inference smoke test",
+          "status": "Unverified"
+        },
+        {
+          "id": "C105",
+          "name": "Observability Engine",
+          "responsibility": "Logs, metrics and traces",
+          "proposedOwner": "Shared platform infrastructure",
+          "dependencies": "Redaction; event model; alerting",
+          "acceptanceEvidence": "Correlated trace and secret-redaction tests",
+          "status": "Unverified"
+        },
+        {
+          "id": "C106",
+          "name": "Backup Engine",
+          "responsibility": "Recovery and continuity",
+          "proposedOwner": "Shared platform infrastructure",
+          "dependencies": "Storage Fabric; AROT; runbooks",
+          "acceptanceEvidence": "Automated backup and restore drill",
+          "status": "Unverified"
+        },
+        {
+          "id": "C107",
+          "name": "Developer SDK",
+          "responsibility": "Third-party integration",
+          "proposedOwner": "Shared developer platform",
+          "dependencies": "API Gateway; contracts; auth docs",
+          "acceptanceEvidence": "Example integration and compatibility tests",
+          "status": "Unverified"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "name": "Experimental components",
+      "declaredCount": 6,
+      "components": [
+        {
+          "id": "C108",
+          "name": "Parallel Reality Engine",
+          "responsibility": "Compare multiple possible solutions/scenarios",
+          "proposedOwner": "Parallel Intelligence research",
+          "dependencies": "C005; World Model; sandbox",
+          "acceptanceEvidence": "Reproducible scenario comparison",
+          "status": "Experimental"
+        },
+        {
+          "id": "C109",
+          "name": "Controlled experiments for agent workflows",
+          "responsibility": "Improve workflows/prompts/capabilities with versioning and rollback",
+          "proposedOwner": "Parallel Intelligence research",
+          "dependencies": "Evaluation; version store; approval",
+          "acceptanceEvidence": "Experiment isolation, rollback and audit tests",
+          "status": "Experimental"
+        },
+        {
+          "id": "C110",
+          "name": "Time Intelligence",
+          "responsibility": "Connect historical records, present information and forecasts",
+          "proposedOwner": "Omni + Parallel Intelligence",
+          "dependencies": "OmniArchive/Trace; forecasting evaluation",
+          "acceptanceEvidence": "Time-aware provenance and forecast evaluation",
+          "status": "Experimental"
+        },
+        {
+          "id": "C111",
+          "name": "Governed network of independent AI agents",
+          "responsibility": "Share discoveries and specialist knowledge",
+          "proposedOwner": "XParallel + Parallel Intelligence",
+          "dependencies": "C045/C046; trust and policy",
+          "acceptanceEvidence": "Consent, provenance, isolation and revocation tests",
+          "status": "Experimental"
+        },
+        {
+          "id": "C112",
+          "name": "World Model",
+          "responsibility": "Structured environment/system/object model for simulation/planning",
+          "proposedOwner": "OmniGraph + Engineering Intelligence",
+          "dependencies": "Knowledge Genome; compute/simulation",
+          "acceptanceEvidence": "Model consistency and simulation tests",
+          "status": "Experimental"
+        },
+        {
+          "id": "C113",
+          "name": "Universal AI Passport",
+          "responsibility": "Portable agent identity, permissions and capability declarations",
+          "proposedOwner": "UIDaaS + XParallel",
+          "dependencies": "C046; signed claims; revocation",
+          "acceptanceEvidence": "Cross-system validation, scope and revoke tests",
+          "status": "Partial"
+        }
+      ]
+    }
+  ],
+  "identities": [
+    {
+      "id": "P001",
+      "name": "ƎllE",
+      "responsibility": "Primary intelligence interface",
+      "ownerBoundary": "User-facing intelligence runtime",
+      "acceptanceEvidence": "Real provider/local inference, persistence, diagnostics",
+      "status": "Unverified"
+    },
+    {
+      "id": "P002",
+      "name": "Omni",
+      "responsibility": "Knowledge stream and orchestration identity",
+      "ownerBoundary": "Separate knowledge and orchestration planes",
+      "acceptanceEvidence": "Separate contracts and no duplicated responsibility",
+      "status": "Unverified"
+    },
+    {
+      "id": "P003",
+      "name": "XParallel",
+      "responsibility": "Interoperability and roaming",
+      "ownerBoundary": "Cross-system task transport/execution",
+      "acceptanceEvidence": "Worker lifecycle and protocol tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P004",
+      "name": "Parallel Intelligence",
+      "responsibility": "Collaborative cognition",
+      "ownerBoundary": "Multi-model/agent coordination",
+      "acceptanceEvidence": "Attributed comparison and synthesis tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P005",
+      "name": "AROT",
+      "responsibility": "Historical evidence and accountability",
+      "ownerBoundary": "Provenance and integrity",
+      "acceptanceEvidence": "Artifact lineage, integrity and recovery tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P006",
+      "name": "UnitAI",
+      "responsibility": "Specialized AI units and agents",
+      "ownerBoundary": "Agent types/specialist capabilities",
+      "acceptanceEvidence": "Manifests, permissions and lifecycle tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P007",
+      "name": "Omnibox",
+      "responsibility": "Universal command and access",
+      "ownerBoundary": "Unified command/access surface",
+      "acceptanceEvidence": "Route/command authorization tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P008",
+      "name": "Jellybox",
+      "responsibility": "Consent-based data collection and exchange",
+      "ownerBoundary": "Consent/data exchange capability",
+      "acceptanceEvidence": "Consent, scope, revoke and audit tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P009",
+      "name": "QCode",
+      "responsibility": "Coding and developer intelligence",
+      "ownerBoundary": "Developer tooling",
+      "acceptanceEvidence": "Repository/test workflow and sandbox tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P010",
+      "name": "UIDaaS",
+      "responsibility": "Identity and access",
+      "ownerBoundary": "Identity/authN/authZ",
+      "acceptanceEvidence": "Session, resource authorization and isolation tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P011",
+      "name": "VOUCHER",
+      "responsibility": "Attribution and verification",
+      "ownerBoundary": "Attribution mechanisms",
+      "acceptanceEvidence": "Evidence chain and clear legal limitations",
+      "status": "Unverified"
+    },
+    {
+      "id": "P012",
+      "name": "WFAIAI OS",
+      "responsibility": "Workflow and operating environment",
+      "ownerBoundary": "Reuse OmniFlow where overlapping",
+      "acceptanceEvidence": "Existing contracts and workflow tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P013",
+      "name": "Build Studio",
+      "responsibility": "Creation and development",
+      "ownerBoundary": "Umbrella creation workspace",
+      "acceptanceEvidence": "Create/build/test/preview tests",
+      "status": "Unverified"
+    },
+    {
+      "id": "P014",
+      "name": "AI Repair Shop",
+      "responsibility": "Diagnostics and repair",
+      "ownerBoundary": "Repair proposal and approval workflow",
+      "acceptanceEvidence": "Diagnose, propose, test, approve and rollback",
+      "status": "Unverified"
+    },
+    {
+      "id": "P015",
+      "name": "AI Mixer",
+      "responsibility": "Multi-model routing and comparison surface",
+      "ownerBoundary": "User-facing model selection/collaboration UI",
+      "acceptanceEvidence": "Provider selection, attribution, fallback and tests",
+      "status": "Unverified"
+    }
+  ],
+  "independenceRules": {
+    "canonicalWorkspace": "Oneaiplus",
+    "independentProducts": [
+      "NexAI",
+      "IDEAS"
+    ],
+    "preserveSourceProjects": true,
+    "noStatusPromotionWithoutEvidence": true
+  }
+}
