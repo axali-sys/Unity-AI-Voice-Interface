@@ -50,6 +50,8 @@ The following adjacent modules were inspected to avoid promoting components base
 
 These are scoped repository inspections, not proof that no related code exists anywhere in the wider ecosystem. The register remains conservative: no status promotion is made from a similarly named but materially narrower primitive.
 
+| C037 | OmniRecovery | `xparallel/execution_recovery_service.py`, `xparallel/execution_recovery_supervisor.py`, `xparallel/execution_recovery_health_store.py` | `tests/test_execution_recovery_service.py`, `tests/test_execution_recovery_supervisor.py`, health-store tests | Partial: bounded recovery of already-persisted execution finalizations, fresh executor session, single-flight cycle, disabled-by-default explicit supervisor, optional append-only secret-free health history. Not general workflow retry or fleet scheduler; no live host recovery drill certified. |
+
 ## Operational gaps still open
 
 1. Execute the full targeted test suite against a reproducible checkout and record exact command, environment, test count and result.
