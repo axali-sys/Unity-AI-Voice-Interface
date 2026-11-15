@@ -30,6 +30,7 @@ class FakeWorker:
 class FakeHostServices:
     def __init__(self, approvals):
         self.approvals = approvals
+    worker_lease_required = True
     def build_worker(self):
         return WORKER
 
@@ -77,6 +78,15 @@ class ExecutionHTTPAPITests(unittest.TestCase):
             self.api.execute_ticket(self.owner, {"one_time_ticket": "x"}, session_token='bad')
         self.assertEqual(self.api.execute_ticket(self.operator, {"one_time_ticket": "x"}, session_token='signed-operator-token')["status"], "completed")
         self.assertEqual(self.api.recover_pending(self.operator, {"limit": 10}, session_token='signed-operator-token')["scanned"], 0)
+
+    def test_rejects_host_without_mandatory_trusted_worker_lease(self):
+        host = FakeHostServices(self.approvals)
+        host.worker_lease_required = False
+        with self.assertRaisesRegex(ValueError, "requires_trusted_worker_lease"):
+            ExecutionHTTPAPI(
+                control_plane=type("Control", (), {"approvals": self.approvals})(),
+                host_services=host,
+            )
 
     def test_host_components_must_share_approval_registry(self):
         with self.assertRaisesRegex(TypeError, "share_approval_registry"):
