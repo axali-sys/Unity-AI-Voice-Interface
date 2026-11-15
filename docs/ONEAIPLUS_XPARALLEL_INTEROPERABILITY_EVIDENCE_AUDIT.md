@@ -246,3 +246,10 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Added tests for mandatory resolver configuration and API refusal when the host has not enabled the requirement.
 - Existing host compositions remain non-execution-capable until they inject a real authoritative resolver and explicitly set `require_worker_lease=True`.
 - This is a fail-closed configuration gate, not proof of a deployed task/agent/worker/lease registry. The default server bootstrap remains inert; no live execution is enabled.
+
+
+### Verification correction for mandatory lease gate
+- The first CI attempt correctly exposed that the existing JWT integration tests constructed the HTTP API without declaring the new mandatory lease capability. Those tests failed at API construction; this was a test-fixture/configuration mismatch, not a runtime bypass.
+- Updated the JWT integration fixture to explicitly inject a test-only lease validator and set `require_worker_lease=True`. The test validator re-checks the authenticated workspace, the authoritative approved intent record and the test host's revocation flag.
+- This fixture demonstrates callback delivery and revocation checkpoint behavior only. It is not a production task/agent/worker/lease registry and does not prove lease claim, renewal, or reassignment.
+- CI for corrected commit `7b2ba0a27c29f0cb9d64a5631a4645b4bc1f998b`: all three GitHub Actions checks completed successfully, including the full test suite (368 tests), the JWT-bound approval/execution lifecycle suite, and frontend configuration checks.
