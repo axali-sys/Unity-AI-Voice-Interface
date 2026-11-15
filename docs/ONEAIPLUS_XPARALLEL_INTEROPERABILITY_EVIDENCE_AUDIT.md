@@ -78,3 +78,10 @@ The earlier static-audit statement above describes the audit's original inspecti
 The XParallel workflow includes `tests/test_execution_http_transport.py`, which starts a temporary loopback HTTP server and sends actual HTTP requests through the request handler. It verifies that the private health route rejects a missing bearer token and that an authenticated intent request passes verified claims and the original session token to a test-double execution API.
 
 **Limit:** these are CI tests with a test verifier and test execution adapter. They do not validate the production JWT issuer/audience/secret, Render environment variables, actual host adapters, public-origin allowlist, real peer interoperability, or sandbox isolation. The XParallel component statuses remain Partial, not operational.
+
+
+## Additional component boundary review — 2026-11-15 (adaptive evolution)
+
+- **C004 Adaptive Intelligence — Partial:** `xparallel/evolution_lab.py` and `tests/test_evolution_lab.py` provide a workspace-scoped experiment/proposal record lifecycle. The implementation hashes datasets/configuration, delegates evaluation to an injected runner, blocks proposals when regressions are recorded, requires separate host-authorized human approvals for staging and promotion, and records proposal history. The tests cover deterministic input digests, regression blocking, workspace/authentication isolation, approval gates and record-only rollback.
+- **C004 boundary:** promotion and rollback explicitly do not deploy or modify a live system; rollback is a record-only state transition. The evaluation runner is injected, not a demonstrated adaptive-learning engine. No consented feedback capture pipeline, automatic workflow improvement, live version activation, or actual runtime rollback was verified. This is a governed experiment/proposal foundation, not self-improving production intelligence.
+- **Related overlap:** C109 remains Experimental; the EvolutionLab primitives may support controlled workflow experiments, but do not by themselves establish the full experimental research capability or an operational adaptation loop.
