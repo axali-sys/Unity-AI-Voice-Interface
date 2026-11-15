@@ -327,6 +327,42 @@ class WorkerLeaseExecutionValidator:
         except Exception:
             return False
 
+    def complete(self, session: Any, intent_id: str, intent: dict[str, Any]) -> bool:
+        """Release the exact lease after execution; stale/reassigned leases fail closed."""
+        if not isinstance(intent_id, str) or not isinstance(intent, dict):
+            return False
+        try:
+            assignment = self._resolve(session, intent_id, dict(intent))
+            if not isinstance(assignment, dict):
+                return False
+            if (assignment.get("intent_id") != intent_id
+                    or assignment.get("workspace_id") != intent.get("workspace_id")
+                    or assignment.get("entity_id") != intent.get("entity_id")
+                    or assignment.get("capability_id") != intent.get("capability_id")):
+                return False
+            with self._lock:
+                entry = self._heartbeats.get(intent_id)
+                if entry is None:
+                    return False
+                identity, heartbeat = entry
+                expected = (
+                    assignment.get("workspace_id"), assignment.get("task_id"),
+                    assignment.get("agent_id"), assignment.get("worker_id"),
+                )
+                if tuple(identity[:4]) != expected:
+                    return False
+                released = self._service.release(
+                    workspace_id=identity[0], task_id=identity[1],
+                    worker_id=identity[3], lease_id=identity[4],
+                    expected_version=heartbeat.current_version,
+                )
+                if not isinstance(released, dict) or released.get("status") != "released":
+                    return False
+                self._heartbeats.pop(intent_id, None)
+                return True
+        except Exception:
+            return False
+
     def forget(self, intent_id: str) -> bool:
         """Release in-memory heartbeat state after the host confirms termination."""
         if not isinstance(intent_id, str) or not intent_id.strip():
