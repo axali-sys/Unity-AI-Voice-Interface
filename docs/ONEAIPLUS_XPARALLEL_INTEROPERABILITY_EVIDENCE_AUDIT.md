@@ -161,3 +161,11 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - **Not an operational durable lease service yet:** this module deliberately introduces no database table or migration. The host must inject an atomic, durable repository implementing claim/get/renew/release; repository operations must enforce atomic ownership and version checks. The current test repository is an in-memory test double and does not establish cross-process safety, durable leases, worker heartbeats, automatic expiry cleanup, task reassignment, or production enforcement.
 - The module is not yet wired into the execution worker or Parallel Verse task assignment. Component C031/C032 remain Unverified; no component status is promoted based on this foundation.
 - CI evidence for commits `0e24e064` and `54e869a3` was not available at the time of this audit update. Do not treat these tests as passed until a workflow run completes successfully.
+
+
+## Execution-worker lease checkpoint bridge — 2026-11-15
+
+- `ApprovedExecutionWorker` now accepts an optional trusted `validate_worker_lease(session, intent)` adapter. When configured, it is evaluated together with the existing approval/revocation checkpoint before work starts and whenever the runner polls `should_continue`.
+- A false result or adapter exception fails closed through the existing checkpoint path; the runner receives the live checkpoint callback and must poll it during execution for timely cancellation.
+- Added worker tests for lease denial before runner start and lease loss during runner activity.
+- This remains an optional host integration: no deployment adapter currently proves how immutable execution intents map to task/worker/lease records. The host must inject a trusted adapter and the runner must poll `should_continue`. No durable lease repository, worker heartbeat, automatic task reassignment, or live deployment verification is claimed.
