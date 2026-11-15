@@ -128,3 +128,8 @@ Compatibility boundary:
 This document records a source audit and an integration contract. It does not claim that source files have already been copied into the canonical Lovable project, that the Lovable preview has changed, or that any provider, database, XParallel host, or private execution path is operational.
 
 The Lovable source files were readable through the connected project integration. The GitHub repository is accessible, but its inspected Next.js frontend has not been proven to be the canonical Lovable project's synchronized source. Therefore this branch is an isolated engineering record, not proof of a completed Lovable-to-GitHub source binding.
+
+
+## Read-only source adoption audit (2026-11-16)
+
+A detailed file-by-file adoption matrix is recorded at `docs/architecture/oneaiplus-lovable-source-adoption-matrix.md`. It inspects OneAI Workspace, Pixel Perfect Replica and Pixel Perfect Replay, distinguishes safe UI/schema patterns from backend and role/migration hazards, and records the current canonical TanStack project inventory state. The key finding remains that the canonical Oneaiplus Lovable project is TanStack Start while the linked GitHub repository frontend is Next.js 14; no exact synchronized source binding or zero-cost write path to the canonical Lovable project has been established. The staged registry is therefore not yet present in the canonical preview.
