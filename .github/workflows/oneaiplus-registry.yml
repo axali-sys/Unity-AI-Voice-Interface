@@ -1,0 +1,34 @@
+name: Oneaiplus Registry Validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/oneaiplus-ecosystem-registry.json"
+      - "tests/oneaiplus-ecosystem-registry.test.mjs"
+      - "package.json"
+      - ".github/workflows/oneaiplus-registry.yml"
+  push:
+    branches:
+      - "oneaiplus/**"
+    paths:
+      - "docs/architecture/oneaiplus-ecosystem-registry.json"
+      - "tests/oneaiplus-ecosystem-registry.test.mjs"
+      - "package.json"
+      - ".github/workflows/oneaiplus-registry.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  registry:
+    name: Validate component and identity registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Validate registry
+        run: npm run test:oneaiplus-registry
