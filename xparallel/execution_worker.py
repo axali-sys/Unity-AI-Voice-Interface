@@ -25,7 +25,7 @@ class ApprovedExecutionWorker:
         measure_resources: Callable[[dict[str, Any], dict[str, Any]], dict[str, int]],
         store_evidence: Callable[[dict[str, Any], dict[str, Any]], list[str]],
         receipts: Any,
-        validate_worker_lease: Callable[[Any, dict[str, Any]], bool] | None = None,
+        validate_worker_lease: Callable[[Any, str, dict[str, Any]], bool] | None = None,
     ):
         adapters = (runner, load_payload, resolve_artifact_digest,
                     resolve_policy_evidence, measure_resources, store_evidence)
@@ -141,7 +141,7 @@ class ApprovedExecutionWorker:
                 # Optional host adapter resolves lease identity from immutable,
                 # trusted intent data and checks current ownership/expiry/revocation.
                 if self._validate_worker_lease is not None:
-                    return self._validate_worker_lease(session, intent) is True
+                    return self._validate_worker_lease(session, intent_id, intent) is True
                 return True
             except Exception:
                 return False
