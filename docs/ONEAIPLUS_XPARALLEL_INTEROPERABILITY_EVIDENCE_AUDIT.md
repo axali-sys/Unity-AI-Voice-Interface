@@ -179,3 +179,13 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Added persistence/reopen, active-claim exclusion, stale-version, event history, and expiry-reclaim tests.
 - **Not yet operationally integrated:** no host deployment selects/configures this repository path, no worker heartbeat loop or task reassignment scheduler exists, and the execution-worker lease adapter still requires trusted host composition. CI results must be checked before treating this implementation as verified.
 - SQLite durability is limited to the configured filesystem/volume. A serverless ephemeral filesystem is not a durable multi-instance lease backend; production requires a persistent shared transactional store and host-level configuration.
+
+
+## Checkpoint-driven worker lease heartbeat — 2026-11-15
+
+- Added `WorkerLeaseHeartbeat` to `xparallel/worker_lease.py`. It is called through the execution runner's existing `should_continue` polling callback, validates the lease on every poll, and renews only when its configured heartbeat interval is due.
+- The heartbeat tracks the incrementing lease version, serializes concurrent polls, and fails closed on revocation, expiry, reassignment, malformed responses, or repository errors.
+- It is deliberately checkpoint-driven rather than a background thread. If a runner stops polling its callback, the heartbeat stops; this avoids a detached heartbeat keeping abandoned work alive.
+- Host code must resolve the workspace/task/agent/worker/lease identity from authenticated server-side records and inject a closure into the existing `validate_worker_lease(session, intent)` adapter. The helper is not automatically wired into the executor or any deployed host.
+- Tests cover heartbeat timing/version progression, revocation, and reassignment. Passing tests establish local policy behavior only; they do not demonstrate live deployment, cross-process worker scheduling, heartbeat delivery from a real runner, or automatic task reassignment.
+- Safe reassignment remains claim-after-expiry/revocation under the repository's atomic claim operation. There is no independent scheduler, worker liveness detector, grace-period policy, or workload checkpoint/restore mechanism yet.
