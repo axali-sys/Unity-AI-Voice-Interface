@@ -31,8 +31,10 @@ class ExecutionHostServices:
       - measure_resources: return measurements from the actual host/container runtime
       - store_evidence: persist execution evidence durably and return immutable references
       - receipts: signed receipt ledger with authoritative job lookup and signing
-      - validate_worker_lease: optional trusted resolver/check receiving (session, intent_id, immutable_intent);
-        it must resolve task/agent/worker/lease from authoritative host records and fail closed
+      - validate_worker_lease: when execution is enabled, a mandatory trusted
+        resolver/check receiving (session, intent_id, immutable_intent); it must
+        resolve task/agent/worker/lease from authoritative host records and fail closed.
+        A WorkerLeaseExecutionValidator also releases its exact lease after the runner stops.
 
     The adapter implementations are trust roots. This wrapper validates their
     outputs but cannot independently prove that an operator's storage or
