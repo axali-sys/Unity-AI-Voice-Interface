@@ -236,3 +236,13 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Added tests for intent-ID delivery, checkpoint revalidation, resolver forwarding, and rejection of a non-callable adapter.
 - This is host composition plumbing, not a configured resolver: no task/agent/worker/lease registry is currently supplied by this repository's default bootstrap. Therefore no live lease enforcement is claimed.
 - The callback remains optional for compatibility with existing host compositions. A production host must make it mandatory before enabling worker execution; the present default bootstrap keeps execution API disabled unless explicitly configured.
+
+
+### 2026-11-15: execution API now fails closed without mandatory lease enforcement
+- `ExecutionHostServices` now accepts an explicit `require_worker_lease` configuration.
+- When enabled, construction fails unless a callable trusted lease resolver is supplied.
+- The host publishes a `worker_lease_required` capability flag only from this validated configuration.
+- `ExecutionHTTPAPI` refuses to construct unless the host explicitly confirms mandatory worker-lease enforcement. This prevents an execution-enabled HTTP API from silently using the legacy optional callback path.
+- Added tests for mandatory resolver configuration and API refusal when the host has not enabled the requirement.
+- Existing host compositions remain non-execution-capable until they inject a real authoritative resolver and explicitly set `require_worker_lease=True`.
+- This is a fail-closed configuration gate, not proof of a deployed task/agent/worker/lease registry. The default server bootstrap remains inert; no live execution is enabled.
