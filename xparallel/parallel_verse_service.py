@@ -44,7 +44,7 @@ class ParallelVerseService:
     def revoke_agent(self,session:Any,*,agent_id:str,reason:str)->dict[str,Any]:
         """Revoke an agent only after trusted workspace authentication and ACL approval."""
         p=self._principal(session); self._allow(p,"agent.revoke",agent_id)
-        if not isinstance(agent_id,str) or not agent_id.strip() or len(agent_id)>200:
+        if not isinstance(agent_id,str) or not agent_id.strip() or len(agent_id)>160:
             raise ValueError("invalid_agent_id")
         if not isinstance(reason,str) or not reason.strip() or len(reason)>1000:
             raise ValueError("invalid_revocation_reason")
