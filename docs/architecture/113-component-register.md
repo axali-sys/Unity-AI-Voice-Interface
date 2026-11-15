@@ -93,16 +93,16 @@ Columns: ID; source name; source responsibility / scope; proposed owner; depende
 
 | ID | Source name | Responsibility | Proposed owner | Dependencies / overlap | Acceptance evidence | Status |
 |---|---|---|---|---|---|---|
-| C038 | XParallel Discovery | Discover compatible AI systems/services | XParallel | Registry; safe probes; egress policy | Authorized discovery and timeout tests | Unverified |
-| C039 | XParallel Connect | Establish authorized connections | XParallel | UIDaaS; Credential Vault; connector SDK | Auth, revoke and reconnect tests | Unverified |
-| C040 | XParallel Roaming | Workers operate in approved environments | XParallel roaming runtime | Registry; queues; sandbox; policy | Register/heartbeat/task/result/revoke lifecycle | Unverified |
-| C041 | XParallel Exchange | Standardized information/task exchange | XParallel | Protocol; versioned contracts | Contract compatibility tests | Unverified |
-| C042 | XParallel Protocol | Common communication contracts | XParallel | Auth; versioning; schema validation | Compatibility and invalid-payload tests | Unverified |
-| C043 | XParallel Mesh | Distributed network of workers/systems | XParallel | C038–C042; observability | Node failure and isolation tests | Unverified |
-| C044 | XParallel Sandbox | Isolated execution environments | XParallel + Compute Fabric | Least privilege; egress restrictions | Escape/egress and resource-limit tests | Unverified |
-| C045 | XParallel Registry | Discoverable agent/service directory | XParallel | UIDaaS; manifests; health | Registration, lookup, stale entry and revoke tests | Unverified |
-| C046 | XParallel Passport | Portable, revocable agent identity | UIDaaS + XParallel | Signed claims; expiry; revocation | Signature, scope, expiry and revoke tests | Unverified |
-| C047 | Parallel Verse | Persistent environment for agents to coexist and collaborate | XParallel | Registry; events; storage; sandbox | Persistence, tenant isolation and recovery tests | Unverified |
+| C038 | XParallel Discovery | Discover compatible AI systems/services | XParallel | Registry; safe probes; egress policy | Authorized discovery and timeout tests | Partial |
+| C039 | XParallel Connect | Establish authorized connections | XParallel | UIDaaS; Credential Vault; connector SDK | Auth, revoke and reconnect tests | Partial |
+| C040 | XParallel Roaming | Workers operate in approved environments | XParallel roaming runtime | Registry; queues; sandbox; policy | Register/heartbeat/task/result/revoke lifecycle | Partial |
+| C041 | XParallel Exchange | Standardized information/task exchange | XParallel | Protocol; versioned contracts | Contract compatibility tests | Partial |
+| C042 | XParallel Protocol | Common communication contracts | XParallel | Auth; versioning; schema validation | Compatibility and invalid-payload tests | Partial |
+| C043 | XParallel Mesh | Distributed network of workers/systems | XParallel | C038–C042; observability | Node failure and isolation tests | Partial |
+| C044 | XParallel Sandbox | Isolated execution environments | XParallel + Compute Fabric | Least privilege; egress restrictions | Escape/egress and resource-limit tests | Partial |
+| C045 | XParallel Registry | Discoverable agent/service directory | XParallel | UIDaaS; manifests; health | Registration, lookup, stale entry and revoke tests | Partial |
+| C046 | XParallel Passport | Portable, revocable agent identity | UIDaaS + XParallel | Signed claims; expiry; revocation | Signature, scope, expiry and revoke tests | Partial |
+| C047 | Parallel Verse | Persistent environment for agents to coexist and collaborate | XParallel | Registry; events; storage; sandbox | Persistence, tenant isolation and recovery tests | Partial |
 
 ### 5. Creative intelligence — 14 entries
 
