@@ -52,6 +52,8 @@ These are scoped repository inspections, not proof that no related code exists a
 
 | C037 | OmniRecovery | `xparallel/execution_recovery_service.py`, `xparallel/execution_recovery_supervisor.py`, `xparallel/execution_recovery_health_store.py` | `tests/test_execution_recovery_service.py`, `tests/test_execution_recovery_supervisor.py`, health-store tests | Partial: bounded recovery of already-persisted execution finalizations, fresh executor session, single-flight cycle, disabled-by-default explicit supervisor, optional append-only secret-free health history. Not general workflow retry or fleet scheduler; no live host recovery drill certified. |
 
+| C113 | Universal AI Passport | `xparallel/digital_dna.py`, `identity_trust.py`, `entity_federation.py`, `capability_verification.py`, `verified_action_gate.py` | `tests/test_digital_dna.py`, `test_identity_trust.py`, `test_entity_federation.py`, `test_capability_verification.py`, `test_verified_action_gate.py` | Partial: workspace-scoped versioned manifests, Ed25519 owner proof/key lifecycle, signed expiring local federation records, artifact-bound capability verification and exact-grant action gate. Separate local primitives only; not a unified portable credential or deployed cross-system identity/revocation service. |
+
 ## Operational gaps still open
 
 1. Execute the full targeted test suite against a reproducible checkout and record exact command, environment, test count and result.
