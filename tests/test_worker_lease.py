@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
-
-import pytest
+import unittest
 
 from xparallel.worker_lease import WorkerLeaseService
 
@@ -20,7 +19,7 @@ class MemoryLeaseRepository:
     def claim(self, workspace, task, agent, worker, lease_id, expires_at):
         key = (workspace, task)
         old = self.rows.get(key)
-        if old and old["status"] == "active" and datetime.fromisoformat(old["expires_at"]) > datetime.now(timezone.utc):
+        if old and old["status"] == "active" and datetime.fromisoformat(old["expires_at"]) > datetime(2026, 1, 1, tzinfo=timezone.utc):
             raise ValueError("lease_already_claimed")
         row = {"workspace_id": workspace, "task_id": task, "agent_id": agent,
                "worker_id": worker, "lease_id": lease_id, "expires_at": expires_at,
@@ -47,70 +46,70 @@ class MemoryLeaseRepository:
         return dict(row)
 
 
-def make_service(active=lambda workspace, agent: True):
-    clock = Clock()
-    repo = MemoryLeaseRepository()
-    service = WorkerLeaseService(repository=repo, agent_is_active=active, clock=clock)
-    return service, repo, clock
+class WorkerLeaseTests(unittest.TestCase):
+    def make_service(self, active=lambda workspace, agent: True):
+        clock = Clock()
+        repo = MemoryLeaseRepository()
+        service = WorkerLeaseService(repository=repo, agent_is_active=active, clock=clock)
+        return service, repo, clock
 
+    def test_claim_validate_renew_and_release_lease(self):
+        service, repo, clock = self.make_service()
+        lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                              worker_id="worker-1", ttl_seconds=60)
+        self.assertTrue(service.validate(workspace_id="w1", task_id="t1",
+                                         agent_id="a1", worker_id="worker-1"))
+        renewed = service.renew(workspace_id="w1", task_id="t1", agent_id="a1",
+                                worker_id="worker-1", lease_id=lease["lease_id"],
+                                expected_version=lease["version"], ttl_seconds=90)
+        self.assertEqual(renewed["version"], 2)
+        released = service.release(workspace_id="w1", task_id="t1",
+                                   worker_id="worker-1", lease_id=lease["lease_id"],
+                                   expected_version=renewed["version"])
+        self.assertEqual(released["status"], "released")
+        self.assertFalse(service.validate(workspace_id="w1", task_id="t1",
+                                          agent_id="a1", worker_id="worker-1"))
 
-def test_claim_validate_renew_and_release_lease():
-    service, repo, clock = make_service()
-    lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
-                          worker_id="worker-1", ttl_seconds=60)
-    assert service.validate(workspace_id="w1", task_id="t1",
-                            agent_id="a1", worker_id="worker-1")
-    renewed = service.renew(workspace_id="w1", task_id="t1", agent_id="a1",
-                            worker_id="worker-1", lease_id=lease["lease_id"],
-                            expected_version=lease["version"], ttl_seconds=90)
-    assert renewed["version"] == 2
-    released = service.release(workspace_id="w1", task_id="t1",
-                               worker_id="worker-1", lease_id=lease["lease_id"],
-                               expected_version=renewed["version"])
-    assert released["status"] == "released"
-    assert not service.validate(workspace_id="w1", task_id="t1",
-                                agent_id="a1", worker_id="worker-1")
+    def test_revoked_agent_cannot_validate_or_renew_lease(self):
+        active = {"value": True}
+        service, repo, clock = self.make_service(lambda workspace, agent: active["value"])
+        lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                              worker_id="worker-1")
+        active["value"] = False
+        self.assertFalse(service.validate(workspace_id="w1", task_id="t1",
+                                           agent_id="a1", worker_id="worker-1"))
+        with self.assertRaisesRegex(PermissionError, "worker_lease_not_valid"):
+            service.renew(workspace_id="w1", task_id="t1", agent_id="a1",
+                          worker_id="worker-1", lease_id=lease["lease_id"],
+                          expected_version=lease["version"])
 
-
-def test_revoked_agent_cannot_validate_or_renew_lease():
-    active = {"value": True}
-    service, repo, clock = make_service(lambda workspace, agent: active["value"])
-    lease = service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
-                          worker_id="worker-1")
-    active["value"] = False
-    assert not service.validate(workspace_id="w1", task_id="t1",
-                                 agent_id="a1", worker_id="worker-1")
-    with pytest.raises(PermissionError, match="worker_lease_not_valid"):
-        service.renew(workspace_id="w1", task_id="t1", agent_id="a1",
-                      worker_id="worker-1", lease_id=lease["lease_id"],
-                      expected_version=lease["version"])
-
-
-def test_expired_lease_is_not_valid():
-    service, repo, clock = make_service()
-    service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
-                  worker_id="worker-1", ttl_seconds=15)
-    clock.value += timedelta(seconds=16)
-    assert not service.validate(workspace_id="w1", task_id="t1",
-                                agent_id="a1", worker_id="worker-1")
-
-
-def test_lease_cannot_be_validated_from_another_workspace_or_worker():
-    service, repo, clock = make_service()
-    service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
-                  worker_id="worker-1")
-    assert not service.validate(workspace_id="w2", task_id="t1",
-                                agent_id="a1", worker_id="worker-1")
-    assert not service.validate(workspace_id="w1", task_id="t1",
-                                agent_id="a1", worker_id="worker-2")
-
-
-def test_invalid_ttl_and_naive_clock_are_rejected():
-    service, repo, clock = make_service()
-    with pytest.raises(ValueError, match="lease_ttl_out_of_range"):
+    def test_expired_lease_is_not_valid(self):
+        service, repo, clock = self.make_service()
         service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
-                      worker_id="worker-1", ttl_seconds=1)
-    clock.value = datetime(2026, 1, 1)
-    with pytest.raises(ValueError, match="timezone_aware"):
+                      worker_id="worker-1", ttl_seconds=15)
+        clock.value += timedelta(seconds=16)
+        self.assertFalse(service.validate(workspace_id="w1", task_id="t1",
+                                          agent_id="a1", worker_id="worker-1"))
+
+    def test_workspace_and_worker_isolation(self):
+        service, repo, clock = self.make_service()
         service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
                       worker_id="worker-1")
+        self.assertFalse(service.validate(workspace_id="w2", task_id="t1",
+                                           agent_id="a1", worker_id="worker-1"))
+        self.assertFalse(service.validate(workspace_id="w1", task_id="t1",
+                                           agent_id="a1", worker_id="worker-2"))
+
+    def test_invalid_ttl_and_naive_clock_are_rejected(self):
+        service, repo, clock = self.make_service()
+        with self.assertRaisesRegex(ValueError, "lease_ttl_out_of_range"):
+            service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                          worker_id="worker-1", ttl_seconds=1)
+        clock.value = datetime(2026, 1, 1)
+        with self.assertRaisesRegex(ValueError, "timezone_aware"):
+            service.claim(workspace_id="w1", task_id="t1", agent_id="a1",
+                          worker_id="worker-1")
+
+
+if __name__ == "__main__":
+    unittest.main()
