@@ -96,6 +96,37 @@ class GovernanceRegistryTests(unittest.TestCase):
         self.assertTrue(decision["allowed"])
         self.assertEqual(decision["grant_id"], approved["grant_id"])
 
+    def test_revocation_immediately_denies_previously_authorized_action(self):
+        approved = self.approved()
+        identity = {
+            "authenticated": True, "workspace_id": "ws-a", "subject": "owner:1",
+            "owner_subject": "owner:1", "entity_id": "entity-a",
+            "entity_status": "active", "key_id": "key-a", "key_status": "active",
+            "capability_id": "research.read", "capability_status": "verified",
+        }
+
+        before = authorize_entity_action(
+            identity, self.registry.active_grants("ws-a", "entity-a"),
+            action="read", resource_scope="source:document-7"
+        )
+        self.assertTrue(before["allowed"])
+        self.assertEqual(before["grant_id"], approved["grant_id"])
+
+        revoked = self.registry.revoke(
+            "approver", approved["grant_id"], "owner requested revocation"
+        )
+        self.assertEqual(revoked["status"], "revoked")
+        after = authorize_entity_action(
+            identity, self.registry.active_grants("ws-a", "entity-a"),
+            action="read", resource_scope="source:document-7"
+        )
+        self.assertFalse(after["allowed"])
+        self.assertEqual(after["reason"], "no_matching_unexpired_grant")
+        self.assertEqual(
+            [event["event_type"] for event in self.registry.events("owner", approved["grant_id"])],
+            ["requested", "approved", "revoked"],
+        )
+
     def test_suspended_grant_is_not_active_and_can_be_reinstated(self):
         approved = self.approved()
         self.registry.suspend("approver", approved["grant_id"], "temporary review")
@@ -144,7 +175,7 @@ class GovernanceRegistryTests(unittest.TestCase):
             self.registry.request_grant(
                 "owner", entity_id="entity-a", key_id="key-a",
                 capability_id="research.read", action="read",
-                resource_scope="source:doc\nother"
+                resource_scope="source:doc\\nother"
             )
 
     def test_audit_history_is_append_only_and_scoped(self):
