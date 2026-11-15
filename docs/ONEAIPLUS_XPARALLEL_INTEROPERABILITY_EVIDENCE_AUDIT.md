@@ -152,3 +152,12 @@ Static source and test inspection only; tests were not executed here. No peer ne
 - Added a test proving that changing the trusted agent-active result to false after execution starts causes the next approval checkpoint to deny continuation. The earlier runner test separately verifies that a false live checkpoint kills the process group.
 - **Important deployment requirement:** the new bridge is optional for backward compatibility. Existing deployments that do not inject `validate_agent_active` continue to validate entity/key/capability/grant state only; they must not claim that Parallel Verse agent revocation is enforced for their running execution jobs. The callback must resolve the agent from trusted server-side intent/identity data and query the correct workspace; it must never accept an agent ID or workspace override from untrusted request data.
 - This is a tested integration contract, not proof that a live host has wired the callback. No worker lease system, lease revocation, federation propagation, deployed process test, or production integration is claimed.
+
+
+## Worker lease policy foundation — 2026-11-15
+
+- Added `xparallel/worker_lease.py` as a host-adapter policy boundary for worker lease claim, validation, renewal and release. It enforces bounded TTLs, timezone-aware expiry checks, workspace/task/agent/worker identity matching, expected-version checks for renewal/release, and a live agent-active check before claim and during validation/renewal.
+- Added `tests/test_worker_lease.py` covering claim/renew/release, agent revocation denial, expiry, workspace/worker isolation, invalid TTL and invalid clock behavior.
+- **Not an operational durable lease service yet:** this module deliberately introduces no database table or migration. The host must inject an atomic, durable repository implementing claim/get/renew/release; repository operations must enforce atomic ownership and version checks. The current test repository is an in-memory test double and does not establish cross-process safety, durable leases, worker heartbeats, automatic expiry cleanup, task reassignment, or production enforcement.
+- The module is not yet wired into the execution worker or Parallel Verse task assignment. Component C031/C032 remain Unverified; no component status is promoted based on this foundation.
+- CI evidence for commits `0e24e064` and `54e869a3` was not available at the time of this audit update. Do not treat these tests as passed until a workflow run completes successfully.
