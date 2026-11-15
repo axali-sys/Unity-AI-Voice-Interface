@@ -9,7 +9,7 @@ class ParallelVerseServiceTests(unittest.TestCase):
                        "beta":{"authenticated":True,"workspace_id":"ws-b","subject":"user-b"}}
         self.allowed=True
         self.service=ParallelVerseService(authenticate=lambda s:self.sessions.get(s,{"authenticated":False}),
-          authorize=lambda p,a,r:self.allowed and a in {"agent.create","agent.read","space.create","space.read","event.write","event.read","task.create","task.read"},
+          authorize=lambda p,a,r:self.allowed and a in {"agent.create","agent.read","agent.revoke","space.create","space.read","event.write","event.read","task.create","task.read"},
           db_path=self.db)
     def tearDown(self): self.temp.cleanup()
     def test_workspace_comes_from_trusted_session_not_client_argument(self):
@@ -32,6 +32,23 @@ class ParallelVerseServiceTests(unittest.TestCase):
         with self.assertRaises(PermissionError): self.service.list_agents("invalid")
         self.allowed=False
         with self.assertRaises(PermissionError): self.service.register_agent("alpha",name="No")
+    def test_agent_revocation_requires_workspace_acl_and_hides_agent(self):
+        agent=self.service.register_agent("alpha",name="Worker")
+        revoked=self.service.revoke_agent("alpha",agent_id=agent["agent_id"],reason="Security review")
+        self.assertEqual(revoked["status"],"revoked")
+        self.assertEqual(self.service.list_agents("alpha"),[])
+        with self.assertRaises(ValueError):
+            self.service.revoke_agent("beta",agent_id=agent["agent_id"],reason="Cross-workspace")
+        self.assertEqual(self.service.list_agents("beta"),[])
+
+    def test_agent_revocation_denied_without_acl_permission(self):
+        agent=self.service.register_agent("alpha",name="Protected")
+        self.allowed=False
+        with self.assertRaises(PermissionError):
+            self.service.revoke_agent("alpha",agent_id=agent["agent_id"],reason="Not authorized")
+        self.allowed=True
+        self.assertEqual(self.service.list_agents("alpha")[0]["agent_id"],agent["agent_id"])
+
     def test_secret_metadata_rejected(self):
         with self.assertRaises(ValueError):
             self.service.register_agent("alpha",name="Bad",metadata={"api_token":"do-not-store"})
