@@ -21,6 +21,8 @@ from xparallel.axaliai_gateway import gateway_manifest
 from xparallel.omni_unitai import system_manifest
 from xparallel.memory_vault import save_memory, search_memories, list_memories, forget_memory
 from xparallel.memory_service import summarize_memories
+from xparallel.memory_backup import create_snapshot, verify_snapshot, list_snapshots
+from xparallel.memory_recovery import recover_snapshot
 from xparallel.conversation_store import save_conversation, get_conversation, list_conversations, delete_conversation
 from xparallel.chat_service import chat as chat_with_ai
 from xparallel.parallel_world import create_parallel_plan
@@ -216,6 +218,13 @@ class Handler(BaseHTTPRequestHandler):
             if query:
                 return send_json(self, 200, {"memories": search_memories(query, workspace, limit)})
             return send_json(self, 200, {"memories": list_memories(workspace, limit)})
+        if parsed.path == "/memory/snapshots":
+            params = parse_qs(parsed.query)
+            workspace = workspace_context({"workspace_id": params.get("workspace_id", ["default"])[0]})["workspace_id"]
+            if not self.require_role("memory_backup"):
+                return send_json(self, 403, {"error": "forbidden"})
+            return send_json(self, 200, {"workspace_id": workspace,
+                                         "snapshots": list_snapshots(workspace, params.get("limit", ["20"])[0])})
         if self.path == "/registry":
             return send_json(self, 200, {"network": NETWORK, "version": VERSION, "knowledge": list(load()), "services": SERVICES})
         if self.path == "/services":
@@ -271,6 +280,38 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 201, result)
             except ValueError as exc:
                 return send_json(self, 400, {"error": str(exc)})
+
+        if self.path == "/memory/snapshots":
+            if not self.require_role("memory_backup"):
+                return send_json(self, 403, {"error": "forbidden"})
+            workspace_data = workspace_context(data)
+            workspace = workspace_data["workspace_id"]
+            try:
+                result = create_snapshot(workspace)
+            except (ValueError, OSError):
+                return send_json(self, 500, {"error": "snapshot_creation_failed"})
+            self.audit("memory_snapshot_created", workspace, workspace_data["actor"],
+                       {"snapshot_id": result["snapshot_id"], "item_count": result["item_count"]})
+            return send_json(self, 201, result)
+
+        if self.path == "/memory/recover":
+            if not self.require_role("memory_recover"):
+                return send_json(self, 403, {"error": "forbidden"})
+            workspace_data = workspace_context(data)
+            workspace = workspace_data["workspace_id"]
+            snapshot_id = str(data.get("snapshot_id", "")).strip()
+            mode = str(data.get("mode", "merge")).strip()
+            target = str(data.get("target_workspace_id", workspace)).strip()
+            explicit_scope = data.get("confirm_scope") is True and bool(snapshot_id) and bool(target)
+            result = recover_snapshot(snapshot_id, workspace, target, mode=mode,
+                                      authorized=self.role() == "owner",
+                                      explicit_scope=explicit_scope)
+            self.audit("memory_recovery_attempt", workspace, workspace_data["actor"],
+                       {"snapshot_id": snapshot_id[:100], "target_workspace_id": target[:128],
+                        "mode": mode, "recovered": bool(result.get("recovered")),
+                        "reason": result.get("reason", "success")})
+            status = 200 if result.get("recovered") else 400
+            return send_json(self, status, result)
 
         if self.path == "/conversations":
             workspace = workspace_context(data)["workspace_id"]
