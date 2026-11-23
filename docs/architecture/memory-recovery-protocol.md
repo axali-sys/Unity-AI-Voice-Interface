@@ -43,6 +43,23 @@ records.
 - Recovery does not claim to restore external replicas, conversations, secrets,
   identity credentials, or files outside the Memory Vault.
 
+## Authenticated API integration (development branch)
+
+- `GET /memory/snapshots?limit=20`: lists snapshot metadata for the authenticated workspace.
+- `POST /memory/snapshots`: creates a snapshot for the authenticated workspace.
+- `POST /memory/recover`: accepts `snapshot_id`, optional `target_workspace_id`,
+  `mode` (`merge` or `replace`), and explicit `confirm_scope: true`.
+
+The server derives the source workspace from the request's authenticated workspace
+context; clients cannot provide a snapshot payload. Snapshot listing/creation
+require the `memory_backup` role. Recovery requires the owner role and explicit
+scope confirmation. Attempts are audited with IDs, mode, outcome, and reason only.
+
+The server's current workspace context is still a deployment-level identity
+boundary: before multi-user exposure, it must be bound to the authenticated
+principal rather than trusting a client-selected workspace ID. Configure and
+verify XP_TOKEN and the identity-to-workspace mapping before use.
+
 ## Important limitations / next integration work
 
 - The current snapshot is stored in the same SQLite database as the vault.
