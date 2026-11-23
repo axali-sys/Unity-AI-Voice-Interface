@@ -45,6 +45,16 @@ def recover_snapshot(snapshot_id: str, source_workspace: str,
         if not row or row["payload_json"] != json.dumps(
                 payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")):
             return {"recovered": False, "reason": "snapshot_changed"}
+        if mode == "merge":
+            # Reject reused IDs with different content before mutating anything.
+            for item in items:
+                existing = conn.execute(
+                    "SELECT content_hash FROM memory_items WHERE id=? AND workspace_id=?",
+                    (item["id"], target)
+                ).fetchone()
+                if existing and existing["content_hash"] != item["content_hash"]:
+                    return {"recovered": False, "reason": "target_memory_id_conflict"}
+
         if mode == "replace":
             conn.execute("DELETE FROM memory_items WHERE workspace_id=?", (target,))
 
