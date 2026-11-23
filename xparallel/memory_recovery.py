@@ -7,6 +7,8 @@ one SQLite transaction to merge or replace the selected destination workspace.
 from __future__ import annotations
 
 import json
+import hashlib
+import uuid
 from typing import Any
 
 from .memory_backup import verify_snapshot, _ensure_schema
@@ -36,14 +38,16 @@ def recover_snapshot(snapshot_id: str, source_workspace: str,
     items = payload["items"]
     with _connect(db_path) as conn:
         _ensure_schema(conn)
-        # Explicitly re-read and verify inside the write transaction to narrow
-        # the time-of-check/time-of-use window.
+        conn.execute("BEGIN IMMEDIATE")
+        # Re-read and verify under the SQLite write reservation.
         row = conn.execute(
             "SELECT payload_json,payload_sha256 FROM memory_snapshots "
             "WHERE snapshot_id=? AND workspace_id=?", (str(snapshot_id), source)
         ).fetchone()
-        if not row or row["payload_json"] != json.dumps(
-                payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")):
+        canonical_payload = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        current_digest = hashlib.sha256(row["payload_json"].encode("utf-8")).hexdigest() if row else ""
+        if (not row or row["payload_json"] != canonical_payload
+                or current_digest != row["payload_sha256"]):
             return {"recovered": False, "reason": "snapshot_changed"}
         if mode == "merge":
             # Reject reused IDs with different content before mutating anything.
@@ -66,7 +70,9 @@ def recover_snapshot(snapshot_id: str, source_workspace: str,
                 "INSERT OR IGNORE INTO memory_items"
                 "(id,workspace_id,content_hash,content,summary,tags_json,created_at,updated_at) "
                 "VALUES(?,?,?,?,?,?,?,?)",
-                (item["id"], target, item["content_hash"], item["content"],
+                (item["id"] if target == source else uuid.uuid5(
+                    uuid.NAMESPACE_URL, "xparallel-memory-recovery:" + str(snapshot_id) + ":" + item["id"]
+                ).hex, target, item["content_hash"], item["content"],
                  item.get("summary", ""), json.dumps(item.get("tags", [])),
                  item["created_at"], item["updated_at"]),
             )
