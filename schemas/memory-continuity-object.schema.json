@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://axaliai.com/schemas/memory-continuity-object.schema.json",
+  "title": "Memory Continuity Object",
+  "description": "Protocol-level data contract; not a claim of runtime enforcement.",
+  "type": "object",
+  "required": [
+    "memory_id",
+    "entity_id",
+    "memory_class",
+    "lifecycle_state",
+    "version",
+    "created_at",
+    "provenance",
+    "validation",
+    "retention_policy"
+  ],
+  "properties": {
+    "memory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memory_class": {
+      "enum": [
+        "identity",
+        "semantic",
+        "procedural",
+        "episodic",
+        "working",
+        "execution"
+      ]
+    },
+    "lifecycle_state": {
+      "enum": [
+        "active",
+        "preserved",
+        "transforming",
+        "quarantined",
+        "resetting",
+        "erased"
+      ]
+    },
+    "content": {
+      "type": [
+        "string",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "content_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source_type"
+      ],
+      "properties": {
+        "source_type": {
+          "type": "string"
+        },
+        "source_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "derived_from": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "unverified",
+            "valid",
+            "invalid",
+            "quarantined"
+          ]
+        },
+        "validator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "details_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "parent_version": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "retention_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deletion_authority": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "integrity_digest": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "content"
+      ]
+    },
+    {
+      "required": [
+        "content_ref"
+      ]
+    }
+  ],
+  "additionalProperties": false
+}
