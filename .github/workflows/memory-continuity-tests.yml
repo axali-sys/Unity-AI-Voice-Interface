@@ -1,0 +1,27 @@
+name: Memory Continuity Tests
+
+on:
+  push:
+    branches:
+      - feat/memory-continuity-protocol
+  pull_request:
+    branches:
+      - feat/memory-continuity-protocol
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  memory-continuity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated development branch
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run memory vault, governance, recovery and authorization tests
+        run: |
+          python -m unittest             tests.test_memory_vault             tests.test_memory_continuity             tests.test_memory_backup_recovery             tests.test_memory_recovery_authorization             -v
